@@ -38,6 +38,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 async function findAuthConfig() {
     const possibleConfigFiles = [
+        'studio-config.json',
         'auth.ts',
         'auth.js',
         'src/auth.ts',
@@ -116,6 +117,7 @@ async function loadTypeScriptConfig(configPath) {
             }
             catch (importError) {
                 console.warn(`Failed to import auth config from ${configPath}:`, importError);
+                console.log('Falling back to regex extraction...');
             }
         }
         // Fallback: try regex extraction

@@ -6,7 +6,8 @@ export const auth = betterAuth({
   database: {
     dialect: "postgres",
     type: "postgres",
-    casing: "camel"
+    casing: "camel",
+    url: process.env.DATABASE_URL || "postgresql://user:password@localhost:5432/better_auth"
   },
   socialProviders: {
     github: {

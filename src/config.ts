@@ -29,6 +29,7 @@ export interface AuthConfig {
 
 export async function findAuthConfig(): Promise<AuthConfig | null> {
   const possibleConfigFiles = [
+    'studio-config.json',
     'auth.ts',
     'auth.js',
     'src/auth.ts',
@@ -112,6 +113,7 @@ async function loadTypeScriptConfig(configPath: string): Promise<AuthConfig | nu
         }
       } catch (importError) {
         console.warn(`Failed to import auth config from ${configPath}:`, importError);
+        console.log('Falling back to regex extraction...');
       }
     }
 

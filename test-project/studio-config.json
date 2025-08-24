@@ -1,0 +1,37 @@
+{
+  "secret": "better-auth-secret-123456789",
+  "database": {
+    "dialect": "postgres",
+    "type": "postgres",
+    "casing": "camel",
+    "url": "postgresql://user:password@localhost:5432/better_auth"
+  },
+  "socialProviders": {
+    "github": {
+      "clientId": "your-github-client-id",
+      "clientSecret": "your-github-client-secret",
+      "redirectUri": "http://localhost:3000/api/auth/callback/github"
+    }
+  },
+  "emailAndPassword": {
+    "enabled": true,
+    "disableSignUp": false,
+    "requireEmailVerification": true,
+    "minPasswordLength": 8,
+    "maxPasswordLength": 128,
+    "autoSignIn": true,
+    "resetPasswordTokenExpiresIn": 3600
+  },
+  "session": {
+    "expiresIn": 604800,
+    "updateAge": 86400
+  },
+  "rateLimit": {
+    "enabled": true,
+    "window": 10,
+    "max": 100
+  },
+  "telemetry": {
+    "enabled": false
+  }
+}

@@ -192,13 +192,13 @@ export default function Settings() {
     switch (type?.toLowerCase()) {
       case 'postgresql':
       case 'postgres':
-        return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="w-3 h-3" />Connected</Badge>
+        return <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"><CheckCircle className="w-3 h-3" />Connected</Badge>
       case 'mysql':
-        return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="w-3 h-3" />Connected</Badge>
+        return <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"><CheckCircle className="w-3 h-3" />Connected</Badge>
       case 'sqlite':
-        return <Badge variant="info" className="flex items-center gap-1"><Info className="w-3 h-3" />Local</Badge>
+        return <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"><Info className="w-3 h-3" />Local</Badge>
       default:
-        return <Badge variant="warning" className="flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Unknown</Badge>
+        return <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Unknown</Badge>
     }
   }
 
@@ -213,7 +213,7 @@ export default function Settings() {
       case 'twitter':
         return <Globe className="w-5 h-5 text-white" />
       default:
-        return <Globe className="w-5 h-5 text-gray-400" />
+        return <Globe className="w-5 h-5 text-white" />
     }
   }
 
@@ -232,22 +232,13 @@ export default function Settings() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
           <p className="text-gray-300 mt-2">Configure your Better Auth application</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-900">
-            <Download className="w-4 h-4 mr-2" />
-            Export Config
-          </Button>
-          <Button className="bg-white hover:bg-white text-black">
-            <Save className="w-4 h-4 mr-2" />
-            Save Changes
-          </Button>
-        </div>
+        
       </div>
       <hr  className='w-full border-white/15 h-px'/>
       <hr  className='w-full border-white/15 h-px'/>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-5">
         {/* Application Configuration */}
-        <Card className="border-white/15 bg-black/70 px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0">
+        <Card className="border-white/15 bg-black/70 px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0 rounded-none">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
               <SettingsIcon className="w-5 h-5 text-white" />
@@ -274,7 +265,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Key className="w-5 h-5 text-yellow-400" />
+                <Key className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Base URL</p>
                   <p className="text-xs text-gray-400">Application base URL</p>
@@ -289,7 +280,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Lock className="w-5 h-5 text-green-400" />
+                <Lock className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Base Path</p>
                   <p className="text-xs text-gray-400">Auth API base path</p>
@@ -304,7 +295,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Shield className="w-5 h-5 text-red-400" />
+                <Shield className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Secret</p>
                   <p className="text-xs text-gray-400">Encryption secret</p>
@@ -320,7 +311,7 @@ export default function Settings() {
         </Card>
 
         {/* Database Configuration */}
-        <Card className="border-white/15 bg-black/70 px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0">
+        <Card className="border-white/15 bg-black/70 px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0 rounded-none">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
               <Database className="w-5 h-5 text-white" />
@@ -346,7 +337,7 @@ export default function Settings() {
             {config?.database?.dialect && (
               <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
                 <div className="flex items-center space-x-3">
-                  <Database className="w-5 h-5 text-green-400" />
+                  <Database className="w-5 h-5 text-white" />
                   <div>
                     <p className="text-sm font-medium text-white">Dialect</p>
                     <p className="text-xs text-gray-400">Database dialect</p>
@@ -363,7 +354,7 @@ export default function Settings() {
             {config?.database?.casing && (
               <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
                 <div className="flex items-center space-x-3">
-                  <SettingsIcon className="w-5 h-5 text-green-400" />
+                  <SettingsIcon className="w-5 h-5 text-white" />
                   <div>
                     <p className="text-sm font-medium text-white">Casing</p>
                     <p className="text-xs text-gray-400">Table name casing</p>
@@ -378,13 +369,13 @@ export default function Settings() {
             )}
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <RefreshCw className="w-5 h-5 text-green-400" />
+                <RefreshCw className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Debug Logs</p>
                   <p className="text-xs text-gray-400">Database debug logging</p>
                 </div>
               </div>
-              <Badge variant={config?.database?.debugLogs ? "warning" : "success"} className="flex items-center gap-1">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.database?.debugLogs ? (
                   <>
                     <AlertTriangle className="w-3 h-3" />
@@ -402,7 +393,7 @@ export default function Settings() {
         </Card>
 
         {/* Authentication Providers */}
-        <Card className="border-white/15 bg-black">
+        <Card className="border-white/15 bg-black rounded-none">
           <CardHeader className="border-b border-white/15">
             <CardTitle className="text-white flex items-center space-x-2">
               <Shield className="w-5 h-5 text-white" />
@@ -423,7 +414,7 @@ export default function Settings() {
                       </p>
                     </div>
                   </div>
-                  <Badge variant={provider.clientId ? "success" : "warning"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+                  <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                     {provider.clientId ? (
                       <>
                         <CheckCircle className="w-3 h-3" />
@@ -440,7 +431,7 @@ export default function Settings() {
               ))
             ) : (
               <div className="text-center py-8">
-                <Shield className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <Shield className="w-8 h-8 text-white mx-auto mb-2" />
                 <p className="text-sm text-gray-400">No providers configured</p>
               </div>
             )}
@@ -448,10 +439,10 @@ export default function Settings() {
         </Card>
 
         {/* Email & Password */}
-        <Card className="border-white/15 bg-black">
+        <Card className="border-white/15 bg-black rounded-none">
           <CardHeader className="border-b border-white/15">
             <CardTitle className="text-white flex items-center space-x-2">
-              <Mail className="w-5 h-5 text-green-400" />
+              <Mail className="w-5 h-5 text-white" />
               <span>Email & Password</span>
             </CardTitle>
             <CardDescription>Email authentication settings</CardDescription>
@@ -459,13 +450,13 @@ export default function Settings() {
           <CardContent className="p-0">
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-green-400" />
+                <Mail className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Email Authentication</p>
                   <p className="text-xs text-gray-400">Allow users to sign up with email</p>
                 </div>
               </div>
-              <Badge variant={config?.emailAndPassword?.enabled ? "success" : "error"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.emailAndPassword?.enabled ? (
                   <>
                     <CheckCircle className="w-3 h-3" />
@@ -484,13 +475,13 @@ export default function Settings() {
               <>
                 <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
                   <div className="flex items-center space-x-3">
-                    <Users className="w-5 h-5 text-blue-400" />
+                    <Users className="w-5 h-5 text-white" />
                     <div>
                       <p className="text-sm font-medium text-white">Sign Up</p>
                       <p className="text-xs text-gray-400">Allow new user registration</p>
                     </div>
                   </div>
-                  <Badge variant={config?.emailAndPassword?.disableSignUp ? "error" : "success"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+                  <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                     {config?.emailAndPassword?.disableSignUp ? (
                       <>
                         <XCircle className="w-3 h-3" />
@@ -513,7 +504,7 @@ export default function Settings() {
                       <p className="text-xs text-gray-400">Require email verification</p>
                     </div>
                   </div>
-                  <Badge variant={config?.emailAndPassword?.requireEmailVerification ? "success" : "warning"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+                  <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                     {config?.emailAndPassword?.requireEmailVerification ? (
                       <>
                         <CheckCircle className="w-3 h-3" />
@@ -530,7 +521,7 @@ export default function Settings() {
 
                 <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
                   <div className="flex items-center space-x-3">
-                    <Lock className="w-5 h-5 text-purple-400" />
+                    <Lock className="w-5 h-5 text-white" />
                     <div>
                       <p className="text-sm font-medium text-white">Password Length</p>
                       <p className="text-xs text-gray-400">Min/Max password length</p>
@@ -545,13 +536,13 @@ export default function Settings() {
 
                 <div className="flex items-center justify-between p-4 px-5 border-b border-white/15 last:border-b-0">
                   <div className="flex items-center space-x-3">
-                    <Zap className="w-5 h-5 text-yellow-400" />
+                    <Zap className="w-5 h-5 text-white" />
                     <div>
                       <p className="text-sm font-medium text-white">Auto Sign In</p>
                       <p className="text-xs text-gray-400">Auto sign in after registration</p>
                     </div>
                   </div>
-                  <Badge variant={config?.emailAndPassword?.autoSignIn ? "success" : "warning"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+                  <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                     {config?.emailAndPassword?.autoSignIn ? (
                       <>
                         <CheckCircle className="w-3 h-3" />
@@ -571,10 +562,10 @@ export default function Settings() {
         </Card>
 
         {/* Session Configuration */}
-        <Card className="border-white/15 bg-black">
+        <Card className="border-white/15 bg-black rounded-none">
           <CardHeader className="border-b border-white/15">
             <CardTitle className="text-white flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-yellow-400" />
+              <Clock className="w-5 h-5 text-white" />
               <span>Session</span>
             </CardTitle>
             <CardDescription>Session management settings</CardDescription>
@@ -582,7 +573,7 @@ export default function Settings() {
           <CardContent className="p-0">
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-yellow-400" />
+                <Clock className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Session Duration</p>
                   <p className="text-xs text-gray-400">How long sessions last</p>
@@ -598,7 +589,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <RefreshCw className="w-5 h-5 text-blue-400" />
+                <RefreshCw className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Update Age</p>
                   <p className="text-xs text-gray-400">Session refresh interval</p>
@@ -613,13 +604,13 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Zap className="w-5 h-5 text-purple-400" />
+                <Zap className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Session Refresh</p>
                   <p className="text-xs text-gray-400">Auto refresh sessions</p>
                 </div>
               </div>
-              <Badge variant={config?.session?.disableSessionRefresh ? "error" : "success"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.session?.disableSessionRefresh ? (
                   <>
                     <XCircle className="w-3 h-3" />
@@ -636,13 +627,13 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15 last:border-b-0">
               <div className="flex items-center space-x-3">
-                <Database className="w-5 h-5 text-green-400" />
+                <Database className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Store in Database</p>
                   <p className="text-xs text-gray-400">Store sessions in database</p>
                 </div>
               </div>
-              <Badge variant={config?.session?.storeSessionInDatabase ? "success" : "info"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.session?.storeSessionInDatabase ? (
                   <>
                     <CheckCircle className="w-3 h-3" />
@@ -660,10 +651,10 @@ export default function Settings() {
         </Card>
 
         {/* Rate Limiting */}
-        <Card className="border-white/15 bg-black">
+        <Card className="border-white/15 bg-black rounded-none">
           <CardHeader className="border-b border-white/15">
             <CardTitle className="text-white flex items-center space-x-2">
-              <Shield className="w-5 h-5 text-red-400" />
+              <Shield className="w-5 h-5 text-white" />
               <span>Rate Limiting</span>
             </CardTitle>
             <CardDescription>API rate limiting configuration</CardDescription>
@@ -671,13 +662,13 @@ export default function Settings() {
           <CardContent className="p-0">
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Shield className="w-5 h-5 text-red-400" />
+                <Shield className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Rate Limiting</p>
                   <p className="text-xs text-gray-400">Enable rate limiting</p>
                 </div>
               </div>
-              <Badge variant={config?.rateLimit?.enabled ? "success" : "warning"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.rateLimit?.enabled ? (
                   <>
                     <CheckCircle className="w-3 h-3" />
@@ -710,7 +701,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Shield className="w-5 h-5 text-red-400" />
+                <Shield className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Max Requests</p>
                   <p className="text-xs text-gray-400">Maximum requests per window</p>
@@ -726,7 +717,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15 last:border-b-0">
               <div className="flex items-center space-x-3">
-                <Database className="w-5 h-5 text-blue-400" />
+                <Database className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Storage</p>
                   <p className="text-xs text-gray-400">Rate limit storage type</p>
@@ -742,7 +733,7 @@ export default function Settings() {
         </Card>
 
         {/* Advanced Configuration */}
-        <Card className="border-white/15 bg-black">
+        <Card className="border-white/15 bg-black rounded-none">
           <CardHeader className="border-b border-white/15">
             <CardTitle className="text-white flex items-center space-x-2">
               <SettingsIcon className="w-5 h-5 text-white" />
@@ -753,13 +744,13 @@ export default function Settings() {
           <CardContent className="p-0">
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Lock className="w-5 h-5 text-green-400" />
+                <Lock className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Secure Cookies</p>
                   <p className="text-xs text-gray-400">Use secure cookies</p>
                 </div>
               </div>
-              <Badge variant={config?.advanced?.useSecureCookies ? "success" : "warning"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.advanced?.useSecureCookies ? (
                   <>
                     <CheckCircle className="w-3 h-3" />
@@ -776,13 +767,13 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Shield className="w-5 h-5 text-red-400" />
+                <Shield className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">CSRF Check</p>
                   <p className="text-xs text-gray-400">CSRF protection</p>
                 </div>
               </div>
-              <Badge variant={config?.advanced?.disableCSRFCheck ? "error" : "success"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.advanced?.disableCSRFCheck ? (
                   <>
                     <XCircle className="w-3 h-3" />
@@ -799,13 +790,13 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Eye className="w-5 h-5 text-blue-400" />
+                <Eye className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">IP Tracking</p>
                   <p className="text-xs text-gray-400">Track IP addresses</p>
                 </div>
               </div>
-              <Badge variant={config?.advanced?.ipAddress?.disableIpTracking ? "error" : "success"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.advanced?.ipAddress?.disableIpTracking ? (
                   <>
                     <XCircle className="w-3 h-3" />
@@ -822,13 +813,13 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15 last:border-b-0">
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-purple-400" />
+                <Bell className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Telemetry</p>
                   <p className="text-xs text-gray-400">Usage analytics</p>
                 </div>
               </div>
-              <Badge variant={config?.telemetry?.enabled ? "warning" : "success"} className="flex items-center gap-1 border-dashed rounded-none text-xs">
+              <Badge variant="secondary" className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1">
                 {config?.telemetry?.enabled ? (
                   <>
                     <AlertTriangle className="w-3 h-3" />
@@ -846,7 +837,7 @@ export default function Settings() {
         </Card>
 
         {/* System Information */}
-        <Card className="border-white/15 bg-black">
+        <Card className="border-white/15 bg-black rounded-none">
           <CardHeader className="border-b border-white/15">
             <CardTitle className="text-white flex items-center space-x-2">
               <Info className="w-5 h-5 text-white" />
@@ -873,7 +864,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Info className="w-5 h-5 text-green-400" />
+                <Info className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Node.js Version</p>
                   <p className="text-xs text-gray-400">Runtime environment</p>
@@ -889,7 +880,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
-                <Globe className="w-5 h-5 text-purple-400" />
+                <Globe className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Platform</p>
                   <p className="text-xs text-gray-400">Operating system</p>
@@ -905,7 +896,7 @@ export default function Settings() {
 
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15 last:border-b-0">
               <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-yellow-400" />
+                <Clock className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">Uptime</p>
                   <p className="text-xs text-gray-400">Service uptime</p>
@@ -923,7 +914,7 @@ export default function Settings() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="border-white/15 bg-black">
+      <Card className="border-white/15 bg-black rounded-none">
         <CardHeader className="border-b border-white/15">
           <CardTitle className="text-white">Quick Actions</CardTitle>
           <CardDescription>Common configuration tasks</CardDescription>
