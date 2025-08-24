@@ -12,8 +12,6 @@ import {
   Info,
   ExternalLink,
   RefreshCw,
-  Save,
-  Download,
   Upload,
   Lock,
   Key,
