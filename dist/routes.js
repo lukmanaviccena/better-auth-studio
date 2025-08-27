@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createRoutes = createRoutes;
 const express_1 = require("express");
 const data_1 = require("./data");
+const auth_adapter_1 = require("./auth-adapter");
 function createRoutes(authConfig) {
     const router = (0, express_1.Router)();
     // Health check with comprehensive system info
@@ -239,6 +240,249 @@ function createRoutes(authConfig) {
         catch (error) {
             console.error('Error updating user:', error);
             res.status(500).json({ error: 'Failed to update user' });
+        }
+    });
+    // Seed data endpoints
+    router.post('/api/seed/users', async (req, res) => {
+        try {
+            const { count = 1 } = req.body;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            console.log({ adapter });
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                try {
+                    // Check if the adapter has the createUser method
+                    if (typeof adapter.createUser !== 'function') {
+                        throw new Error('createUser method not available on adapter');
+                    }
+                    const user = await (0, auth_adapter_1.createMockUser)(adapter, i + 1);
+                    results.push({
+                        success: true,
+                        user: {
+                            id: user.id,
+                            email: user.email,
+                            name: user.name,
+                            emailVerified: user.emailVerified,
+                            image: user.image,
+                            createdAt: user.createdAt
+                        }
+                    });
+                }
+                catch (error) {
+                    results.push({
+                        success: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    });
+                }
+            }
+            res.json({
+                success: true,
+                message: `Seeded ${results.filter(r => r.success).length} users`,
+                results
+            });
+        }
+        catch (error) {
+            console.error('Error seeding users:', error);
+            res.status(500).json({ error: 'Failed to seed users' });
+        }
+    });
+    router.post('/api/seed/sessions', async (req, res) => {
+        try {
+            const { count = 1 } = req.body;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            // First create a user if needed
+            let user;
+            try {
+                user = await (0, auth_adapter_1.createMockUser)(adapter, 1);
+            }
+            catch (error) {
+                return res.status(500).json({ error: 'Failed to create user for session' });
+            }
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                try {
+                    // Check if the adapter has the createSession method
+                    if (typeof adapter.createSession !== 'function') {
+                        throw new Error('createSession method not available on adapter');
+                    }
+                    const session = await (0, auth_adapter_1.createMockSession)(adapter, user.id, i + 1);
+                    results.push({
+                        success: true,
+                        session: {
+                            id: session.id,
+                            userId: session.userId,
+                            expires: session.expires,
+                            sessionToken: session.sessionToken,
+                            createdAt: session.createdAt
+                        }
+                    });
+                }
+                catch (error) {
+                    results.push({
+                        success: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    });
+                }
+            }
+            res.json({
+                success: true,
+                message: `Seeded ${results.filter(r => r.success).length} sessions`,
+                results
+            });
+        }
+        catch (error) {
+            console.error('Error seeding sessions:', error);
+            res.status(500).json({ error: 'Failed to seed sessions' });
+        }
+    });
+    router.post('/api/seed/accounts', async (req, res) => {
+        try {
+            const { count = 1 } = req.body;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            // First create a user if needed
+            let user;
+            try {
+                user = await (0, auth_adapter_1.createMockUser)(adapter, 1);
+            }
+            catch (error) {
+                return res.status(500).json({ error: 'Failed to create user for account' });
+            }
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                try {
+                    // Check if the adapter has the createAccount method
+                    if (typeof adapter.createAccount !== 'function') {
+                        throw new Error('createAccount method not available on adapter');
+                    }
+                    const account = await (0, auth_adapter_1.createMockAccount)(adapter, user.id, i + 1);
+                    results.push({
+                        success: true,
+                        account: {
+                            id: account.id,
+                            userId: account.userId,
+                            type: account.type,
+                            provider: account.provider,
+                            providerAccountId: account.providerAccountId,
+                            createdAt: account.createdAt
+                        }
+                    });
+                }
+                catch (error) {
+                    results.push({
+                        success: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    });
+                }
+            }
+            res.json({
+                success: true,
+                message: `Seeded ${results.filter(r => r.success).length} accounts`,
+                results
+            });
+        }
+        catch (error) {
+            console.error('Error seeding accounts:', error);
+            res.status(500).json({ error: 'Failed to seed accounts' });
+        }
+    });
+    router.post('/api/seed/verifications', async (req, res) => {
+        try {
+            const { count = 1 } = req.body;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                try {
+                    // Check if the adapter has the createVerification method
+                    if (typeof adapter.createVerification !== 'function') {
+                        throw new Error('createVerification method not available on adapter');
+                    }
+                    const verification = await (0, auth_adapter_1.createMockVerification)(adapter, `user${i + 1}@example.com`, i + 1);
+                    results.push({
+                        success: true,
+                        verification: {
+                            id: verification.id,
+                            identifier: verification.identifier,
+                            token: verification.token,
+                            expires: verification.expires,
+                            createdAt: verification.createdAt
+                        }
+                    });
+                }
+                catch (error) {
+                    results.push({
+                        success: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    });
+                }
+            }
+            res.json({
+                success: true,
+                message: `Seeded ${results.filter(r => r.success).length} verifications`,
+                results
+            });
+        }
+        catch (error) {
+            console.error('Error seeding verifications:', error);
+            res.status(500).json({ error: 'Failed to seed verifications' });
+        }
+    });
+    router.post('/api/seed/organizations', async (req, res) => {
+        try {
+            const { count = 1 } = req.body;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            const results = [];
+            for (let i = 0; i < count; i++) {
+                try {
+                    const organizationData = {
+                        name: `Organization ${i + 1}`,
+                        slug: `org-${i + 1}`,
+                        image: `https://api.dicebear.com/7.x/identicon/svg?seed=org${i + 1}`,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    const organization = await adapter.createOrganization(organizationData);
+                    results.push({
+                        success: true,
+                        organization: {
+                            id: organization.id,
+                            name: organization.name,
+                            slug: organization.slug,
+                            image: organization.image,
+                            createdAt: organization.createdAt
+                        }
+                    });
+                }
+                catch (error) {
+                    results.push({
+                        success: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    });
+                }
+            }
+            res.json({
+                success: true,
+                message: `Seeded ${results.filter(r => r.success).length} organizations`,
+                results
+            });
+        }
+        catch (error) {
+            console.error('Error seeding organizations:', error);
+            res.status(500).json({ error: 'Failed to seed organizations' });
         }
     });
     return router;

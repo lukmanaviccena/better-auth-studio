@@ -27,7 +27,13 @@ export default function Dashboard() {
   const [selectedTimeRange, setSelectedTimeRange] = useState('1Y')
   const [selectedPeriod, _ ] = useState('Daily')
   const [activeTab, setActiveTab] = useState('overview')
-  const [seedingStatus, setSeedingStatus] = useState<'idle' | 'seeding' | 'success' | 'error'>('idle')
+  const [seedingStatus, setSeedingStatus] = useState<Record<string, 'idle' | 'seeding' | 'success' | 'error'>>({
+    users: 'idle',
+    organizations: 'idle',
+    sessions: 'idle',
+    verifications: 'idle',
+    accounts: 'idle'
+  })
   const [showTerminal, setShowTerminal] = useState(false)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [seedCount, setSeedCount] = useState({
@@ -86,140 +92,105 @@ export default function Dashboard() {
 
   const handleSeedData = async (type: string) => {
     console.log({type})
-    setSeedingStatus('seeding')
+    setSeedingStatus(prev => ({ ...prev, [type]: 'seeding' }))
     
     const count = seedCount[type as keyof typeof seedCount] || 10
     
-    if (type === 'users') {
-      // Generate detailed user data
-      const users = Array.from({ length: count }, (_, i) => ({
-        id: `user_${Date.now()}_${i}`,
-        email: `user${i + 1}@example.com`,
-        name: `User ${i + 1}`,
-        method: i % 3 === 0 ? 'email' : i % 3 === 1 ? 'github' : 'passkey',
-        verified: i % 2 === 0,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date(Date.now() - Math.random() * 86400000).toISOString()
-      }))
+    addLog('info', `Starting ${type} seeding...`, { type, count })
+    
+    try {
+      addLog('info', `Sending request to /api/seed/${type}`, { type, count })
       
-      const payload = {
-        type,
-        count,
-        users,
-        timestamp: new Date().toISOString()
+      const response = await fetch(`/api/seed/${type}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ count })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      addLog('info', `Starting ${type} seeding...`, payload)
+      const result = await response.json()
       
-      try {
-        // Simulate API call with progress updates
-        addLog('info', `Sending request to /api/seed/${type}`, payload)
-        
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      if (result.success) {
         addLog('info', `Processing ${count} ${type}...`)
         
-        // Log each user individually
-        for (let i = 0; i < users.length; i++) {
-          const user = users[i]
-          addLog('info', `Created user ${i + 1}/${count}: ${user.name} (${user.email})`, {
-            message: `user with this email registered`,
-            email: user.email
-          })
-          await new Promise(resolve => setTimeout(resolve, 200)) // Small delay between users
-        }
-        
-        addLog('success', `Successfully seeded ${count} ${type}`, {
-          totalCreated: count,
-          users: users.map(u => ({ id: u.id, email: u.email, name: u.name }))
-        })
-        
-        setSeedingStatus('success')
-        setTimeout(() => setSeedingStatus('idle'), 3000)
-      } catch (error) {
-        addLog('error', `Failed to seed ${type}: ${error}`)
-        setSeedingStatus('error')
-        setTimeout(() => setSeedingStatus('idle'), 3000)
-      }
-    } else if (type === 'organizations') {
-      // Generate detailed organization data
-      const organizations = Array.from({ length: count }, (_, i) => ({
-        id: `org_${Date.now()}_${i}`,
-        name: `Organization ${i + 1}`,
-        slug: `org-${i + 1}`,
-        members: Math.floor(Math.random() * 10) + 1,
-        createdAt: new Date().toISOString(),
-        plan: i % 3 === 0 ? 'free' : i % 3 === 1 ? 'pro' : 'enterprise'
-      }))
-      
-      const payload = {
-        type,
-        count,
-        organizations,
-        timestamp: new Date().toISOString()
-      }
-      
-      addLog('info', `Starting ${type} seeding...`, payload)
-      
-      try {
-        addLog('info', `Sending request to /api/seed/${type}`, payload)
-        
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        addLog('info', `Processing ${count} ${type}...`)
-        
-        // Log each organization individually
-        for (let i = 0; i < organizations.length; i++) {
-          const org = organizations[i]
-          addLog('info', `Created organization ${i + 1}/${count}: ${org.name} (${org.members} members)`, {
-            organization: {
-              id: org.id,
-              name: org.name,
-              slug: org.slug,
-              members: org.members,
-              plan: org.plan,
-              createdAt: org.createdAt
+        // Log each created item individually
+        if (result.results && Array.isArray(result.results)) {
+          for (let i = 0; i < result.results.length; i++) {
+            const item = result.results[i]
+            if (item.success) {
+              if (type === 'users' && item.user) {
+                addLog('info', `Created user ${i + 1}/${count}: ${item.user.name} (${item.user.email})`, {
+                  message: `user with this email registered`,
+                  email: item.user.email,
+                  name: item.user.name,
+                  id: item.user.id
+                })
+              } else if (type === 'organizations' && item.organization) {
+                addLog('info', `Created organization ${i + 1}/${count}: ${item.organization.name}`, {
+                  organization: {
+                    id: item.organization.id,
+                    name: item.organization.name,
+                    slug: item.organization.slug,
+                    createdAt: item.organization.createdAt
+                  }
+                })
+              } else if (type === 'sessions' && item.session) {
+                addLog('info', `Created session ${i + 1}/${count}: ${item.session.sessionToken.substring(0, 8)}...`, {
+                  session: {
+                    id: item.session.id,
+                    userId: item.session.userId,
+                    expires: item.session.expires,
+                    createdAt: item.session.createdAt
+                  }
+                })
+              } else if (type === 'accounts' && item.account) {
+                addLog('info', `Created account ${i + 1}/${count}: ${item.account.provider} (${item.account.providerAccountId})`, {
+                  account: {
+                    id: item.account.id,
+                    userId: item.account.userId,
+                    provider: item.account.provider,
+                    type: item.account.type,
+                    createdAt: item.account.createdAt
+                  }
+                })
+              } else if (type === 'verifications' && item.verification) {
+                addLog('info', `Created verification ${i + 1}/${count}: ${item.verification.identifier}`, {
+                  verification: {
+                    id: item.verification.id,
+                    identifier: item.verification.identifier,
+                    token: item.verification.token.substring(0, 8) + '...',
+                    expires: item.verification.expires,
+                    createdAt: item.verification.createdAt
+                  }
+                })
+              }
+            } else {
+              addLog('error', `Failed to create ${type} ${i + 1}: ${item.error}`)
             }
-          })
-          await new Promise(resolve => setTimeout(resolve, 200))
+            await new Promise(resolve => setTimeout(resolve, 100)) // Small delay between items
+          }
         }
         
-        addLog('success', `Successfully seeded ${count} ${type}`, {
-          totalCreated: count,
-          organizations: organizations.map(o => ({ id: o.id, name: o.name, members: o.members }))
+        addLog('success', `Successfully seeded ${result.results?.filter((r: any) => r.success).length || count} ${type}`, {
+          totalCreated: result.results?.filter((r: any) => r.success).length || count,
+          message: result.message
         })
         
-        setSeedingStatus('success')
-        setTimeout(() => setSeedingStatus('idle'), 3000)
-      } catch (error) {
-        addLog('error', `Failed to seed ${type}: ${error}`)
-        setSeedingStatus('error')
-        setTimeout(() => setSeedingStatus('idle'), 3000)
+        setSeedingStatus(prev => ({ ...prev, [type]: 'success' }))
+        setTimeout(() => setSeedingStatus(prev => ({ ...prev, [type]: 'idle' })), 3000)
+      } else {
+        throw new Error(result.error || 'Unknown error')
       }
-    } else {
-      // For other types, use the original simple approach
-      const payload = {
-        type,
-        count,
-        timestamp: new Date().toISOString()
-      }
-      
-      addLog('info', `Starting ${type} seeding...`, payload)
-      
-      try {
-        addLog('info', `Sending request to /api/seed/${type}`, payload)
-        
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        addLog('info', `Processing ${count} ${type}...`)
-        
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        addLog('success', `Successfully seeded ${count} ${type}`)
-        
-        setSeedingStatus('success')
-        setTimeout(() => setSeedingStatus('idle'), 3000)
-      } catch (error) {
-        addLog('error', `Failed to seed ${type}: ${error}`)
-        setSeedingStatus('error')
-        setTimeout(() => setSeedingStatus('idle'), 3000)
-      }
+    } catch (error) {
+      console.error(`Error seeding ${type}:`, error)
+      addLog('error', `Failed to seed ${type}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setSeedingStatus(prev => ({ ...prev, [type]: 'error' }))
+      setTimeout(() => setSeedingStatus(prev => ({ ...prev, [type]: 'idle' })), 3000)
     }
   }
 
@@ -457,10 +428,10 @@ export default function Dashboard() {
           <div className="flex justify-end pr-3">
             <Button
               onClick={() => handleSeedData('users')}
-              disabled={seedingStatus === 'seeding'}
+              disabled={seedingStatus.users === 'seeding'}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-light text-sm px-4"
             >
-              {seedingStatus === 'seeding' ? 'Seeding...' : 'Seed'}
+              {seedingStatus.users === 'seeding' ? 'Seeding...' : 'Seed'}
             </Button>
           </div>
           <div className="bg-black border border-white/10 rounded-none p-3 font-mono text-xs">
@@ -510,10 +481,10 @@ export default function Dashboard() {
           <div className="flex justify-end pr-3">
             <Button
               onClick={() => handleSeedData('organizations')}
-              disabled={seedingStatus === 'seeding'}
+              disabled={seedingStatus.organizations === 'seeding'}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-light text-sm px-4"
             >
-              {seedingStatus === 'seeding' ? 'Seeding...' : 'Seed'}
+              {seedingStatus.organizations === 'seeding' ? 'Seeding...' : 'Seed'}
             </Button>
           </div>
           <div className="bg-black border border-white/10 rounded-none p-3 font-mono text-xs">
@@ -564,10 +535,10 @@ export default function Dashboard() {
           <div className="flex justify-end pr-3">
             <Button
               onClick={() => handleSeedData('organizations')}
-              disabled={seedingStatus === 'seeding'}
+              disabled={seedingStatus.organizations === 'seeding'}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-light text-sm px-4"
             >
-              {seedingStatus === 'seeding' ? 'Seeding...' : 'Seed'}
+              {seedingStatus.organizations === 'seeding' ? 'Seeding...' : 'Seed'}
             </Button>
           </div>
           <div className="bg-black border border-white/10 rounded-none p-3 font-mono text-xs">
@@ -619,10 +590,10 @@ export default function Dashboard() {
           <div className="flex justify-end pr-3">
             <Button
               onClick={() => handleSeedData('sessions')}
-              disabled={seedingStatus === 'seeding'}
+              disabled={seedingStatus.sessions === 'seeding'}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-light text-sm px-4"
             >
-              {seedingStatus === 'seeding' ? 'Seeding...' : 'Seed'}
+              {seedingStatus.sessions === 'seeding' ? 'Seeding...' : 'Seed'}
             </Button>
           </div>
           <div className="bg-black border border-white/10 rounded-none p-3 font-mono text-xs">
@@ -674,10 +645,10 @@ export default function Dashboard() {
           <div className="flex justify-end pr-3">
             <Button
               onClick={() => handleSeedData('verifications')}
-              disabled={seedingStatus === 'seeding'}
+              disabled={seedingStatus.verifications === 'seeding'}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-light text-sm px-4"
             >
-              {seedingStatus === 'seeding' ? 'Seeding...' : 'Seed'}
+              {seedingStatus.verifications === 'seeding' ? 'Seeding...' : 'Seed'}
             </Button>
           </div>
           <div className="bg-black border border-white/10 rounded-none p-3 font-mono text-xs">
@@ -729,10 +700,10 @@ export default function Dashboard() {
           <div className="flex justify-end pr-3">
             <Button
               onClick={() => handleSeedData('accounts')}
-              disabled={seedingStatus === 'seeding'}
+              disabled={seedingStatus.accounts === 'seeding'}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-light text-sm px-4"
             >
-              {seedingStatus === 'seeding' ? 'Seeding...' : 'Seed'}
+              {seedingStatus.accounts === 'seeding' ? 'Seeding...' : 'Seed'}
             </Button>
           </div>
           <div className="bg-black border border-white/10 rounded-none p-3 font-mono text-xs">

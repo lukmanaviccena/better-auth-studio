@@ -1,14 +1,9 @@
 import { betterAuth } from "better-auth";
-
+import Database from "better-sqlite3";
 // Better Auth configuration
 export const auth = betterAuth({
   secret: process.env.AUTH_SECRET || "better-auth-secret-123456789",
-  database: {
-    dialect: "postgres",
-    type: "postgres",
-    casing: "camel",
-    url: process.env.DATABASE_URL || "postgresql://user:password@localhost:5432/better_auth"
-  },
+  database: new Database("./better-auth.db"),
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,

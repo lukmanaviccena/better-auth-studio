@@ -1,0 +1,14 @@
+export interface AuthAdapter {
+    createUser: (data: any) => Promise<any>;
+    createSession: (data: any) => Promise<any>;
+    createAccount: (data: any) => Promise<any>;
+    createVerification: (data: any) => Promise<any>;
+    createOrganization: (data: any) => Promise<any>;
+    create?: (table: string, data: any) => Promise<any>;
+}
+export declare function getAuthAdapter(): Promise<AuthAdapter | null>;
+export declare function createMockUser(adapter: AuthAdapter, index: number): Promise<any>;
+export declare function createMockSession(adapter: AuthAdapter, userId: string, index: number): Promise<any>;
+export declare function createMockAccount(adapter: AuthAdapter, userId: string, index: number): Promise<any>;
+export declare function createMockVerification(adapter: AuthAdapter, userId: string, index: number): Promise<any>;
+//# sourceMappingURL=auth-adapter.d.ts.map
