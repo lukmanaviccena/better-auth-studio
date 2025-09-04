@@ -231,6 +231,58 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to fetch statistics' });
         }
     });
+    // Get counts for navigation
+    router.get('/api/counts', async (req, res) => {
+        try {
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            let userCount = 0;
+            let sessionCount = 0;
+            let organizationCount = 0;
+            if (adapter) {
+                // Get user count
+                try {
+                    if (typeof adapter.findMany === 'function') {
+                        const users = await adapter.findMany({ model: 'user' });
+                        userCount = users?.length || 0;
+                    }
+                }
+                catch (error) {
+                    console.error('Error fetching user count:', error);
+                }
+                // Get session count
+                try {
+                    if (typeof adapter.findMany === 'function') {
+                        const sessions = await adapter.findMany({ model: 'session' });
+                        sessionCount = sessions?.length || 0;
+                    }
+                }
+                catch (error) {
+                    console.error('Error fetching session count:', error);
+                }
+                // Get organization count
+                try {
+                    if (typeof adapter.findMany === 'function') {
+                        const organizations = await adapter.findMany({ model: 'organization' });
+                        organizationCount = organizations?.length || 0;
+                    }
+                }
+                catch (error) {
+                    console.error('Error fetching organization count:', error);
+                    // If organizations fail, it might be because plugin is not enabled
+                    organizationCount = 0;
+                }
+            }
+            res.json({
+                users: userCount,
+                sessions: sessionCount,
+                organizations: organizationCount
+            });
+        }
+        catch (error) {
+            console.error('Error fetching counts:', error);
+            res.status(500).json({ error: 'Failed to fetch counts' });
+        }
+    });
     router.get('/api/users', async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
@@ -316,6 +368,56 @@ function createRoutes(authConfig) {
         catch (error) {
             console.error('Error deleting user:', error);
             res.status(500).json({ error: 'Failed to delete user' });
+        }
+    });
+    // Get all enabled plugins
+    router.get('/api/plugins', async (req, res) => {
+        try {
+            const authConfigPath = await findAuthConfigPath();
+            if (!authConfigPath) {
+                return res.json({
+                    plugins: [],
+                    error: 'No auth config found',
+                    configPath: null
+                });
+            }
+            try {
+                const authModule = await Promise.resolve(`${authConfigPath}`).then(s => __importStar(require(s)));
+                const auth = authModule.auth || authModule.default;
+                if (!auth) {
+                    return res.json({
+                        plugins: [],
+                        error: 'No auth export found',
+                        configPath: authConfigPath
+                    });
+                }
+                // Get all enabled plugins
+                const plugins = auth.options?.plugins || [];
+                const pluginInfo = plugins.map((plugin) => ({
+                    id: plugin.id,
+                    name: plugin.name || plugin.id,
+                    version: plugin.version || 'unknown',
+                    description: plugin.description || `${plugin.id} plugin for Better Auth`,
+                    enabled: true
+                }));
+                res.json({
+                    plugins: pluginInfo,
+                    configPath: authConfigPath,
+                    totalPlugins: pluginInfo.length
+                });
+            }
+            catch (error) {
+                console.error('Error getting plugins:', error);
+                res.json({
+                    plugins: [],
+                    error: 'Failed to load auth config',
+                    configPath: authConfigPath
+                });
+            }
+        }
+        catch (error) {
+            console.error('Error fetching plugins:', error);
+            res.status(500).json({ error: 'Failed to fetch plugins' });
         }
     });
     // Check if organization plugin is enabled

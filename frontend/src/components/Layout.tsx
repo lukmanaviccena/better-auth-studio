@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   LayoutDashboard, 
@@ -15,16 +15,47 @@ interface LayoutProps {
   children: ReactNode
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Users', href: '/users', icon: Users, badge: '1,247' },
-  { name: 'Organizations', href: '/organizations', icon: Building2, badge: '12' },
-  { name: 'Sessions', href: '/sessions', icon: Shield, badge: '3,456' },
-  { name: 'Settings', href: '/settings', icon: Settings },
-]
+interface Counts {
+  users: number
+  organizations: number
+  sessions: number
+}
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
+  const [counts, setCounts] = useState<Counts>({ users: 0, organizations: 0, sessions: 0 })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchCounts()
+  }, [])
+
+  const fetchCounts = async () => {
+    try {
+      const response = await fetch('/api/counts')
+      const data = await response.json()
+      setCounts(data)
+    } catch (error) {
+      console.error('Failed to fetch counts:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCount = (count: number): string => {
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+    }
+    return count.toString()
+  }
+
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Users', href: '/users', icon: Users, badge: loading ? '...' : formatCount(counts.users) },
+    { name: 'Organizations', href: '/organizations', icon: Building2, badge: loading ? '...' : formatCount(counts.organizations) },
+    { name: 'Sessions', href: '/sessions', icon: Shield, badge: loading ? '...' : formatCount(counts.sessions) },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ]
 
   return (
     <div className="min-h-screen bg-black">

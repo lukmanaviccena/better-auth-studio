@@ -16,7 +16,8 @@ import {
   Users,
   Settings as SettingsIcon,
   Bell,
-  Eye
+  Eye,
+  Puzzle
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -138,14 +139,31 @@ interface SystemInfo {
   uptime: string
 }
 
+interface Plugin {
+  id: string
+  name: string
+  version: string
+  description: string
+  enabled: boolean
+}
+
+interface PluginsResponse {
+  plugins: Plugin[]
+  configPath: string | null
+  totalPlugins: number
+  error?: string
+}
+
 export default function Settings() {
   const [config, setConfig] = useState<AuthConfig | null>(null)
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
+  const [plugins, setPlugins] = useState<PluginsResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchConfig()
     fetchSystemInfo()
+    fetchPlugins()
   }, [])
 
   const fetchConfig = async () => {
@@ -179,6 +197,23 @@ export default function Settings() {
         nodeVersion: 'v18.0.0',
         platform: 'macOS',
         uptime: '2h 15m'
+      })
+    }
+  }
+
+  const fetchPlugins = async () => {
+    try {
+      const response = await fetch('/api/plugins')
+      const data = await response.json()
+      console.log('Plugins data:', data)
+      setPlugins(data)
+    } catch (error) {
+      console.error('Failed to fetch plugins:', error)
+      setPlugins({
+        plugins: [],
+        configPath: null,
+        totalPlugins: 0,
+        error: 'Failed to fetch plugins'
       })
     }
   }
@@ -904,6 +939,79 @@ export default function Settings() {
                 <p className="text-xs text-gray-400">Running</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Plugins Configuration */}
+        <Card className="border-white/15 bg-black/70 px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0 rounded-none lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Puzzle className="w-5 h-5 text-white" />
+              <span>Plugins</span>
+            </CardTitle>
+            <CardDescription>Better Auth plugins enabled in your configuration</CardDescription>
+          </CardHeader>
+          <hr className='w-full border-white/15 h-px -mt-3 mb-1'/>
+          <CardContent className="space-y-0 px-0 pb-0 border-b-none">
+            {plugins?.plugins && plugins.plugins.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
+                  <div className="flex items-center space-x-3">
+                    <Info className="w-5 h-5 text-white" />
+                    <div>
+                      <p className="text-sm font-medium text-white">Total Plugins</p>
+                      <p className="text-xs text-gray-400">Currently enabled plugins</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-white">{plugins.totalPlugins}</p>
+                    <p className="text-xs text-gray-400">Active</p>
+                  </div>
+                </div>
+                
+                {plugins.plugins.map((plugin, index) => (
+                  <div key={plugin.id} className={`flex items-center justify-between p-4 px-5 ${index < plugins.plugins.length - 1 ? 'border-b border-white/15' : ''}`}>
+                    <div className="flex items-center space-x-3">
+                      <Puzzle className="w-5 h-5 text-white" />
+                      <div>
+                        <p className="text-sm font-medium text-white">{plugin.name}</p>
+                        <p className="text-xs text-gray-400">{plugin.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs bg-green-900/50 border border-green-500/30 text-green-400 rounded-sm flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Enabled
+                      </Badge>
+                      <p className="text-xs text-gray-400">v{plugin.version}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {plugins.configPath && (
+                  <div className="p-4 px-5 bg-black/30 border-t border-white/10">
+                    <p className="text-xs text-gray-400">
+                      Config file: <span className="text-white font-mono">{plugins.configPath}</span>
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-between p-4 px-5">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                  <div>
+                    <p className="text-sm font-medium text-white">No Plugins Enabled</p>
+                    <p className="text-xs text-gray-400">
+                      {plugins?.error || 'No plugins are currently configured in your Better Auth setup'}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="text-xs bg-yellow-900/50 border border-yellow-500/30 text-yellow-400 rounded-sm">
+                  None
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

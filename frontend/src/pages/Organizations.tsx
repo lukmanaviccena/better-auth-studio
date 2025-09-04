@@ -46,10 +46,44 @@ export default function Organizations() {
   const [showSeedModal, setShowSeedModal] = useState(false)
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null)
   const [seedingLogs, setSeedingLogs] = useState<string[]>([])
+  const [createFormData, setCreateFormData] = useState({ name: '', slug: '' })
+  const [editFormData, setEditFormData] = useState({ name: '', slug: '' })
 
   useEffect(() => {
     checkPluginStatus()
   }, [])
+
+  // Utility function to generate slug from name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/[^a-z0-9-]/g, '') // Remove special characters except hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+  }
+
+  // Handle create form name change with auto-slug generation
+  const handleCreateNameChange = (name: string) => {
+    const slug = generateSlug(name)
+    setCreateFormData({ name, slug })
+  }
+
+  // Handle create form slug change (manual override)
+  const handleCreateSlugChange = (slug: string) => {
+    setCreateFormData(prev => ({ ...prev, slug: generateSlug(slug) }))
+  }
+
+  // Handle edit form name change with auto-slug generation
+  const handleEditNameChange = (name: string) => {
+    const slug = generateSlug(name)
+    setEditFormData({ name, slug })
+  }
+
+  // Handle edit form slug change (manual override)
+  const handleEditSlugChange = (slug: string) => {
+    setEditFormData(prev => ({ ...prev, slug: generateSlug(slug) }))
+  }
 
   const checkPluginStatus = async () => {
     try {
@@ -142,6 +176,7 @@ export default function Organizations() {
 
   const openEditModal = (organization: Organization) => {
     setSelectedOrganization(organization)
+    setEditFormData({ name: organization.name, slug: organization.slug })
     setShowEditModal(true)
   }
 
@@ -151,10 +186,7 @@ export default function Organizations() {
   }
 
   const handleCreateOrganization = async () => {
-    const name = (document.getElementById('create-name') as HTMLInputElement)?.value
-    const slug = (document.getElementById('create-slug') as HTMLInputElement)?.value
-
-    if (!name) {
+    if (!createFormData.name) {
       toast.error('Please fill in the organization name')
       return
     }
@@ -165,7 +197,10 @@ export default function Organizations() {
       const response = await fetch('/api/organizations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug })
+        body: JSON.stringify({ 
+          name: createFormData.name, 
+          slug: createFormData.slug 
+        })
       })
 
       const result = await response.json()
@@ -175,8 +210,7 @@ export default function Organizations() {
         await fetchOrganizations()
         setShowCreateModal(false)
         // Clear the form
-        ;(document.getElementById('create-name') as HTMLInputElement).value = ''
-        ;(document.getElementById('create-slug') as HTMLInputElement).value = ''
+        setCreateFormData({ name: '', slug: '' })
         toast.success('Organization created successfully!', { id: toastId })
       } else {
         toast.error(`Error creating organization: ${result.error || 'Unknown error'}`, { id: toastId })
@@ -193,10 +227,7 @@ export default function Organizations() {
       return
     }
 
-    const name = (document.getElementById('edit-name') as HTMLInputElement)?.value
-    const slug = (document.getElementById('edit-slug') as HTMLInputElement)?.value
-
-    if (!name) {
+    if (!editFormData.name) {
       toast.error('Please fill in the organization name')
       return
     }
@@ -207,7 +238,10 @@ export default function Organizations() {
       const response = await fetch(`/api/organizations/${selectedOrganization.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug })
+        body: JSON.stringify({ 
+          name: editFormData.name, 
+          slug: editFormData.slug 
+        })
       })
 
       const result = await response.json()
@@ -217,6 +251,7 @@ export default function Organizations() {
         await fetchOrganizations()
         setShowEditModal(false)
         setSelectedOrganization(null)
+        setEditFormData({ name: '', slug: '' })
         toast.success('Organization updated successfully!', { id: toastId })
       } else {
         toast.error(`Error updating organization: ${result.error || 'Unknown error'}`, { id: toastId })
@@ -415,7 +450,6 @@ export default function Organizations() {
               <tr className="border-b border-dashed border-white/10">
                 <th className="text-left py-4 px-4 text-white font-light">Organization</th>
                 <th className="text-left py-4 px-4 text-white font-light">Slug</th>
-                <th className="text-left py-4 px-4 text-white font-light">Status</th>
                 <th className="text-left py-4 px-4 text-white font-light">Created</th>
                 <th className="text-right py-4 px-4 text-white font-light">Actions</th>
               </tr>
@@ -435,14 +469,11 @@ export default function Organizations() {
                     </div>
                   </td>
                   <td className="py-4 px-4 text-white">{organization.slug}</td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <span className="text-sm text-gray-400">Active</span>
-                    </div>
-                  </td>
                   <td className="py-4 px-4 text-sm text-gray-400">
+                   <div className="flex flex-col">
                     {new Date(organization.createdAt).toLocaleDateString()}
+                    <p className="text-xs">{new Date(organization.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    </div>
                   </td>
                   <td className="py-4 px-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
@@ -612,6 +643,9 @@ export default function Organizations() {
                 <Label htmlFor="create-name" className="text-sm text-gray-400 font-light">Name</Label>
                 <Input
                   id="create-name"
+                  value={createFormData.name}
+                  onChange={(e) => handleCreateNameChange(e.target.value)}
+                  placeholder="e.g. Acme Corp"
                   className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
                 />
               </div>
@@ -619,14 +653,23 @@ export default function Organizations() {
                 <Label htmlFor="create-slug" className="text-sm text-gray-400 font-light">Slug</Label>
                 <Input
                   id="create-slug"
+                  value={createFormData.slug}
+                  onChange={(e) => handleCreateSlugChange(e.target.value)}
+                  placeholder="e.g. acme-corp"
                   className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Auto-generated from name. You can edit it manually.
+                </p>
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false)
+                  setCreateFormData({ name: '', slug: '' })
+                }}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Cancel
@@ -671,7 +714,9 @@ export default function Organizations() {
                 <Label htmlFor="edit-name" className="text-sm text-gray-400 font-light">Name</Label>
                 <Input
                   id="edit-name"
-                  defaultValue={selectedOrganization.name}
+                  value={editFormData.name}
+                  onChange={(e) => handleEditNameChange(e.target.value)}
+                  placeholder="e.g. Acme Corp"
                   className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
                 />
               </div>
@@ -679,15 +724,23 @@ export default function Organizations() {
                 <Label htmlFor="edit-slug" className="text-sm text-gray-400 font-light">Slug</Label>
                 <Input
                   id="edit-slug"
-                  defaultValue={selectedOrganization.slug}
+                  value={editFormData.slug}
+                  onChange={(e) => handleEditSlugChange(e.target.value)}
+                  placeholder="e.g. acme-corp"
                   className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Auto-generated from name. You can edit it manually.
+                </p>
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditFormData({ name: '', slug: '' })
+                }}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Cancel
