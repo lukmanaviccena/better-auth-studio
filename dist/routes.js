@@ -462,17 +462,19 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to check teams status' });
         }
     });
-    // Get invitations for an organization
     router.get('/api/organizations/:orgId/invitations', async (req, res) => {
         try {
+            console.log('fetching invitations', req.params);
             const { orgId } = req.params;
             const adapter = await (0, auth_adapter_1.getAuthAdapter)();
             if (adapter && typeof adapter.findMany === 'function') {
                 try {
                     const invitations = await adapter.findMany({
                         model: 'invitation',
-                        where: { organizationId: orgId },
-                        limit: 10000
+                        where: [
+                            { field: 'organizationId', value: orgId },
+                            { field: 'status', value: 'pending' }
+                        ],
                     });
                     const transformedInvitations = (invitations || []).map((invitation) => ({
                         id: invitation.id,
@@ -481,7 +483,7 @@ function createRoutes(authConfig) {
                         status: invitation.status || 'pending',
                         organizationId: invitation.organizationId,
                         teamId: invitation.teamId,
-                        invitedBy: invitation.invitedBy,
+                        inviterId: invitation.inviterId,
                         expiresAt: invitation.expiresAt,
                         createdAt: invitation.createdAt
                     }));
@@ -509,16 +511,15 @@ function createRoutes(authConfig) {
                 try {
                     const members = await adapter.findMany({
                         model: 'member',
-                        where: { organizationId: orgId },
+                        where: [{ field: 'organizationId', value: orgId }],
                         limit: 10000
                     });
-                    // Get user details for each member
                     const membersWithUsers = await Promise.all((members || []).map(async (member) => {
                         try {
                             if (adapter.findMany) {
                                 const users = await adapter.findMany({
                                     model: 'user',
-                                    where: { id: member.userId },
+                                    where: [{ field: 'id', value: member.userId }],
                                     limit: 1
                                 });
                                 const user = users?.[0];
@@ -560,7 +561,6 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to fetch members' });
         }
     });
-    // Seed members from existing users
     router.post('/api/organizations/:orgId/seed-members', async (req, res) => {
         try {
             const { orgId } = req.params;
@@ -570,7 +570,7 @@ function createRoutes(authConfig) {
                 return res.status(500).json({ error: 'Auth adapter not available' });
             }
             // Get existing users to add as members
-            if (!adapter.findMany) {
+            if (!adapter.findMany || !adapter.create) {
                 return res.status(500).json({ error: 'Adapter findMany method not available' });
             }
             const users = await adapter.findMany({ model: 'user', limit: 10000 });
@@ -583,7 +583,7 @@ function createRoutes(authConfig) {
                 if (adapter.findMany) {
                     existingMembers = await adapter.findMany({
                         model: 'member',
-                        where: { organizationId: orgId },
+                        where: [{ field: 'organizationId', value: orgId }],
                         limit: 10000
                     }) || [];
                 }
@@ -600,24 +600,25 @@ function createRoutes(authConfig) {
             const usersToAdd = availableUsers.slice(0, count);
             for (const user of usersToAdd) {
                 try {
-                    // For now, simulate member creation since we don't have the exact adapter method
-                    const member = {
-                        id: `member_${Date.now()}_${Math.random()}`,
-                        userId: user.id,
+                    const memberData = {
                         organizationId: orgId,
+                        userId: user.id,
                         role: 'member',
-                        joinedAt: new Date().toISOString(),
-                        user: {
-                            id: user.id,
-                            name: user.name,
-                            email: user.email,
-                            image: user.image,
-                            emailVerified: user.emailVerified
-                        }
+                        createdAt: new Date()
                     };
+                    await adapter.create({
+                        model: 'member',
+                        data: memberData
+                    });
                     results.push({
                         success: true,
-                        member
+                        member: {
+                            userId: user.id,
+                            user: {
+                                name: user.name,
+                                email: user.email
+                            }
+                        }
                     });
                 }
                 catch (error) {
@@ -638,7 +639,83 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to seed members' });
         }
     });
-    // Create invitation
+    // Remove member from organization
+    router.delete('/api/members/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            if (!adapter.delete) {
+                return res.status(500).json({ error: 'Adapter delete method not available' });
+            }
+            // Delete member record
+            await adapter.delete({
+                model: 'member',
+                where: [{ field: 'id', value: id }]
+            });
+            res.json({ success: true });
+        }
+        catch (error) {
+            console.error('Error removing member:', error);
+            res.status(500).json({ error: 'Failed to remove member' });
+        }
+    });
+    // Resend invitation
+    router.post('/api/invitations/:id/resend', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            if (!adapter.update) {
+                return res.status(500).json({ error: 'Adapter update method not available' });
+            }
+            // Update invitation with new expiry date
+            await adapter.update({
+                model: 'invitation',
+                where: [{ field: 'id', value: id }],
+                update: {
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+                    updatedAt: new Date().toISOString()
+                }
+            });
+            res.json({ success: true });
+        }
+        catch (error) {
+            console.error('Error resending invitation:', error);
+            res.status(500).json({ error: 'Failed to resend invitation' });
+        }
+    });
+    // Cancel invitation (change status to cancelled)
+    router.delete('/api/invitations/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            if (!adapter.update) {
+                return res.status(500).json({ error: 'Adapter update method not available' });
+            }
+            // Update invitation status to cancelled
+            await adapter.update({
+                model: 'invitation',
+                where: [{ field: 'id', value: id }],
+                update: {
+                    status: 'cancelled',
+                    updatedAt: new Date().toISOString()
+                }
+            });
+            res.json({ success: true });
+        }
+        catch (error) {
+            console.error('Error cancelling invitation:', error);
+            res.status(500).json({ error: 'Failed to cancel invitation' });
+        }
+    });
     router.post('/api/organizations/:orgId/invitations', async (req, res) => {
         try {
             const { orgId } = req.params;
@@ -654,13 +731,28 @@ function createRoutes(authConfig) {
                 status: 'pending',
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
                 createdAt: new Date(),
-                invitedBy: 'admin' // In real app, get from session
+                inviterId: 'admin' // In real app, get from session
             };
-            // For now, simulate invitation creation
             const invitation = {
                 id: `inv_${Date.now()}`,
                 ...invitationData
             };
+            if (!adapter.create) {
+                return res.status(500).json({ error: 'Adapter create method not available' });
+            }
+            const adminId = "dQ2aAFgMwmRKvoqLiM1MCbjbka5g1Nzc";
+            await adapter.create({
+                model: 'invitation',
+                data: {
+                    organizationId: invitationData.organizationId,
+                    email: invitationData.email,
+                    role: invitationData.role,
+                    status: invitationData.status,
+                    inviterId: adminId,
+                    expiresAt: invitationData.expiresAt,
+                    createdAt: invitationData.createdAt,
+                }
+            });
             res.json({ success: true, invitation });
         }
         catch (error) {
@@ -677,13 +769,12 @@ function createRoutes(authConfig) {
                 try {
                     const teams = await adapter.findMany({
                         model: 'team',
-                        where: { organizationId: orgId },
+                        where: [{ organizationId: orgId }],
                         limit: 10000
                     });
                     const transformedTeams = (teams || []).map((team) => ({
                         id: team.id,
                         name: team.name,
-                        slug: team.slug,
                         organizationId: team.organizationId,
                         metadata: team.metadata,
                         createdAt: team.createdAt,
@@ -705,7 +796,6 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to fetch teams' });
         }
     });
-    // Create team
     router.post('/api/organizations/:orgId/teams', async (req, res) => {
         try {
             const { orgId } = req.params;
@@ -727,6 +817,18 @@ function createRoutes(authConfig) {
                 id: `team_${Date.now()}`,
                 ...teamData
             };
+            if (!adapter.create) {
+                return res.status(500).json({ error: 'Adapter create method not available' });
+            }
+            await adapter.create({
+                model: 'team',
+                data: {
+                    name: teamData.name,
+                    organizationId: teamData.organizationId,
+                    createdAt: teamData.createdAt,
+                    updatedAt: teamData.updatedAt,
+                }
+            });
             res.json({ success: true, team });
         }
         catch (error) {
@@ -734,17 +836,31 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to create team' });
         }
     });
-    // Update team
     router.put('/api/teams/:id', async (req, res) => {
         try {
             const { id } = req.params;
             const { name, slug } = req.body;
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
             const updatedTeam = {
                 id,
                 name,
                 slug,
                 updatedAt: new Date().toISOString()
             };
+            if (!adapter.update) {
+                return res.status(500).json({ error: 'Adapter update method not available' });
+            }
+            await adapter.update({
+                model: 'team',
+                where: [{ id }],
+                update: {
+                    name: updatedTeam.name,
+                    updatedAt: updatedTeam.updatedAt
+                }
+            });
             res.json({ success: true, team: updatedTeam });
         }
         catch (error) {
@@ -752,11 +868,20 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to update team' });
         }
     });
-    // Delete team
     router.delete('/api/teams/:id', async (req, res) => {
         try {
             const { id } = req.params;
-            // For now, simulate the deletion
+            const adapter = await (0, auth_adapter_1.getAuthAdapter)();
+            if (!adapter) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            if (!adapter.delete) {
+                return res.status(500).json({ error: 'Adapter delete method not available' });
+            }
+            await adapter.delete({
+                model: 'team',
+                where: [{ id }],
+            });
             res.json({ success: true });
         }
         catch (error) {
@@ -764,7 +889,6 @@ function createRoutes(authConfig) {
             res.status(500).json({ error: 'Failed to delete team' });
         }
     });
-    // Check if organization plugin is enabled
     router.get('/api/plugins/organization/status', async (req, res) => {
         try {
             const authConfigPath = await findAuthConfigPath();

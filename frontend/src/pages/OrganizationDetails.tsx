@@ -48,7 +48,7 @@ interface Invitation {
     status: 'pending' | 'accepted' | 'expired'
     organizationId: string
     teamId?: string
-    invitedBy: string
+    inviterId: string
     expiresAt: string
     createdAt: string
 }
@@ -223,12 +223,15 @@ export default function OrganizationDetails() {
             
             if (result.success) {
                 setSeedingLogs(result.results.map((r: any) =>
-                    `✅ Added member: ${r.member.user.name} (${r.member.user.email})`
+                    r.success 
+                        ? `✅ Added member: ${r.member.user.name} (${r.member.user.email})`
+                        : `❌ Failed: ${r.error}`
                 ))
-                // Refresh the members list
                 await fetchMembers()
+                toast.success(`Successfully added ${result.results.filter((r: any) => r.success).length} members!`)
             } else {
                 setSeedingLogs([`❌ Error: ${result.error || 'Failed to seed members'}`])
+                toast.error(result.error || 'Failed to seed members')
             }
         } catch (error) {
             setSeedingLogs([`❌ Error: ${error}`])
@@ -267,6 +270,75 @@ export default function OrganizationDetails() {
         } catch (error) {
             console.error('Error sending invitation:', error)
             toast.error('Error sending invitation', { id: toastId })
+        }
+    }
+
+    const handleCancelInvitation = async (invitationId: string) => {
+        const toastId = toast.loading('Cancelling invitation...')
+        
+        try {
+            const response = await fetch(`/api/invitations/${invitationId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+
+            const result = await response.json()
+
+            if (result.success) {
+                await fetchInvitations()
+                toast.success('Invitation cancelled successfully!', { id: toastId })
+            } else {
+                toast.error(`Error cancelling invitation: ${result.error || 'Unknown error'}`, { id: toastId })
+            }
+        } catch (error) {
+            console.error('Error cancelling invitation:', error)
+            toast.error('Error cancelling invitation', { id: toastId })
+        }
+    }
+
+    const handleResendInvitation = async (invitationId: string, email: string) => {
+        const toastId = toast.loading('Resending invitation...')
+        
+        try {
+            const response = await fetch(`/api/invitations/${invitationId}/resend`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+
+            const result = await response.json()
+
+            if (result.success) {
+                await fetchInvitations()
+                toast.success(`Invitation resent to ${email}!`, { id: toastId })
+            } else {
+                toast.error(`Error resending invitation: ${result.error || 'Unknown error'}`, { id: toastId })
+            }
+        } catch (error) {
+            console.error('Error resending invitation:', error)
+            toast.error('Error resending invitation', { id: toastId })
+        }
+    }
+
+    const handleRemoveMember = async (memberId: string, userName: string) => {
+        const toastId = toast.loading(`Removing ${userName}...`)
+        
+        try {
+            const response = await fetch(`/api/members/${memberId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+
+            const result = await response.json()
+
+            if (result.success) {
+                await fetchMembers()
+                toast.success(`${userName} removed from organization!`, { id: toastId })
+            } else {
+                toast.error(`Error removing member: ${result.error || 'Unknown error'}`, { id: toastId })
+            }
+        } catch (error) {
+            console.error('Error removing member:', error)
+            toast.error('Error removing member', { id: toastId })
         }
     }
 
@@ -642,28 +714,31 @@ export default function OrganizationDetails() {
                                                 <td className="py-4 px-4 text-right">
                                                     <div className="flex items-center justify-end space-x-2">
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-gray-400 hover:text-white rounded-none"
+                                                            className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
                                                             onClick={() => {/* Navigate to team details */}}
                                                         >
-                                                            <Eye className="w-4 h-4" />
+                                                            <Eye className="w-4 h-4 mr-1" />
+                                                            View
                                                         </Button>
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-gray-400 hover:text-white rounded-none"
+                                                            className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
                                                             onClick={() => openEditTeamModal(team)}
                                                         >
-                                                            <Edit className="w-4 h-4" />
+                                                            <Edit className="w-4 h-4 mr-1" />
+                                                            Edit
                                                         </Button>
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-red-400 hover:text-red-300 rounded-none"
+                                                            className="border border-dashed border-red-400/50 text-red-400 hover:bg-red-400/10 rounded-none"
                                                             onClick={() => openDeleteTeamModal(team)}
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4 mr-1" />
+                                                            Delete
                                                         </Button>
                                                     </div>
                                                 </td>
@@ -746,20 +821,22 @@ export default function OrganizationDetails() {
                                                 <td className="py-4 px-4 text-right">
                                                     <div className="flex items-center justify-end space-x-2">
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-gray-400 hover:text-white rounded-none"
-                                                            onClick={() => {/* Change role */}}
+                                                            className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                                                            onClick={() => {/* Change role - to be implemented */}}
                                                         >
-                                                            <Edit className="w-4 h-4" />
+                                                            <Edit className="w-4 h-4 mr-1" />
+                                                            Edit Role
                                                         </Button>
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-red-400 hover:text-red-300 rounded-none"
-                                                            onClick={() => {/* Remove member */}}
+                                                            className="border border-dashed border-red-400/50 text-red-400 hover:bg-red-400/10 rounded-none"
+                                                            onClick={() => handleRemoveMember(member.id, member.user.name)}
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4 mr-1" />
+                                                            Remove
                                                         </Button>
                                                     </div>
                                                 </td>
@@ -861,20 +938,22 @@ export default function OrganizationDetails() {
                                                 <td className="py-4 px-4 text-right">
                                                     <div className="flex items-center justify-end space-x-2">
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-gray-400 hover:text-white rounded-none"
-                                                            onClick={() => {/* Resend invitation */}}
+                                                            className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                                                            onClick={() => handleResendInvitation(invitation.id, invitation.email)}
                                                         >
-                                                            <Send className="w-4 h-4" />
+                                                            <Send className="w-4 h-4 mr-1" />
+                                                            Resend
                                                         </Button>
                                                         <Button
-                                                            variant="ghost"
+                                                            variant="outline"
                                                             size="sm"
-                                                            className="text-red-400 hover:text-red-300 rounded-none"
-                                                            onClick={() => {/* Cancel invitation */}}
+                                                            className="border border-dashed border-red-400/50 text-red-400 hover:bg-red-400/10 rounded-none"
+                                                            onClick={() => handleCancelInvitation(invitation.id)}
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4 mr-1" />
+                                                            Cancel
                                                         </Button>
                                                     </div>
                                                 </td>

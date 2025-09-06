@@ -472,20 +472,20 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get invitations for an organization
   router.get('/api/organizations/:orgId/invitations', async (req: Request, res: Response) => {
     try {
+      console.log('fetching invitations' , req.params)
       const { orgId } = req.params;
       const adapter = await getAuthAdapter();
-
       if (adapter && typeof adapter.findMany === 'function') {
         try {
           const invitations = await adapter.findMany({
             model: 'invitation',
-            where: [{ organizationId: orgId }],
-            limit: 10000
+            where: [
+              { field: 'organizationId', value: orgId },
+              { field: 'status', value: 'pending' }
+            ],
           });
-
           const transformedInvitations = (invitations || []).map((invitation: any) => ({
             id: invitation.id,
             email: invitation.email,
@@ -493,11 +493,10 @@ export function createRoutes(authConfig: AuthConfig) {
             status: invitation.status || 'pending',
             organizationId: invitation.organizationId,
             teamId: invitation.teamId,
-            invitedBy: invitation.invitedBy,
+            inviterId: invitation.inviterId,
             expiresAt: invitation.expiresAt,
             createdAt: invitation.createdAt
           }));
-
           res.json({ success: true, invitations: transformedInvitations });
           return;
         } catch (error) {
@@ -523,21 +522,18 @@ export function createRoutes(authConfig: AuthConfig) {
         try {
           const members = await adapter.findMany({
             model: 'member',
-            where: [{ organizationId: orgId }],
+            where: [{ field: 'organizationId', value: orgId }],
             limit: 10000
           });
-
-          // Get user details for each member
           const membersWithUsers = await Promise.all((members || []).map(async (member: any) => {
             try {
               if (adapter.findMany) {
                 const users = await adapter.findMany({
                   model: 'user',
-                  where: [{ id: member.userId }],
+                  where: [{ field: 'id', value: member.userId }],
                   limit: 1
                 });
                 const user = users?.[0];
-
                 return {
                   id: member.id,
                   userId: member.userId,
@@ -577,7 +573,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Seed members from existing users
   router.post('/api/organizations/:orgId/seed-members', async (req: Request, res: Response) => {
     try {
       const { orgId } = req.params;
@@ -605,7 +600,7 @@ export function createRoutes(authConfig: AuthConfig) {
         if (adapter.findMany) {
           existingMembers = await adapter.findMany({
             model: 'member',
-            where: [{ organizationId: orgId }],
+            where: [{ field: 'organizationId', value: orgId }],
             limit: 10000
           }) || [];
         }
@@ -625,37 +620,26 @@ export function createRoutes(authConfig: AuthConfig) {
 
       for (const user of usersToAdd) {
         try {
-          const member = {
-            id: `member_${Date.now()}_${Math.random()}`,
-            userId: user.id,
+          const memberData = {
             organizationId: orgId,
+            userId: user.id,
             role: 'member',
-            joinedAt: new Date().toISOString(),
-            user: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              image: user.image,
-              emailVerified: user.emailVerified
-            }
+            createdAt: new Date()
           };
+
           await adapter.create({
             model: 'member',
-            data: {
-              organizationId: member.organizationId,
-              userId: member.userId,
-              role: member.role,
-              createdAt: member.joinedAt
-            }
+            data: memberData
           });
+
           results.push({
             success: true,
             member: {
-              id: member.id,
-              organizationId: member.organizationId,
-              userId: member.userId,
-              role: member.role,
-              createdAt: member.joinedAt
+              userId: user.id,
+              user: {
+                name: user.name,
+                email: user.email
+              }
             }
           });
         } catch (error) {
@@ -677,6 +661,95 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
+  // Remove member from organization
+  router.delete('/api/members/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const adapter = await getAuthAdapter();
+      
+      if (!adapter) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      if (!adapter.delete) {
+        return res.status(500).json({ error: 'Adapter delete method not available' });
+      }
+
+      // Delete member record
+      await adapter.delete({
+        model: 'member',
+        where: [{ field: 'id', value: id }]
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing member:', error);
+      res.status(500).json({ error: 'Failed to remove member' });
+    }
+  });
+
+  // Resend invitation
+  router.post('/api/invitations/:id/resend', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const adapter = await getAuthAdapter();
+      
+      if (!adapter) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      if (!adapter.update) {
+        return res.status(500).json({ error: 'Adapter update method not available' });
+      }
+
+      // Update invitation with new expiry date
+      await adapter.update({
+        model: 'invitation',
+        where: [{ field: 'id', value: id }],
+        update: {
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          updatedAt: new Date().toISOString()
+        }
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      res.status(500).json({ error: 'Failed to resend invitation' });
+    }
+  });
+
+  // Cancel invitation (change status to cancelled)
+  router.delete('/api/invitations/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const adapter = await getAuthAdapter();
+      
+      if (!adapter) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      if (!adapter.update) {
+        return res.status(500).json({ error: 'Adapter update method not available' });
+      }
+
+      // Update invitation status to cancelled
+      await adapter.update({
+        model: 'invitation',
+        where: [{ field: 'id', value: id }],
+        update: {
+          status: 'cancelled',
+          updatedAt: new Date().toISOString()
+        }
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error cancelling invitation:', error);
+      res.status(500).json({ error: 'Failed to cancel invitation' });
+    }
+  });
+
   router.post('/api/organizations/:orgId/invitations', async (req: Request, res: Response) => {
     try {
       const { orgId } = req.params;
@@ -694,7 +767,7 @@ export function createRoutes(authConfig: AuthConfig) {
         status: 'pending',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         createdAt: new Date(),
-        invitedBy: 'admin' // In real app, get from session
+        inviterId: 'admin' // In real app, get from session
       };
 
       const invitation = {
@@ -704,6 +777,7 @@ export function createRoutes(authConfig: AuthConfig) {
       if(!adapter.create) {
         return res.status(500).json({ error: 'Adapter create method not available' });
       }
+      const adminId = "dQ2aAFgMwmRKvoqLiM1MCbjbka5g1Nzc"
       await adapter.create({
         model: 'invitation',
         data: {
@@ -711,7 +785,7 @@ export function createRoutes(authConfig: AuthConfig) {
           email: invitationData.email,
           role: invitationData.role,
           status: invitationData.status,
-          inviterId: invitationData.invitedBy,
+          inviterId: adminId,
           expiresAt: invitationData.expiresAt,
           createdAt: invitationData.createdAt,
         }
@@ -741,7 +815,6 @@ export function createRoutes(authConfig: AuthConfig) {
           const transformedTeams = (teams || []).map((team: any) => ({
             id: team.id,
             name: team.name,
-            slug: team.slug,
             organizationId: team.organizationId,
             metadata: team.metadata,
             createdAt: team.createdAt,
