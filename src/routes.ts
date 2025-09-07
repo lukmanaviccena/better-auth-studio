@@ -8,10 +8,10 @@ async function findAuthConfigPath(): Promise<string | null> {
   const { existsSync } = await import('fs');
 
   const possiblePaths = [
-    'test-project/src/auth.ts',
-    'test-project/src/auth.js',
     'src/auth.ts',
     'src/auth.js',
+    'lib/auth.ts',
+    'lib/auth.js',
     'auth.ts',
     'auth.js'
   ];
