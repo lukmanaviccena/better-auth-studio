@@ -183,7 +183,6 @@ export function createRoutes(authConfig: AuthConfig) {
 
   router.get('/api/config', (req: Request, res: Response) => {
     console.log('Raw authConfig:', JSON.stringify(authConfig, null, 2));
-    
     const config = {
       appName: authConfig.appName || 'Better Auth',
       baseURL: authConfig.baseURL || process.env.BETTER_AUTH_URL,
@@ -191,8 +190,8 @@ export function createRoutes(authConfig: AuthConfig) {
       secret: authConfig.secret ? 'Configured' : 'Not set',
 
       database: {
-        type: authConfig.database?.type || 'unknown',
-        dialect: authConfig.database?.dialect,
+        type: authConfig.database?.type || authConfig.database?.adapter || 'unknown',
+        dialect: authConfig.database?.dialect || authConfig.database?.provider || 'unknown',
         casing: authConfig.database?.casing || 'camel',
         debugLogs: authConfig.database?.debugLogs || false,
         url: authConfig.database?.url

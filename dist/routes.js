@@ -193,8 +193,8 @@ function createRoutes(authConfig) {
             basePath: authConfig.basePath || '/api/auth',
             secret: authConfig.secret ? 'Configured' : 'Not set',
             database: {
-                type: authConfig.database?.type || 'unknown',
-                dialect: authConfig.database?.dialect,
+                type: authConfig.database?.type || authConfig.database?.adapter || 'unknown',
+                dialect: authConfig.database?.dialect || authConfig.database?.provider || 'unknown',
                 casing: authConfig.database?.casing || 'camel',
                 debugLogs: authConfig.database?.debugLogs || false,
                 url: authConfig.database?.url

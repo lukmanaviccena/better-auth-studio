@@ -31,8 +31,35 @@ program
             process.exit(1);
         }
         console.log(chalk_1.default.green('✅ Found Better Auth configuration'));
-        console.log(chalk_1.default.gray(`Database: ${authConfig.database?.type || 'Not configured'}`));
-        console.log(chalk_1.default.gray(`Providers: ${authConfig.providers?.map(p => p.type).join(', ') || 'None'}\n`));
+        // Display database information
+        let databaseInfo = 'Not configured';
+        if (authConfig.database) {
+            if (authConfig.database.adapter && authConfig.database.provider) {
+                databaseInfo = `${authConfig.database.provider} (${authConfig.database.adapter})`;
+            }
+            else if (authConfig.database.type) {
+                databaseInfo = authConfig.database.type;
+            }
+            else if (authConfig.database.adapter) {
+                databaseInfo = authConfig.database.adapter;
+            }
+        }
+        // Display providers information
+        let providersInfo = 'None';
+        if (authConfig.socialProviders && typeof authConfig.socialProviders === 'object') {
+            const providerNames = Object.keys(authConfig.socialProviders);
+            if (providerNames.length > 0) {
+                providersInfo = providerNames.join(', ');
+            }
+        }
+        else if (authConfig.providers && Array.isArray(authConfig.providers)) {
+            const providerNames = authConfig.providers.map(p => p.type || p.name).filter(Boolean);
+            if (providerNames.length > 0) {
+                providersInfo = providerNames.join(', ');
+            }
+        }
+        console.log(chalk_1.default.gray(`Database: ${databaseInfo}`));
+        console.log(chalk_1.default.gray(`Providers: ${providersInfo}\n`));
         await (0, studio_1.startStudio)({
             port: parseInt(options.port),
             host: options.host,

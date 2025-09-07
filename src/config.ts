@@ -465,6 +465,9 @@ export function extractBetterAuthConfig(content: string): AuthConfig | null {
 
 function extractBetterAuthFields(config: any): AuthConfig {
   console.log('Extracting fields from config:', JSON.stringify(config, null, 2));
+  console.log('Database type:', typeof config.database);
+  console.log('Database constructor:', config.database?.constructor?.name);
+  console.log('Database keys:', config.database ? Object.keys(config.database) : 'no database');
   
   const authConfig: AuthConfig = {};
 
@@ -473,30 +476,33 @@ function extractBetterAuthFields(config: any): AuthConfig {
     let dbName = config.database.name;
     let adapter = 'unknown';
     
-    // Check if it's a Prisma adapter (function call result)
-    if (config.database.constructor && config.database.constructor.name === 'Database') {
+    // Check if it's a Prisma adapter instance (function)
+    if (typeof config.database === 'function') {
+      // This is likely a Prisma adapter function
+      adapter = 'prisma';
+      dbType = 'postgresql'; // Default for Prisma
+      
+      // Try to extract provider from the adapter options if available
+      if (config.database.options && config.database.options.provider) {
+        dbType = config.database.options.provider;
+      }
+    } else if (config.database.constructor && config.database.constructor.name === 'Database') {
       dbType = 'sqlite';
       dbName = config.database.name || './better-auth.db';
       adapter = 'sqlite';
     } else if (config.database.name && config.database.name.endsWith('.db')) {
       dbType = 'sqlite';
       adapter = 'sqlite';
+    } else if (config.database.provider) {
+      // This is likely a Prisma adapter with provider specified
+      dbType = config.database.provider;
+      adapter = 'prisma';
     } else if (config.database.type) {
       dbType = config.database.type;
       adapter = config.database.type;
     } else if (config.database.dialect) {
       dbType = config.database.dialect;
       adapter = config.database.dialect;
-    } else if (config.database.provider) {
-      // This is likely a Prisma adapter with provider specified
-      dbType = config.database.provider;
-      adapter = 'prisma';
-    } else {
-      // Try to detect from the database object structure
-      if (config.database.provider) {
-        dbType = config.database.provider;
-        adapter = 'prisma';
-      }
     }
     
     authConfig.database = {
