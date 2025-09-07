@@ -587,7 +587,6 @@ export function createRoutes(authConfig: AuthConfig) {
         return res.status(500).json({ error: 'Adapter findMany method not available' });
       }
 
-      // Generate random string for unique emails
       const generateRandomString = (length: number) => {
         const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
@@ -601,12 +600,10 @@ export function createRoutes(authConfig: AuthConfig) {
 
       for (let i = 0; i < count; i++) {
         try {
-          // Generate random email and user data
           const randomString = generateRandomString(8);
           const email = `user${randomString}@example.com`;
           const name = `User ${randomString}`;
 
-          // Create user first
           const userData = {
             name,
             email,
@@ -620,7 +617,6 @@ export function createRoutes(authConfig: AuthConfig) {
             data: userData
           });
 
-          // Create member
           const memberData = {
             organizationId: orgId,
             userId: user.id,

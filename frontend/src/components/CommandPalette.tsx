@@ -33,7 +33,6 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
   const [search, setSearch] = useState('')
 
   const commands: CommandItem[] = [
-    // Navigation
     {
       id: 'users',
       title: 'Users',
@@ -79,17 +78,12 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
       category: 'Navigation',
       keywords: ['overview', 'stats', 'home']
     },
-
-    // Actions
     {
       id: 'create-user',
       title: 'Create User',
       description: 'Add a new user to the system',
       icon: UserPlus,
-      action: () => {
-        navigate('/users')
-        // You could trigger a modal here instead
-      },
+      action: () => navigate('/users'),
       category: 'Actions',
       keywords: ['add', 'new', 'register']
     },
@@ -98,10 +92,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
       title: 'Create Organization',
       description: 'Create a new organization',
       icon: Plus,
-      action: () => {
-        navigate('/organizations')
-        // You could trigger a modal here instead
-      },
+      action: () => navigate('/organizations'),
       category: 'Actions',
       keywords: ['add', 'new', 'org']
     },
@@ -110,16 +101,12 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
       title: 'Invite User',
       description: 'Send invitation to join organization',
       icon: Mail,
-      action: () => {
-        navigate('/organizations')
-        // You could trigger a modal here instead
-      },
+      action: () => navigate('/organizations'),
       category: 'Actions',
       keywords: ['invite', 'email', 'send']
     }
   ]
 
-  // Filter commands based on search
   const filteredCommands = commands.filter((command) => {
     const searchLower = search.toLowerCase()
     return (
@@ -129,7 +116,6 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
     )
   })
 
-  // Group commands by category
   const groupedCommands = filteredCommands.reduce((acc, command) => {
     if (!acc[command.category]) {
       acc[command.category] = []
@@ -138,12 +124,10 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
     return acc
   }, {} as Record<string, CommandItem[]>)
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        // This will be handled by the parent component
       }
     }
 
@@ -151,7 +135,6 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

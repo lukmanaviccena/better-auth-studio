@@ -31,7 +31,6 @@ export default function Layout({ children }: LayoutProps) {
     fetchCounts()
   }, [])
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {

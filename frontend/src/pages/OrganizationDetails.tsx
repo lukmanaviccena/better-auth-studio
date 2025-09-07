@@ -115,15 +115,11 @@ export default function OrganizationDetails() {
         }
     }, [orgId])
 
-    // Fetch teams when teams are enabled
     useEffect(() => {
         if (teamsEnabled && orgId) {
             fetchTeams()
         }
     }, [])
-
-    // Fetch data when tabs become active (teams are already fetched when enabled)
-    // Teams tab will use the already fetched data
 
     useEffect(() => {
         if (activeTab === 'members' && orgId) {
@@ -137,7 +133,6 @@ export default function OrganizationDetails() {
         }
     }, [activeTab, orgId])
 
-    // Handle team form name change
     const handleTeamNameChange = (name: string) => {
         setTeamFormData({ name })
     }
@@ -149,7 +144,6 @@ export default function OrganizationDetails() {
 
             if (data.success) {
                 setOrganization(data.organization)
-                // Teams will be fetched when the teams tab becomes active
             } else {
                 toast.error('Organization not found')
             }
@@ -243,7 +237,6 @@ export default function OrganizationDetails() {
         }
     }
 
-    // Invitation functions
     const handleInviteUser = async () => {
         if (!inviteEmail) {
             toast.error('Please enter an email address')
@@ -347,7 +340,6 @@ export default function OrganizationDetails() {
         }
     }
 
-    // Team functions
     const handleCreateTeam = async () => {
         if (!teamFormData.name) {
             toast.error('Please enter a team name')
@@ -446,7 +438,6 @@ export default function OrganizationDetails() {
         }
     }
 
-    // Modal handlers
     const openEditTeamModal = (team: Team) => {
         setSelectedTeam(team)
         setTeamFormData({ name: team.name })
