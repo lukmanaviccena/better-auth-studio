@@ -192,7 +192,6 @@ export function createRoutes(authConfig: AuthConfig) {
     res.json(config);
   });
 
-  // Get dashboard statistics
   router.get('/api/stats', async (req: Request, res: Response) => {
     try {
       const stats = await getAuthData(authConfig, 'stats');
@@ -211,7 +210,6 @@ export function createRoutes(authConfig: AuthConfig) {
       let organizationCount = 0;
 
       if (adapter) {
-        // Get user count
         try {
           if (typeof adapter.findMany === 'function') {
             const users = await adapter.findMany({ model: 'user', limit: 10000 });
@@ -221,7 +219,6 @@ export function createRoutes(authConfig: AuthConfig) {
           console.error('Error fetching user count:', error);
         }
 
-        // Get session count
         try {
           if (typeof adapter.findMany === 'function') {
             const sessions = await adapter.findMany({ model: 'session', limit: 10000 });
@@ -231,7 +228,6 @@ export function createRoutes(authConfig: AuthConfig) {
           console.error('Error fetching session count:', error);
         }
 
-        // Get organization count
         try {
           if (typeof adapter.findMany === 'function') {
             const organizations = await adapter.findMany({ model: 'organization', limit: 10000 });
@@ -312,7 +308,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get sessions with pagination
   router.get('/api/sessions', async (req: Request, res: Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -326,7 +321,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get provider statistics
   router.get('/api/providers', async (req: Request, res: Response) => {
     try {
       const providers = await getAuthData(authConfig, 'providers');
@@ -337,7 +331,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Delete user
   router.delete('/api/users/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -349,7 +342,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get all enabled plugins
   router.get('/api/plugins', async (req: Request, res: Response) => {
     try {
       const authConfigPath = await findAuthConfigPath();
@@ -373,7 +365,6 @@ export function createRoutes(authConfig: AuthConfig) {
           });
         }
 
-        // Get all enabled plugins
         const plugins = auth.options?.plugins || [];
         const pluginInfo = plugins.map((plugin: any) => ({
           id: plugin.id,
@@ -403,7 +394,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Check if teams plugin is enabled
   router.get('/api/plugins/teams/status', async (req: Request, res: Response) => {
     try {
       const authConfigPath = await findAuthConfigPath();
@@ -427,7 +417,6 @@ export function createRoutes(authConfig: AuthConfig) {
           });
         }
 
-        // Check if organization plugin has teams enabled
         const organizationPlugin = auth.options?.plugins?.find((plugin: any) =>
           plugin.id === "organization"
         );
@@ -486,7 +475,6 @@ export function createRoutes(authConfig: AuthConfig) {
         }
       }
 
-      // Fallback to mock data or empty array
       res.json({ success: true, invitations: [] });
     } catch (error) {
       console.error('Error fetching invitations:', error);
@@ -494,7 +482,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get members for an organization
   router.get('/api/organizations/:orgId/members', async (req: Request, res: Response) => {
     try {
       const { orgId } = req.params;
@@ -547,7 +534,6 @@ export function createRoutes(authConfig: AuthConfig) {
         }
       }
 
-      // Fallback to empty array
       res.json({ success: true, members: [] });
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -640,7 +626,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Remove member from organization
   router.delete('/api/members/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -654,7 +639,6 @@ export function createRoutes(authConfig: AuthConfig) {
         return res.status(500).json({ error: 'Adapter delete method not available' });
       }
 
-      // Delete member record
       await adapter.delete({
         model: 'member',
         where: [{ field: 'id', value: id }]
@@ -667,7 +651,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Resend invitation
   router.post('/api/invitations/:id/resend', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -681,7 +664,6 @@ export function createRoutes(authConfig: AuthConfig) {
         return res.status(500).json({ error: 'Adapter update method not available' });
       }
 
-      // Update invitation with new expiry date
       await adapter.update({
         model: 'invitation',
         where: [{ field: 'id', value: id }],
@@ -698,7 +680,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Cancel invitation (change status to cancelled)
   router.delete('/api/invitations/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -712,7 +693,6 @@ export function createRoutes(authConfig: AuthConfig) {
         return res.status(500).json({ error: 'Adapter update method not available' });
       }
 
-      // Update invitation status to cancelled
       await adapter.update({
         model: 'invitation',
         where: [{ field: 'id', value: id }],
@@ -777,7 +757,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get teams for an organization
   router.get('/api/organizations/:orgId/teams', async (req: Request, res: Response) => {
     try {
       const { orgId } = req.params;
@@ -819,7 +798,6 @@ export function createRoutes(authConfig: AuthConfig) {
         }
       }
 
-      // Fallback to mock data or empty array
       res.json({ success: true, teams: [] });
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -845,7 +823,6 @@ export function createRoutes(authConfig: AuthConfig) {
         memberCount: 0
       };
 
-      // For now, simulate team creation
       const team = {
         id: `team_${Date.now()}`,
         ...teamData
@@ -869,7 +846,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get single team with organization info
   router.get('/api/teams/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -885,7 +861,6 @@ export function createRoutes(authConfig: AuthConfig) {
           
           const team = teams?.[0];
           if (team) {
-            // Get organization info
             let organization = null;
             try {
               const orgs = await adapter.findMany({ 
@@ -927,7 +902,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get team members
   router.get('/api/teams/:teamId/members', async (req: Request, res: Response) => {
     try {
       const { teamId } = req.params;
@@ -941,7 +915,6 @@ export function createRoutes(authConfig: AuthConfig) {
             limit: 10000 
           });
           
-          // Get user details for each team member
           const membersWithUsers = await Promise.all((teamMembers || []).map(async (member: any) => {
             try {
               if (adapter.findMany) {
@@ -990,7 +963,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Add members to team
   router.post('/api/teams/:teamId/members', async (req: Request, res: Response) => {
     try {
       const { teamId } = req.params;
@@ -1039,7 +1011,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Remove team member
   router.delete('/api/team-members/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -1182,7 +1153,6 @@ export function createRoutes(authConfig: AuthConfig) {
             );
           }
 
-          // Apply pagination
           const startIndex = (page - 1) * limit;
           const endIndex = startIndex + limit;
           const paginatedOrganizations = filteredOrganizations.slice(startIndex, endIndex);
@@ -1281,7 +1251,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Get single organization
   router.get('/api/organizations/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -1333,7 +1302,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Create user
   router.post('/api/users', async (req: Request, res: Response) => {
     try {
       const adapter = await getAuthAdapter();
@@ -1350,7 +1318,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Update user
   router.put('/api/users/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -1364,7 +1331,6 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
-  // Seed data endpoints
   router.post('/api/seed/users', async (req: Request, res: Response) => {
     try {
       const { count = 1 } = req.body;
@@ -1377,7 +1343,6 @@ export function createRoutes(authConfig: AuthConfig) {
       const results = [];
       for (let i = 0; i < count; i++) {
         try {
-          // Check if the adapter has the createUser method
           if (typeof adapter.createUser !== 'function') {
             throw new Error('createUser method not available on adapter');
           }
@@ -1422,7 +1387,6 @@ export function createRoutes(authConfig: AuthConfig) {
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
 
-      // First create a user if needed
       let user;
       try {
         user = await createMockUser(adapter, 1);
@@ -1433,7 +1397,6 @@ export function createRoutes(authConfig: AuthConfig) {
       const results = [];
       for (let i = 0; i < count; i++) {
         try {
-          // Check if the adapter has the createSession method
           if (typeof adapter.createSession !== 'function') {
             throw new Error('createSession method not available on adapter');
           }
@@ -1477,7 +1440,6 @@ export function createRoutes(authConfig: AuthConfig) {
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
 
-      // First create a user if needed
       let user;
       try {
         user = await createMockUser(adapter, 1);
@@ -1488,7 +1450,6 @@ export function createRoutes(authConfig: AuthConfig) {
       const results = [];
       for (let i = 0; i < count; i++) {
         try {
-          // Check if the adapter has the createAccount method
           if (typeof adapter.createAccount !== 'function') {
             throw new Error('createAccount method not available on adapter');
           }
@@ -1536,7 +1497,6 @@ export function createRoutes(authConfig: AuthConfig) {
       const results = [];
       for (let i = 0; i < count; i++) {
         try {
-          // Check if the adapter has the createVerification method
           if (typeof adapter.createVerification !== 'function') {
             throw new Error('createVerification method not available on adapter');
           }

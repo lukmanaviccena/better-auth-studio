@@ -131,37 +131,21 @@ async function loadTypeScriptConfig(configPath: string): Promise<AuthConfig | nu
 function extractBetterAuthConfig(content: string): AuthConfig | null {
   console.log('Extracting config from content:', content.substring(0, 500) + '...');
   
-  // Look for Better Auth configuration patterns
   const patterns = [
-    // Pattern 1: export const auth = betterAuth({...})
     /export\s+const\s+\w+\s*=\s*betterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 2: export const auth = BetterAuth({...})
     /export\s+const\s+\w+\s*=\s*BetterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 3: const auth = betterAuth({...})
     /const\s+\w+\s*=\s*betterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 4: const auth = BetterAuth({...})
     /const\s+\w+\s*=\s*BetterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 5: export default betterAuth({...})
     /export\s+default\s+betterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 6: export default BetterAuth({...})
     /export\s+default\s+BetterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 7: module.exports = betterAuth({...})
     /module\.exports\s*=\s*betterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 8: module.exports = BetterAuth({...})
     /module\.exports\s*=\s*BetterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 9: export default {...}
     /export\s+default\s*({[\s\S]*?});?$/m,
-    // Pattern 10: module.exports = {...}
     /module\.exports\s*=\s*({[\s\S]*?});?$/m,
-    // Pattern 11: betterAuth({...}) - more flexible
     /betterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 12: BetterAuth({...}) - more flexible
     /BetterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-    // Pattern 13: Any object with socialProviders
     /({[\s\S]*?"socialProviders"[\s\S]*?})/,
-    // Pattern 14: Any object with emailAndPassword
     /({[\s\S]*?"emailAndPassword"[\s\S]*?})/,
-    // Pattern 15: Any object with database
     /({[\s\S]*?"database"[\s\S]*?})/
   ];
 
@@ -318,10 +302,8 @@ function extractBetterAuthFields(config: any): AuthConfig {
 
 async function evaluateJSConfig(configPath: string): Promise<AuthConfig | null> {
   try {
-    // For JS files, we can try to require them
     const config = require(configPath);
     
-    // Handle different export patterns
     if (config.default) {
       return extractBetterAuthFields(config.default);
     } else if (typeof config === 'object') {
