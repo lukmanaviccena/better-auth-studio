@@ -9,7 +9,6 @@ import {
     Calendar,
     UserPlus,
     Trash2,
-    Eye,
     Mail,
     X,
     Send,
