@@ -70,19 +70,6 @@ interface Member {
     }
 }
 
-// interface TeamMember {
-//   id: string
-//   userId: string
-//   teamId: string
-//   role: string
-//   joinedAt: string
-//   user: {
-//     id: string
-//     name: string
-//     email: string
-//     image?: string
-//   }
-// }
 
 export default function OrganizationDetails() {
     const { orgId } = useParams<{ orgId: string }>()
@@ -95,7 +82,6 @@ export default function OrganizationDetails() {
     const [activeTab, setActiveTab] = useState<'details' | 'members' | 'invitations' | 'teams'>('details')
     const [teamsEnabled, setTeamsEnabled] = useState(false)
     
-    // Modal states
     const [showInviteModal, setShowInviteModal] = useState(false)
     const [showSeedMembersModal, setShowSeedMembersModal] = useState(false)
     const [showSeedTeamsModal, setShowSeedTeamsModal] = useState(false)
@@ -104,7 +90,6 @@ export default function OrganizationDetails() {
     const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false)
     const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
     
-    // Form states
     const [inviteEmail, setInviteEmail] = useState('')
     const [selectedInviterId, setSelectedInviterId] = useState('')
     const [availableUsers, setAvailableUsers] = useState<User[]>([])
@@ -242,7 +227,6 @@ export default function OrganizationDetails() {
         setSeedingLogs([])
         setIsSeeding(true)
         
-        // Add initial info message
         setSeedingLogs([{
             id: 'start',
             type: 'info',
@@ -260,7 +244,6 @@ export default function OrganizationDetails() {
             const result = await response.json()
             
             if (result.success) {
-                // Add progress messages for each member
                 const progressLogs = result.results.map((r: any, index: number) => {
                     if (r.success) {
                         return {
@@ -282,7 +265,6 @@ export default function OrganizationDetails() {
                 
                 setSeedingLogs(prev => [...prev, ...progressLogs])
                 
-                // Add completion message
                 const successCount = result.results.filter((r: any) => r.success).length
                 setSeedingLogs(prev => [...prev, {
                     id: 'complete',
@@ -319,7 +301,6 @@ export default function OrganizationDetails() {
         setTeamSeedingLogs([])
         setIsTeamSeeding(true)
         
-        // Add initial info message
         setTeamSeedingLogs([{
             id: 'start',
             type: 'info',
@@ -337,7 +318,6 @@ export default function OrganizationDetails() {
             const result = await response.json()
             
             if (result.success) {
-                // Add progress messages for each team
                 const progressLogs = result.results.map((r: any, index: number) => {
                     if (r.success) {
                         return {
@@ -359,7 +339,6 @@ export default function OrganizationDetails() {
                 
                 setTeamSeedingLogs(prev => [...prev, ...progressLogs])
                 
-                // Add completion message
                 const successCount = result.results.filter((r: any) => r.success).length
                 setTeamSeedingLogs(prev => [...prev, {
                     id: 'complete',

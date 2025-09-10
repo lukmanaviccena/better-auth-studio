@@ -65,7 +65,6 @@ export default function Sessions() {
     setSeedingLogs([])
     setIsSeeding(true)
     
-    // Add initial info message
     setSeedingLogs([{
       id: 'start',
       type: 'info',
@@ -83,7 +82,6 @@ export default function Sessions() {
       const result = await response.json()
       
       if (result.success) {
-        // Add progress messages for each session
         const progressLogs = result.results.map((r: any, index: number) => {
           if (r.success) {
             return {
@@ -105,7 +103,6 @@ export default function Sessions() {
         
         setSeedingLogs(prev => [...prev, ...progressLogs])
         
-        // Add completion message
         const successCount = result.results.filter((r: any) => r.success).length
         setSeedingLogs(prev => [...prev, {
           id: 'complete',
@@ -114,7 +111,6 @@ export default function Sessions() {
           timestamp: new Date()
         }])
         
-        // Refresh the sessions list to show updated count
         await fetchSessions()
       } else {
         setSeedingLogs(prev => [...prev, {
@@ -140,7 +136,6 @@ export default function Sessions() {
     setSeedingLogs([])
     setIsSeeding(true)
     
-    // Add initial info message
     setSeedingLogs([{
       id: 'start',
       type: 'info',
@@ -158,7 +153,6 @@ export default function Sessions() {
       const result = await response.json()
       
       if (result.success) {
-        // Add progress messages for each account
         const progressLogs = result.results.map((r: any, index: number) => {
           if (r.success) {
             return {
@@ -180,7 +174,6 @@ export default function Sessions() {
         
         setSeedingLogs(prev => [...prev, ...progressLogs])
         
-        // Add completion message
         const successCount = result.results.filter((r: any) => r.success).length
         setSeedingLogs(prev => [...prev, {
           id: 'complete',
@@ -189,7 +182,6 @@ export default function Sessions() {
           timestamp: new Date()
         }])
         
-        // Refresh the sessions list to show updated count
         await fetchSessions()
       } else {
         setSeedingLogs(prev => [...prev, {

@@ -76,10 +76,8 @@ program
 
       console.log(chalk.green('✅ Found Better Auth configuration'));
       
-      // Display database information
       let databaseInfo = 'Not configured';
       if (authConfig.database) {
-        // Try to detect adapter from the raw config content
         const configPath = await findAuthConfigPath();
         if (configPath) {
           const content = readFileSync(configPath, 'utf-8');
@@ -88,7 +86,6 @@ program
           } else if (content.includes('prismaAdapter')) {
             databaseInfo = 'Prisma';
           } else if (authConfig.database.adapter && authConfig.database.provider) {
-            // Fallback to existing logic
             let adapter = authConfig.database.adapter;
             const adapterName = adapter.charAt(0).toUpperCase() + adapter.slice(1);
             databaseInfo = adapterName;
@@ -98,7 +95,6 @@ program
             databaseInfo = authConfig.database.adapter;
           }
         } else {
-          // Fallback if no config file found
           if (authConfig.database.adapter && authConfig.database.provider) {
             let adapter = authConfig.database.adapter;
             const adapterName = adapter.charAt(0).toUpperCase() + adapter.slice(1);
@@ -111,7 +107,6 @@ program
         }
       }
       
-      // Display providers information
       let providersInfo = 'None';
       if (authConfig.socialProviders && typeof authConfig.socialProviders === 'object') {
         const providerNames = Object.keys(authConfig.socialProviders);

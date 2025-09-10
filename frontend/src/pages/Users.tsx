@@ -61,7 +61,6 @@ export default function Users() {
 
   const fetchUsers = async () => {
     try {
-      // Request all users by setting a high limit to ensure we get all 1,012 users
       const response = await fetch('/api/users?limit=10000')
       const data = await response.json()
       setUsers(data.users || [])
@@ -76,7 +75,6 @@ export default function Users() {
     setSeedingLogs([])
     setIsSeeding(true)
     
-    // Add initial info message
     setSeedingLogs([{
       id: 'start',
       type: 'info',
@@ -94,7 +92,6 @@ export default function Users() {
       const result = await response.json()
       
       if (result.success) {
-        // Add progress messages for each user
         const progressLogs = result.results.map((r: any, index: number) => {
           if (r.success) {
             return {
@@ -116,7 +113,6 @@ export default function Users() {
         
         setSeedingLogs(prev => [...prev, ...progressLogs])
         
-        // Add completion message
         const successCount = result.results.filter((r: any) => r.success).length
         setSeedingLogs(prev => [...prev, {
           id: 'complete',
@@ -125,9 +121,7 @@ export default function Users() {
           timestamp: new Date()
         }])
         
-        // Refresh the users list to show updated count
         await fetchUsers()
-        // Refetch counts to update tab badges
         await refetchCounts()
       } else {
         setSeedingLogs(prev => [...prev, {
@@ -186,10 +180,8 @@ export default function Users() {
       const result = await response.json()
 
       if (result.success) {
-        // Refresh the users list to show the new user
         await fetchUsers()
         setShowCreateModal(false)
-        // Clear the form
         ;(document.getElementById('create-name') as HTMLInputElement).value = ''
         ;(document.getElementById('create-email') as HTMLInputElement).value = ''
         ;(document.getElementById('create-password') as HTMLInputElement).value = ''
@@ -229,7 +221,6 @@ export default function Users() {
       const result = await response.json()
 
       if (result.success) {
-        // Refresh the users list to show the updated user
         await fetchUsers()
         setShowEditModal(false)
         setSelectedUser(null)
@@ -260,9 +251,7 @@ export default function Users() {
       const result = await response.json()
 
       if (result.success) {
-        // Refresh the users list to remove the deleted user
         await fetchUsers()
-        // Refetch counts to update tab badges
         await refetchCounts()
         setShowDeleteModal(false)
         setSelectedUser(null)
@@ -283,7 +272,6 @@ export default function Users() {
     return matchesSearch && matchesFilter
   })
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
   const startIndex = (currentPage - 1) * usersPerPage
   const endIndex = startIndex + usersPerPage

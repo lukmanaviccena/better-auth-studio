@@ -152,7 +152,6 @@ export function Terminal({ title = "Seeding Terminal", lines, isRunning = false,
   )
 }
 
-// Add custom CSS for fade-in animation
 const style = document.createElement('style')
 style.textContent = `
   @keyframes fadeIn {

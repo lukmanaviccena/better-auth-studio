@@ -71,7 +71,6 @@ export default function Organizations() {
     checkPluginStatus()
   }, [])
 
-  // Utility function to generate slug from name
   const generateSlug = (name: string): string => {
     return name
       .toLowerCase()
@@ -81,24 +80,20 @@ export default function Organizations() {
       .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
   }
 
-  // Handle create form name change with auto-slug generation
   const handleCreateNameChange = (name: string) => {
     const slug = generateSlug(name)
     setCreateFormData({ name, slug })
   }
 
-  // Handle create form slug change (manual override)
   const handleCreateSlugChange = (slug: string) => {
     setCreateFormData(prev => ({ ...prev, slug: generateSlug(slug) }))
   }
 
-  // Handle edit form name change with auto-slug generation
   const handleEditNameChange = (name: string) => {
     const slug = generateSlug(name)
     setEditFormData({ name, slug })
   }
 
-  // Handle edit form slug change (manual override)
   const handleEditSlugChange = (slug: string) => {
     setEditFormData(prev => ({ ...prev, slug: generateSlug(slug) }))
   }
@@ -123,7 +118,6 @@ export default function Organizations() {
 
   const fetchOrganizations = async () => {
     try {
-      // Request all organizations by setting a high limit
       const response = await fetch('/api/organizations?limit=10000')
       const data = await response.json()
       setOrganizations(data.organizations || [])
@@ -139,7 +133,6 @@ export default function Organizations() {
     setSeedingLogs([])
     setIsSeeding(true)
     
-    // Add initial info message
     setSeedingLogs([{
       id: 'start',
       type: 'info',
@@ -157,7 +150,6 @@ export default function Organizations() {
       const result = await response.json()
       
       if (result.success) {
-        // Add progress messages for each organization
         const progressLogs = result.results.map((r: any, index: number) => {
           if (r.success) {
             return {
@@ -179,7 +171,6 @@ export default function Organizations() {
         
         setSeedingLogs(prev => [...prev, ...progressLogs])
         
-        // Add completion message
         const successCount = result.results.filter((r: any) => r.success).length
         setSeedingLogs(prev => [...prev, {
           id: 'complete',
@@ -188,9 +179,7 @@ export default function Organizations() {
           timestamp: new Date()
         }])
         
-        // Refresh the organizations list to show updated count
         await fetchOrganizations()
-        // Refetch counts to update tab badges
         await refetchCounts()
       } else {
         setSeedingLogs(prev => [...prev, {
@@ -216,7 +205,6 @@ export default function Organizations() {
     setSeedingLogs([])
     setIsSeeding(true)
     
-    // Add initial info message
     setSeedingLogs([{
       id: 'start',
       type: 'info',
@@ -234,7 +222,6 @@ export default function Organizations() {
       const result = await response.json()
       
       if (result.success) {
-        // Add progress messages for each team
         const progressLogs = result.results.map((r: any, index: number) => {
           if (r.success) {
             return {
@@ -256,7 +243,6 @@ export default function Organizations() {
         
         setSeedingLogs(prev => [...prev, ...progressLogs])
         
-        // Add completion message
         const successCount = result.results.filter((r: any) => r.success).length
         setSeedingLogs(prev => [...prev, {
           id: 'complete',
@@ -265,9 +251,7 @@ export default function Organizations() {
           timestamp: new Date()
         }])
         
-        // Refresh the organizations list to show updated count
         await fetchOrganizations()
-        // Refetch counts to update tab badges
         await refetchCounts()
       } else {
         setSeedingLogs(prev => [...prev, {
@@ -326,10 +310,8 @@ export default function Organizations() {
       const result = await response.json()
 
       if (result.success) {
-        // Refresh the organizations list to show the new organization
         await fetchOrganizations()
         setShowCreateModal(false)
-        // Clear the form
         setCreateFormData({ name: '', slug: '' })
         toast.success('Organization created successfully!', { id: toastId })
       } else {
@@ -368,7 +350,6 @@ export default function Organizations() {
 
       if (result.success) {
         setShowCreateTeamModal(false)
-        // Clear the form
         setCreateTeamFormData({ name: '', organizationId: '' })
         toast.success('Team created successfully!', { id: toastId })
       } else {
@@ -406,7 +387,6 @@ export default function Organizations() {
       const result = await response.json()
 
       if (result.success) {
-        // Refresh the organizations list to show the updated organization
         await fetchOrganizations()
         setShowEditModal(false)
         setSelectedOrganization(null)
@@ -438,9 +418,7 @@ export default function Organizations() {
       const result = await response.json()
 
       if (result.success) {
-        // Refresh the organizations list to remove the deleted organization
         await fetchOrganizations()
-        // Refetch counts to update tab badges
         await refetchCounts()
         setShowDeleteModal(false)
         setSelectedOrganization(null)
@@ -461,7 +439,6 @@ export default function Organizations() {
     return matchesSearch && matchesFilter
   })
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredOrganizations.length / organizationsPerPage)
   const startIndex = (currentPage - 1) * organizationsPerPage
   const endIndex = startIndex + organizationsPerPage
@@ -482,7 +459,6 @@ export default function Organizations() {
     )
   }
 
-  // Show plugin setup prompt if organization plugin is not enabled
   if (pluginStatus && !pluginStatus.enabled) {
     return (
       <div className="space-y-6 p-6">

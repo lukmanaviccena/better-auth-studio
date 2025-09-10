@@ -24,59 +24,36 @@ function resolveModuleWithExtensions(id: string, parent: string): string {
     }
   }
   
-  // Special case: if it's a directory, try index files
   if (existsSync(basePath)) {
-    console.log(`Found directory: ${basePath}, trying index files`);
     for (const ext of extensions) {
       const indexPath = join(basePath, 'index' + ext);
-      console.log(`Trying index: ${indexPath}`);
       if (existsSync(indexPath)) {
-        console.log(`✅ Found index: ${indexPath}`);
         return pathToFileURL(indexPath).href;
       }
     }
   }
   
-  // If no file found, return the original id
-  console.log(`❌ Could not resolve ${id} with any extension, using original`);
   return id;
 }
 
-// Helper function to properly resolve imports from the project's context
 export async function safeImportAuthConfig(authConfigPath: string): Promise<any> {
   try {
-    // For TypeScript files, use Jiti for safe resolution
     if (authConfigPath.endsWith('.ts')) {
-      console.log(`Using Jiti to safely import TypeScript config from ${authConfigPath}...`);
-      // Create aliases for all relative imports dynamically
       const aliases: Record<string, string> = {};
-      
-      // Get the directory of the auth config file
       const authConfigDir = dirname(authConfigPath);
-      
-      // Read the file content to find all relative imports
       const content = readFileSync(authConfigPath, 'utf-8');
-      
-      // Find all relative imports (./something or ../something)
       const relativeImportRegex = /import\s+.*?\s+from\s+['"](\.\/[^'"]+)['"]/g;
       const dynamicImportRegex = /import\s*\(\s*['"](\.\/[^'"]+)['"]\s*\)/g;
-      
       const foundImports = new Set<string>();
       
-      // Extract relative imports from static imports
       let match;
       while ((match = relativeImportRegex.exec(content)) !== null) {
         foundImports.add(match[1]);
       }
       
-      // Extract relative imports from dynamic imports
       while ((match = dynamicImportRegex.exec(content)) !== null) {
         foundImports.add(match[1]);
       }
-      
-      console.log(`Found relative imports: ${Array.from(foundImports).join(', ')}`);
-      
-      // Create aliases for each found import
       for (const importPath of foundImports) {
         const importName = importPath.replace('./', '');
         const possiblePaths = [
@@ -93,7 +70,6 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
         for (const path of possiblePaths) {
           if (existsSync(path)) {
             aliases[importPath] = pathToFileURL(path).href;
-            console.log(`Created alias: ${importPath} -> ${path}`);
             break;
           }
         }
@@ -109,18 +85,12 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
       try {
         return await jiti.import(authConfigPath);
       } catch (importError: any) {
-        console.log(`Jiti import failed: ${importError.message}`);
-        console.log('Falling back to regex extraction...');
         
-        // If Jiti import fails, fall back to regex extraction
         const content = readFileSync(authConfigPath, 'utf-8');
-        console.log('Using regex extraction as fallback');
         
-        // Return a mock module that can be processed by regex extraction
         return {
           auth: {
             options: {
-              // This will be processed by regex extraction
               _content: content
             }
           }
@@ -128,13 +98,10 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
       }
     }
     
-    // For JavaScript files, try normal import first
     return await import(authConfigPath);
   } catch (importError) {
-    console.log('Import failed, trying to resolve imports from project context...');
     
     try {
-      // Get the project directory from the auth config path
       const { dirname, join } = await import('path');
       const { existsSync, readFileSync, writeFileSync, mkdtempSync, unlinkSync, rmdirSync } = await import('fs');
       const { tmpdir } = await import('os');
@@ -142,10 +109,8 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
       const projectDir = dirname(authConfigPath);
       const content = readFileSync(authConfigPath, 'utf-8');
       
-      // Create a safe version of the auth config by ignoring problematic imports
       let resolvedContent = content;
       
-      // Look for node_modules in the project directory and parent directories
       let currentDir = projectDir;
       let nodeModulesPath = null;
       
@@ -158,14 +123,9 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
         currentDir = dirname(currentDir);
       }
       
-      // Replace problematic imports with safe alternatives
-      console.log('Creating safe auth config by replacing problematic imports...');
-      
-      // Replace prisma import with a mock
       resolvedContent = resolvedContent.replace(
         /import\s+prisma\s+from\s+["']\.\/prisma["'];/g,
-        `// Mock prisma client for studio
-const prisma = {
+`const prisma = {
   user: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
   session: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
   account: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
@@ -178,62 +138,46 @@ const prisma = {
 };`
       );
       
-      // Replace other problematic local imports with safe alternatives
       resolvedContent = resolvedContent.replace(
         /import\s+([^"']*)\s+from\s+["']\.\/[^"']*["'];/g,
-        '// Ignored local import for studio compatibility'
+        '// Ignored local import'
       );
       
-      // Replace magic-link import with a mock
       resolvedContent = resolvedContent.replace(
         /import\s+{\s*magicLink\s*}\s+from\s+["']\.\/magic-link["'];/g,
-        `// Mock magic link plugin
-const magicLink = () => ({ id: 'magic-link', name: 'Magic Link' });`
+        `const magicLink = () => ({ id: 'magic-link', name: 'Magic Link' });`
       );
       
-      // Now try to import the resolved content
-      
       if (nodeModulesPath) {
-        console.log(`Found node_modules at: ${nodeModulesPath}`);
-        
-        // Create a temporary file with the resolved content
         const tempDir = mkdtempSync(join(tmpdir(), 'better-auth-studio-'));
         const tempFile = join(tempDir, 'resolved-auth-config.js');
         
-        // Convert ES modules to CommonJS for easier import
         let commonJsContent = resolvedContent
           .replace(/export\s+const\s+(\w+)\s*=/g, 'const $1 =')
           .replace(/export\s+default\s+/g, 'module.exports = ')
           .replace(/export\s+type\s+.*$/gm, '// $&') // Comment out type exports
           .replace(/import\s+type\s+.*$/gm, '// $&'); // Comment out type imports
         
-        // Ensure we have a proper export
         if (!commonJsContent.includes('module.exports')) {
           commonJsContent += '\nmodule.exports = { auth };';
         }
         
         writeFileSync(tempFile, commonJsContent);
-        console.log('Created temporary auth config file:', tempFile);
         
-        // Try to import with the project's module resolution
         const originalCwd = process.cwd();
         const originalNodePath = process.env.NODE_PATH;
         
         try {
-          // Set NODE_PATH to include the project's node_modules
           process.env.NODE_PATH = nodeModulesPath;
           process.chdir(projectDir);
           
-          // Try to import the resolved auth config
           const authModule = await import(tempFile);
           
-          // Clean up temp file
           unlinkSync(tempFile);
           rmdirSync(tempDir);
           
           return authModule;
         } finally {
-          // Restore original environment
           process.chdir(originalCwd);
           if (originalNodePath) {
             process.env.NODE_PATH = originalNodePath;
@@ -242,7 +186,6 @@ const magicLink = () => ({ id: 'magic-link', name: 'Magic Link' });`
           }
         }
       } else {
-        console.log('No node_modules found in project directory');
         throw new Error('No node_modules found');
       }
     } catch (resolveError) {
@@ -304,12 +247,9 @@ export function createRoutes(authConfig: AuthConfig) {
   });
 
   router.get('/api/config', async (req: Request, res: Response) => {
-    console.log('Raw authConfig:', JSON.stringify(authConfig, null, 2));
     
-    // Try to detect adapter from the raw config content
     let databaseType = 'unknown';
     const configPath = await findAuthConfigPath();
-    console.log('Config path:', configPath);
     if (configPath) {
       const content = readFileSync(configPath, 'utf-8');
       if (content.includes('drizzleAdapter')) {
@@ -321,7 +261,6 @@ export function createRoutes(authConfig: AuthConfig) {
       }
     }
     
-    // Fallback to existing logic
     if (databaseType === 'unknown') {
       let type = authConfig.database?.type || authConfig.database?.adapter || 'unknown';
       if (type && type !== 'unknown') {
@@ -461,7 +400,6 @@ export function createRoutes(authConfig: AuthConfig) {
       }
     };
 
-    console.log('Processed config:', JSON.stringify(config, null, 2));
     res.json(config);
   });
 
@@ -522,7 +460,6 @@ export function createRoutes(authConfig: AuthConfig) {
       res.status(500).json({ error: 'Failed to fetch counts' });
     }
   });
-  // Endpoint to fetch all users for selection (e.g., for inviter selection)
   router.get('/api/users/all', async (req: Request, res: Response) => {
     try {
       const adapter = await getAuthAdapter();
@@ -551,7 +488,6 @@ export function createRoutes(authConfig: AuthConfig) {
         const adapter = await getAuthAdapter();
         if (adapter && typeof adapter.findMany === 'function') {
           const allUsers = await adapter.findMany({ model: 'user', limit: limit });
-          console.log('Found users via findMany:', allUsers?.length || 0);
           
           let filteredUsers = allUsers || [];
           if (search) {
@@ -675,9 +611,7 @@ export function createRoutes(authConfig: AuthConfig) {
 
       } catch (error) {
         console.error('Error importing auth config:', error);
-        console.log('Falling back to regex extraction...');
         
-        // Fallback to regex extraction when import fails
         try {
           const { readFileSync } = await import('fs');
           const content = readFileSync(authConfigPath, 'utf-8');
@@ -747,9 +681,7 @@ export function createRoutes(authConfig: AuthConfig) {
 
       } catch (error) {
         console.error('Error getting database info:', error);
-        console.log('Falling back to regex extraction...');
         
-        // Fallback to regex extraction when import fails
         try {
           const { readFileSync } = await import('fs');
           const content = readFileSync(authConfigPath, 'utf-8');
@@ -816,9 +748,7 @@ export function createRoutes(authConfig: AuthConfig) {
 
       } catch (error) {
         console.error('Error checking teams plugin:', error);
-        console.log('Falling back to regex extraction...');
         
-        // Fallback to regex extraction when import fails
         try {
           const { readFileSync } = await import('fs');
           const content = readFileSync(authConfigPath, 'utf-8');
@@ -857,7 +787,6 @@ export function createRoutes(authConfig: AuthConfig) {
 
   router.get('/api/organizations/:orgId/invitations', async (req: Request, res: Response) => {
     try {
-      console.log('fetching invitations' , req.params)
       const { orgId } = req.params;
       const adapter = await getAuthAdapter();
       if (adapter && typeof adapter.findMany === 'function') {
@@ -1587,7 +1516,6 @@ export function createRoutes(authConfig: AuthConfig) {
       try {
         const authModule = await safeImportAuthConfig(authConfigPath);
         const auth = authModule.auth || authModule.default;
-        console.log({ auth })
         if (!auth) {
           return res.json({
             enabled: false,
@@ -1599,7 +1527,6 @@ export function createRoutes(authConfig: AuthConfig) {
         const hasOrganizationPlugin = auth.options?.plugins?.find((plugin: any) =>
           plugin.id === "organization"
         );
-        console.log({ hasOrganizationPlugin })
 
         res.json({
           enabled: !!hasOrganizationPlugin,
@@ -1610,9 +1537,7 @@ export function createRoutes(authConfig: AuthConfig) {
 
       } catch (error) {
         console.error('Error checking organization plugin:', error);
-        console.log('Falling back to regex extraction...');
         
-        // Fallback to regex extraction when import fails
         try {
           const { readFileSync } = await import('fs');
           const content = readFileSync(authConfigPath, 'utf-8');
@@ -1658,7 +1583,6 @@ export function createRoutes(authConfig: AuthConfig) {
         const adapter = await getAuthAdapter();
         if (adapter && typeof adapter.findMany === 'function') {
           const allOrganizations = await adapter.findMany({ model: 'organization' });
-          console.log('Found organizations via findMany:', allOrganizations?.length || 0);
 
           let filteredOrganizations = allOrganizations || [];
           if (search) {
@@ -1850,7 +1774,6 @@ export function createRoutes(authConfig: AuthConfig) {
     try {
       const { count = 1 } = req.body;
       const adapter = await getAuthAdapter();
-      console.log({ adapter })
       if (!adapter) {
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
@@ -2058,11 +1981,9 @@ export function createRoutes(authConfig: AuthConfig) {
       const results = [];
       for (let i = 0; i < count; i++) {
         try {
-          // Generate random string suffix
           const randomSuffix = Math.random().toString(36).substring(2, 8);
           const organizationName = `organization-${randomSuffix}`;
           
-          // Generate slug from organization name
           const generateSlug = (name: string): string => {
             return name
               .toLowerCase()

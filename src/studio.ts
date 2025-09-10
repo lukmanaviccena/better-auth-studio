@@ -9,7 +9,6 @@ import chalk from 'chalk';
 import { createRoutes } from './routes.js';
 import { AuthConfig } from './config.js';
 
-// ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -25,7 +24,6 @@ export async function startStudio(options: StudioOptions) {
   const app = express();
   const server = createServer(app);
 
-  // CORS configuration
   app.use(cors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true
