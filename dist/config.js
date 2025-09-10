@@ -2,25 +2,19 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { createJiti } from 'jiti';
 import { pathToFileURL } from 'url';
-// Custom module resolver that tries both .js and .ts extensions
 function resolveModuleWithExtensions(id, parent) {
-    // If it's not a relative import, return as is
     if (!id.startsWith('./') && !id.startsWith('../')) {
         return id;
     }
     const parentDir = dirname(parent);
     const basePath = join(parentDir, id);
-    // Try different extensions in order of preference
     const extensions = ['.ts', '.js', '.mjs', '.cjs'];
     for (const ext of extensions) {
         const fullPath = basePath + ext;
         if (existsSync(fullPath)) {
-            console.log(`Resolved ${id} to ${fullPath}`);
             return pathToFileURL(fullPath).href;
         }
     }
-    // If no file found, return the original id
-    console.log(`Could not resolve ${id} with any extension, using original`);
     return id;
 }
 export async function findAuthConfig() {
@@ -86,27 +80,19 @@ async function loadTypeScriptConfig(configPath) {
     try {
         if (configPath.endsWith('.ts')) {
             try {
-                // Create aliases for all relative imports dynamically
                 const aliases = {};
-                // Get the directory of the config file
                 const configDir = dirname(configPath);
-                // Read the file content to find all relative imports
                 const content = readFileSync(configPath, 'utf-8');
-                // Find all relative imports (./something or ../something)
                 const relativeImportRegex = /import\s+.*?\s+from\s+['"](\.\/[^'"]+)['"]/g;
                 const dynamicImportRegex = /import\s*\(\s*['"](\.\/[^'"]+)['"]\s*\)/g;
                 const foundImports = new Set();
-                // Extract relative imports from static imports
                 let match;
                 while ((match = relativeImportRegex.exec(content)) !== null) {
                     foundImports.add(match[1]);
                 }
-                // Extract relative imports from dynamic imports
                 while ((match = dynamicImportRegex.exec(content)) !== null) {
                     foundImports.add(match[1]);
                 }
-                console.log(`Found relative imports: ${Array.from(foundImports).join(', ')}`);
-                // Create aliases for each found import
                 for (const importPath of foundImports) {
                     const importName = importPath.replace('./', '');
                     const possiblePaths = [
@@ -122,56 +108,41 @@ async function loadTypeScriptConfig(configPath) {
                     for (const path of possiblePaths) {
                         if (existsSync(path)) {
                             aliases[importPath] = pathToFileURL(path).href;
-                            console.log(`Created alias: ${importPath} -> ${path}`);
                             break;
                         }
                     }
                 }
-                // Use Jiti for safe TypeScript module resolution
                 const jiti = createJiti(import.meta.url, {
-                    debug: true, // Enable debug to see what's happening
+                    debug: true,
                     fsCache: true,
                     moduleCache: true,
                     interopDefault: true,
                     alias: aliases
                 });
-                console.log(`Using Jiti to safely import TypeScript config from ${configPath}...`);
                 let authModule;
                 try {
                     authModule = await jiti.import(configPath);
                 }
                 catch (importError) {
-                    console.log(`Jiti import failed: ${importError.message}`);
-                    console.log('Falling back to regex extraction...');
-                    // If Jiti import fails, fall back to regex extraction
                     const content = readFileSync(configPath, 'utf-8');
-                    console.log('Using regex extraction as fallback');
-                    // Return a mock module that can be processed by regex extraction
                     authModule = {
                         auth: {
                             options: {
-                                // This will be processed by regex extraction
                                 _content: content
                             }
                         }
                     };
                 }
                 if (authModule.auth) {
-                    console.log('Found auth export, extracting configuration...');
                     const config = authModule.auth.options || authModule.auth;
-                    // If we have content from regex fallback, use regex extraction
                     if (config._content) {
-                        console.log('Using regex extraction for content...');
                         return extractBetterAuthConfig(config._content);
                     }
                     return extractBetterAuthFields(config);
                 }
                 else if (authModule.default) {
-                    console.log('Found default export, extracting configuration...');
                     const config = authModule.default.options || authModule.default;
-                    // If we have content from regex fallback, use regex extraction
                     if (config._content) {
-                        console.log('Using regex extraction for content...');
                         return extractBetterAuthConfig(config._content);
                     }
                     return extractBetterAuthFields(config);
@@ -179,7 +150,6 @@ async function loadTypeScriptConfig(configPath) {
             }
             catch (importError) {
                 console.warn(`Failed to import auth config from ${configPath}:`, importError.message);
-                console.log('Falling back to regex extraction...');
             }
         }
         const content = readFileSync(configPath, 'utf-8');
@@ -228,7 +198,6 @@ function detectDatabaseAdapter(content) {
         database.adapter = 'sqlite';
         database.type = 'sqlite';
         database.provider = 'sqlite';
-        // Try to extract the database file path
         const dbPathMatch = content.match(/new\s+Database\s*\(\s*["']([^"']+)["']\s*\)/);
         if (dbPathMatch) {
             database.name = dbPathMatch[1];
@@ -241,67 +210,44 @@ function detectDatabaseAdapter(content) {
     return database;
 }
 function cleanConfigString(configStr) {
-    // First, let's handle the specific problematic patterns
     let cleaned = configStr;
-    // Handle prismaAdapter calls specifically - be more comprehensive
     cleaned = cleaned.replace(/:\s*prismaAdapter\s*\(\s*\w+\s*,\s*\{[^}]*\}\s*\)/g, ':"prisma-adapter"');
     cleaned = cleaned.replace(/:\s*prismaAdapter\s*\(\s*\w+\s*\)/g, ':"prisma-adapter"');
-    // Handle drizzleAdapter calls
     cleaned = cleaned.replace(/:\s*drizzleAdapter\s*\(\s*\w+\s*,\s*\{[^}]*\}\s*\)/g, ':"drizzle-adapter"');
     cleaned = cleaned.replace(/:\s*drizzleAdapter\s*\(\s*\w+\s*\)/g, ':"drizzle-adapter"');
-    // Handle other database adapters
     cleaned = cleaned.replace(/:\s*betterSqlite3\s*\(\s*[^)]*\)/g, ':"better-sqlite3"');
     cleaned = cleaned.replace(/:\s*postgres\s*\(\s*[^)]*\)/g, ':"postgres"');
     cleaned = cleaned.replace(/:\s*mysql2\s*\(\s*[^)]*\)/g, ':"mysql2"');
     cleaned = cleaned.replace(/:\s*bun:sqlite\s*\(\s*[^)]*\)/g, ':"bun-sqlite"');
-    // Handle new Database() pattern from better-sqlite3
     cleaned = cleaned.replace(/:\s*new\s+Database\s*\(\s*[^)]*\)/g, ':"sqlite-database"');
     cleaned = cleaned.replace(/new\s+Database\s*\(\s*[^)]*\)/g, '"sqlite-database"');
-    // Handle other function calls
     cleaned = cleaned.replace(/:\s*(\w+)\s*\(\s*[^)]*\)/g, ':"$1-function"');
-    // Handle arrays
     cleaned = cleaned.replace(/:\s*\[[^\]]*\]/g, ':"array"');
-    // Handle nested objects more carefully
     cleaned = cleaned.replace(/:\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, ':"object"');
-    // Handle process.env variables
     cleaned = cleaned.replace(/:\s*process\.env\.(\w+)(\s*\|\|\s*"[^"]*")?/g, ':"$1"');
-    // Handle template literals
     cleaned = cleaned.replace(/:\s*`([^`]*)`/g, ':"$1"');
-    // Handle string literals - be more careful with quotes
     cleaned = cleaned.replace(/:\s*"([^"]*)"/g, ':"$1"');
     cleaned = cleaned.replace(/:\s*'([^']*)'/g, ':"$1"');
-    // Handle unquoted strings (but be careful with numbers and booleans)
     cleaned = cleaned.replace(/:\s*([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*[,}])/g, ':"$1"');
-    // Quote property names
     cleaned = cleaned.replace(/([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '"$1":');
-    // Remove trailing commas
     cleaned = cleaned.replace(/,\s*}/g, '}');
     cleaned = cleaned.replace(/,\s*]/g, ']');
-    // Remove comments
     cleaned = cleaned.replace(/\/\/.*$/gm, '');
     cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-    // Normalize whitespace
     cleaned = cleaned.replace(/\s+/g, ' ');
-    // Keep numbers, booleans, and null as-is
     cleaned = cleaned.replace(/:\s*(\d+\.?\d*)/g, ':$1');
     cleaned = cleaned.replace(/:\s*(true|false)/g, ':$1');
     cleaned = cleaned.replace(/:\s*null/g, ':null');
     return cleaned.trim();
 }
 export function extractBetterAuthConfig(content) {
-    console.log('Extracting config from content:', content.substring(0, 500) + '...');
-    console.log('Looking for drizzleAdapter in content:', content.includes('drizzleAdapter'));
-    console.log('Looking for prismaAdapter in content:', content.includes('prismaAdapter'));
     const pluginsMatch = content.match(/plugins\s*:\s*(?:\[)?(\w+)(?:\])?/);
     if (pluginsMatch) {
         const pluginsVar = pluginsMatch[1];
-        console.log('Found plugins variable:', pluginsVar);
-        // Look for the variable definition
         const varMatch = content.match(new RegExp(`const\\s+${pluginsVar}\\s*=\\s*[^\\[]*\\[([^\\]]*)\\]`));
         if (varMatch) {
             const pluginsContent = varMatch[1];
             const plugins = [];
-            // Extract plugin names from the plugins array
             const pluginMatches = pluginsContent.match(/(\w+)\(\)/g);
             if (pluginMatches) {
                 for (const pluginMatch of pluginMatches) {
@@ -313,9 +259,7 @@ export function extractBetterAuthConfig(content) {
                         description: `${pluginName} plugin for Better Auth`,
                         enabled: true
                     };
-                    // Check if this is the organization plugin and look for teams configuration
                     if (pluginName === 'organization') {
-                        // Look for organization({teams: {enabled: true}}) pattern
                         const orgConfigMatch = content.match(/organization\s*\(\s*\{[^}]*teams[^}]*enabled[^}]*\}/);
                         if (orgConfigMatch) {
                             plugin.teams = { enabled: true };
@@ -325,23 +269,19 @@ export function extractBetterAuthConfig(content) {
                 }
             }
             if (plugins.length > 0) {
-                console.log('Extracted plugins from content:', plugins);
                 const database = detectDatabaseAdapter(content);
-                console.log('Detected database:', database);
                 return {
                     plugins: plugins,
-                    baseURL: 'http://localhost:3000', // Default fallback
+                    baseURL: 'http://localhost:3000',
                     database: database
                 };
             }
         }
     }
-    // Also try direct plugins array
     const directPluginsMatch = content.match(/plugins\s*:\s*\[([^\]]*)\]/);
     if (directPluginsMatch) {
         const pluginsContent = directPluginsMatch[1];
         const plugins = [];
-        // Extract plugin names from the plugins array
         const pluginMatches = pluginsContent.match(/(\w+)\(\)/g);
         if (pluginMatches) {
             for (const pluginMatch of pluginMatches) {
@@ -353,9 +293,7 @@ export function extractBetterAuthConfig(content) {
                     description: `${pluginName} plugin for Better Auth`,
                     enabled: true
                 };
-                // Check if this is the organization plugin and look for teams configuration
                 if (pluginName === 'organization') {
-                    // Look for organization({teams: {enabled: true}}) pattern
                     const orgConfigMatch = content.match(/organization\s*\(\s*\{[^}]*teams[^}]*enabled[^}]*\}/);
                     if (orgConfigMatch) {
                         plugin.teams = { enabled: true };
@@ -365,42 +303,27 @@ export function extractBetterAuthConfig(content) {
             }
         }
         if (plugins.length > 0) {
-            console.log('Extracted plugins from content:', plugins);
             const database = detectDatabaseAdapter(content);
-            console.log('Detected database:', database);
             return {
                 plugins: plugins,
-                baseURL: 'http://localhost:3000', // Default fallback
+                baseURL: 'http://localhost:3000',
                 database: database
             };
         }
     }
-    // More precise patterns that handle real-world scenarios better
     const patterns = [
-        // Pattern 1: export const auth = betterAuth({...})
         /export\s+const\s+\w+\s*=\s*betterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 2: export const auth = BetterAuth({...})
         /export\s+const\s+\w+\s*=\s*BetterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 3: const auth = betterAuth({...})
         /const\s+\w+\s*=\s*betterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 4: const auth = BetterAuth({...})
         /const\s+\w+\s*=\s*BetterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 5: export default betterAuth({...})
         /export\s+default\s+betterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 6: export default BetterAuth({...})
         /export\s+default\s+BetterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 7: module.exports = betterAuth({...})
         /module\.exports\s*=\s*betterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 8: module.exports = BetterAuth({...})
         /module\.exports\s*=\s*BetterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 9: betterAuth({...}) - standalone
         /betterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 10: BetterAuth({...}) - standalone
         /BetterAuth\s*\(\s*({[^{}]*(?:{[^{}]*}[^{}]*)*})\s*\)/,
-        // Pattern 11: More flexible pattern for complex configs
         /betterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
         /BetterAuth\s*\(\s*({[\s\S]*?})\s*\)/,
-        // Pattern 12: Handle the specific case with baseURL and database
         /betterAuth\s*\(\s*({[^{}]*baseURL[^{}]*database[^{}]*})\s*\)/,
         /BetterAuth\s*\(\s*({[^{}]*baseURL[^{}]*database[^{}]*})\s*\)/
     ];
@@ -408,8 +331,6 @@ export function extractBetterAuthConfig(content) {
         const pattern = patterns[i];
         const match = content.match(pattern);
         if (match) {
-            console.log(`Pattern ${i + 1} matched!`);
-            console.log('Matched content:', match[1].substring(0, 200) + '...');
             try {
                 let configStr = match[1];
                 configStr = configStr
@@ -438,7 +359,6 @@ export function extractBetterAuthConfig(content) {
                     }
                 });
                 configStr = cleanConfigString(configStr);
-                console.log('Cleaned config string:', configStr.substring(0, 300) + '...');
                 let config;
                 try {
                     config = JSON.parse(configStr);
@@ -450,7 +370,6 @@ export function extractBetterAuthConfig(content) {
                 }
                 const authConfig = extractBetterAuthFields(config);
                 if (authConfig) {
-                    // Enhance with database detection from original content
                     const detectedDatabase = detectDatabaseAdapter(content);
                     if (detectedDatabase.adapter) {
                         authConfig.database = { ...authConfig.database, ...detectedDatabase };
@@ -549,13 +468,9 @@ function extractBetterAuthFields(config) {
             dbType = config.database.type;
             adapter = config.database.type;
         }
-        // Override adapter detection for Drizzle - check if we have drizzleAdapter in the original content
-        console.log('Before override - adapter:', adapter, 'provider:', config.database.provider);
         if (config.database.provider && (config.database.provider === 'postgresql' || config.database.provider === 'pg' || config.database.provider === 'mysql' || config.database.provider === 'sqlite')) {
-            // For now, assume any adapter with these providers is Drizzle since Prisma would have different provider values
             adapter = 'drizzle';
             dbType = config.database.provider === 'pg' ? 'postgresql' : config.database.provider;
-            console.log('After override - adapter:', adapter, 'dbType:', dbType);
         }
         authConfig.database = {
             url: config.database.url || config.database.connectionString,
@@ -609,14 +524,12 @@ function extractBetterAuthFields(config) {
     if (config.plugins) {
         authConfig.plugins = config.plugins.map((plugin) => plugin.id);
     }
-    console.log('Extracted auth config:', JSON.stringify(authConfig, null, 2));
     return authConfig;
 }
 async function evaluateJSConfig(configPath) {
     try {
         const config = require(configPath);
         if (config.auth) {
-            console.log('Found auth export in CommonJS module, extracting configuration...');
             const authConfig = config.auth.options || config.auth;
             return extractBetterAuthFields(authConfig);
         }
