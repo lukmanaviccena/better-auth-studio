@@ -58,7 +58,7 @@ program
 program
   .command('start')
   .description('Start Better Auth Studio')
-  .option('-p, --port <port>', 'Port to run the studio on', '3001')
+  .option('-p, --port <port>', 'Port to run the studio on', '3002')
   .option('-h, --host <host>', 'Host to run the studio on', 'localhost')
   .option('--no-open', 'Do not open browser automatically')
   .action(async (options) => {

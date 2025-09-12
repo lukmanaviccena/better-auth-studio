@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   Users as UsersIcon,
@@ -33,6 +34,7 @@ interface User {
 }
 
 export default function Users() {
+  const navigate = useNavigate()
   const { refetchCounts } = useCounts()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -398,7 +400,11 @@ export default function Users() {
                 </tr>
               ) : (
                 currentUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-dashed border-white/5 hover:bg-white/5">
+                                        <tr 
+                                            key={user.id} 
+                                            className="border-b border-dashed border-white/5 hover:bg-white/5 cursor-pointer"
+                                            onClick={() => navigate(`/users/${user.id}`)}
+                                        >
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
                         <img
@@ -437,7 +443,10 @@ export default function Users() {
                           variant="ghost"
                           size="sm"
                           className="text-gray-400 hover:text-white rounded-none"
-                          onClick={() => openViewModal(user)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openViewModal(user)
+                          }}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -445,7 +454,10 @@ export default function Users() {
                           variant="ghost"
                           size="sm"
                           className="text-gray-400 hover:text-white rounded-none"
-                          onClick={() => openEditModal(user)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditModal(user)
+                          }}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -453,7 +465,10 @@ export default function Users() {
                           variant="ghost"
                           size="sm"
                           className="text-red-400 hover:text-red-300 rounded-none"
-                          onClick={() => openDeleteModal(user)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDeleteModal(user)
+                          }}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

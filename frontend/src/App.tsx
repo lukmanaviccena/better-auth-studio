@@ -6,6 +6,7 @@ import Users from './pages/Users'
 import Organizations from './pages/Organizations'
 import OrganizationDetails from './pages/OrganizationDetails'
 import TeamDetails from './pages/TeamDetails'
+import UserDetails from './pages/UserDetails'
 import Sessions from './pages/Sessions'
 import Settings from './pages/Settings'
 import { CountsProvider } from './contexts/CountsContext'
@@ -18,6 +19,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/users/:userId" element={<UserDetails />} />
             <Route path="/organizations" element={<Organizations />} />
             <Route path="/organizations/:orgId" element={<OrganizationDetails />} />
             <Route path="/teams/:teamId" element={<TeamDetails />} />

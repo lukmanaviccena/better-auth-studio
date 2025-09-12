@@ -479,6 +479,250 @@ export function createRoutes(authConfig: AuthConfig) {
     }
   });
 
+  router.get('/api/users/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.findMany) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const users = await adapter.findMany({ model: 'user', limit: 10000 });
+      const user = users && users.length > 0 ? users.find((u: any) => u.id === userId) : null;
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({ user });
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ error: 'Failed to fetch user' });
+    }
+  });
+
+  router.put('/api/users/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const { name, email } = req.body;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.update) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const user = await adapter.update({ 
+        model: 'user', 
+        id: userId,
+        data: { name, email }
+      });
+
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
+  router.delete('/api/users/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.delete) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      await adapter.delete({ model: 'user', id: userId });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
+    }
+  });
+
+  router.get('/api/users/:userId/organizations', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.findMany) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const [memberships, organizations] = await Promise.all([
+        adapter.findMany({ model: 'member', limit: 10000 }),
+        adapter.findMany({ model: 'organization', limit: 10000 })
+      ]);
+
+      const userMemberships = memberships.filter((membership: any) => membership.userId === userId);
+
+      const formattedMemberships = userMemberships.map((membership: any) => {
+        const organization = organizations.find((org: any) => org.id === membership.organizationId);
+        return {
+          id: membership.id,
+          organization: organization ? {
+            id: organization.id,
+            name: organization.name || 'Unknown Organization',
+            slug: organization.slug || 'unknown',
+            image: organization.image,
+            createdAt: organization.createdAt
+          } : {
+            id: membership.organizationId,
+            name: 'Unknown Organization',
+            slug: 'unknown',
+            createdAt: membership.createdAt
+          },
+          role: membership.role || 'member',
+          joinedAt: membership.createdAt
+        };
+      });
+
+      res.json({ memberships: formattedMemberships });
+    } catch (error) {
+      console.error('Error fetching user organizations:', error);
+      res.status(500).json({ error: 'Failed to fetch user organizations' });
+    }
+  });
+
+  router.get('/api/users/:userId/teams', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.findMany) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const [memberships, teams, organizations] = await Promise.all([
+        adapter.findMany({ model: 'teamMember', limit: 10000 }),
+        adapter.findMany({ model: 'team', limit: 10000 }),
+        adapter.findMany({ model: 'organization', limit: 10000 })
+      ]);
+
+      const userMemberships = memberships.filter((membership: any) => membership.userId === userId);
+
+      const formattedMemberships = userMemberships.map((membership: any) => {
+        const team = teams.find((t: any) => t.id === membership.teamId);
+        const organization = team ? organizations.find((org: any) => org.id === team.organizationId) : null;
+        
+        return {
+          id: membership.id,
+          team: team ? {
+            id: team.id,
+            name: team.name || 'Unknown Team',
+            organizationId: team.organizationId,
+            organizationName: organization ? organization.name || 'Unknown Organization' : 'Unknown Organization'
+          } : {
+            id: membership.teamId,
+            name: 'Unknown Team',
+            organizationId: 'unknown',
+            organizationName: 'Unknown Organization'
+          },
+          role: membership.role || 'member',
+          joinedAt: membership.createdAt
+        };
+      });
+
+      res.json({ memberships: formattedMemberships });
+    } catch (error) {
+      console.error('Error fetching user teams:', error);
+      res.status(500).json({ error: 'Failed to fetch user teams' });
+    }
+  });
+
+  router.delete('/api/organizations/members/:membershipId', async (req: Request, res: Response) => {
+    try {
+      const { membershipId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.delete) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      await adapter.delete({ model: 'member', id: membershipId });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing user from organization:', error);
+      res.status(500).json({ error: 'Failed to remove user from organization' });
+    }
+  });
+
+  router.delete('/api/teams/members/:membershipId', async (req: Request, res: Response) => {
+    try {
+      const { membershipId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.delete) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      await adapter.delete({ model: 'teamMember', id: membershipId });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing user from team:', error);
+      res.status(500).json({ error: 'Failed to remove user from team' });
+    }
+  });
+
+  router.post('/api/users/:userId/ban', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.update) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const user = await adapter.update({ 
+        model: 'user', 
+        id: userId,
+        data: { banned: true }
+      });
+
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error('Error banning user:', error);
+      res.status(500).json({ error: 'Failed to ban user' });
+    }
+  });
+
+  router.get('/api/teams/:teamId', async (req: Request, res: Response) => {
+    try {
+      const { teamId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.findMany) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const teams = await adapter.findMany({ model: 'team', limit: 10000 });
+      const team = teams.find((t: any) => t.id === teamId);
+      
+      if (!team) {
+        return res.status(404).json({ error: 'Team not found' });
+      }
+
+      res.json({ team });
+    } catch (error) {
+      console.error('Error fetching team:', error);
+      res.status(500).json({ error: 'Failed to fetch team' });
+    }
+  });
+
+  router.get('/api/organizations/:orgId', async (req: Request, res: Response) => {
+    try {
+      const { orgId } = req.params;
+      const adapter = await getAuthAdapter();
+      if (!adapter || !adapter.findMany) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+
+      const organizations = await adapter.findMany({ model: 'organization', limit: 10000 });
+      const organization = organizations.find((org: any) => org.id === orgId);
+      
+      if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      res.json({ organization });
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      res.status(500).json({ error: 'Failed to fetch organization' });
+    }
+  });
+
   router.get('/api/users', async (req: Request, res: Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
