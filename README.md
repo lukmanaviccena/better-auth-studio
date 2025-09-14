@@ -108,7 +108,7 @@ export const auth = betterAuth({
 ## 🎯 Features
 
 ### 📊 Dashboard
-- **Overview statistics** - User counts, organization counts, session data
+- **Overview statistics** - User, teams and organization counts data
 
 ### 👥 User Management
 - **View all users** - Paginated list with search and filtering
