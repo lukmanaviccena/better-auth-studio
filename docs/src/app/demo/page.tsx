@@ -5,7 +5,6 @@ export default function DemoPage() {
     { name: 'HOME', href: '/' },
     { name: 'INSTALLATION', href: '/installation' },
     { name: 'CHANGELOG', href: '/changelog' },
-    { name: 'DEMO', href: '/demo' },
     { name: 'GITHUB', href: 'https://github.com/Kinfe123/better-auth-studio' }
   ];
   
