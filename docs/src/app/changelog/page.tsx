@@ -105,14 +105,6 @@ export default function Changelog() {
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                   <li className="flex items-start">
                     <span className="text-white/50 mr-3">•</span>
-                    Implemented pixel-inspired design system with sharp edges
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-white/50 mr-3">•</span>
-                    Added 3D void-hero component with whitish spotlight effects
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-white/50 mr-3">•</span>
                     Unified black and white color scheme across all pages
                   </li>
                   <li className="flex items-start">
