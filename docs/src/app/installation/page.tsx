@@ -24,6 +24,29 @@ export default function Installation() {
           </PixelCard>
         </section>
 
+        {/* Beta Version Callout */}
+        <section>
+          <PixelCard variant="highlight">
+            <div className="flex items-start">
+              <span className="text-white/50 mr-3 text-lg">🚀</span>
+              <div>
+                <h3 className="text-lg font-light tracking-tight mb-2 text-white">Try the Beta Version</h3>
+                <p className="text-sm font-light tracking-tight text-white/70 mb-3">
+                  Experience the latest features, patches, and improvements by installing the beta version. The beta includes recent bug fixes, performance enhancements, and new functionality that may not be available in the stable release yet.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <PixelCard variant="code" className="flex-1 min-w-0">
+                    <code className="text-sm font-mono text-white/90">pnpm add -g better-auth-studio@beta</code>
+                  </PixelCard>
+                </div>
+                <p className="text-xs font-light tracking-tight text-white/60 mt-2">
+                  <strong>Note:</strong> The beta version may include experimental features. 
+                </p>
+              </div>
+            </div>
+          </PixelCard>
+        </section>
+
         {/* Quick Start */}
         <section>
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">QUICK START</h2>
@@ -31,17 +54,32 @@ export default function Installation() {
           {/* Installation */}
           <PixelCard className="mb-6">
             <h3 className="text-lg font-light tracking-tight mb-4 text-white">Installation</h3>
-            <p className="text-sm font-light tracking-tight text-white/70 mb-4">
-              Install Better Auth Studio globally using pnpm:
-            </p>
-            <PixelCard variant="code">
-              <code className="text-sm font-mono text-white/90">pnpm add -g better-auth-studio</code>
-            </PixelCard>
+            
+            {/* Stable Version */}
+            <div className="mb-4">
+              <p className="text-sm font-light tracking-tight text-white/70 mb-2">
+                <strong>Stable version:</strong>
+              </p>
+              <PixelCard variant="code">
+                <code className="text-sm font-mono text-white/90">pnpm add -g better-auth-studio</code>
+              </PixelCard>
+            </div>
+
+            {/* Beta Version */}
+            <div className="mb-4">
+              <p className="text-sm font-light tracking-tight text-white/70 mb-2">
+                <strong>Beta version (recommended):</strong>
+              </p>
+              <PixelCard variant="code">
+                <code className="text-sm font-mono text-white/90">pnpm add -g better-auth-studio@beta</code>
+              </PixelCard>
+            </div>
+
             <p className="text-sm font-light tracking-tight text-white/70 mt-4 mb-4">
               Or use pnpx to run it without installation:
             </p>
             <PixelCard variant="code">
-              <code className="text-sm font-mono text-white/90">pnpx better-auth-studio</code>
+              <code className="text-sm font-mono text-white/90">pnpx better-auth-studio@beta</code>
             </PixelCard>
           </PixelCard>
 
