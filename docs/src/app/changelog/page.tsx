@@ -14,43 +14,232 @@ export default function Changelog() {
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">LATEST RELEASE</h2>
           <PixelCard variant="highlight">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-light tracking-tight text-white">v1.0.16</h3>
-              <span className="text-sm font-light tracking-tight text-white/50">2025-01-27</span>
+              <h3 className="text-lg font-light tracking-tight text-white">v1.0.20-beta.5</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
             </div>
             <p className="text-sm font-light tracking-tight text-white/70 mb-4">
-              Latest stable release of Better Auth Studio with enhanced functionality and pixel-perfect design.
+              Major beta release with advanced session management, IP geolocation, modern tooling, and comprehensive CI/CD pipeline.
             </p>
             <div className="space-y-3">
               <h4 className="font-light tracking-tight text-white">✨ New Features</h4>
               <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">CSV Export functionality{" "} </strong> for users and organizations with timestamped downloads
+                  <strong className="pr-2">Advanced Session Management</strong> with user-specific session seeding and terminal logging
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  Complete user management interface with CRUD operations
+                  <strong className="pr-2">IP Geolocation Resolution</strong> using MaxMind databases with country flags and location display
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  Organization and team management with hierarchical structure
+                  <strong className="pr-2">Biome Integration</strong> for modern linting and formatting with comprehensive CI/CD
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  Session monitoring and management capabilities
+                  <strong className="pr-2">CLI Geo Database Support</strong> with --geo-db option and default IP database
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  Support for Prisma, Drizzle, and SQLite databases
+                  <strong className="pr-2">Copy Functionality</strong> for all code blocks in documentation
+                </li>
+                <li className="flex items-start">
+                  <span className="text-white/50 mr-3">•</span>
+                  <strong className="pr-2">CSV Export functionality</strong> for users and organizations with timestamped downloads
                 </li>
               </ul>
             </div>
           </PixelCard>
         </section>
 
-        {/* Recent Updates */}
         <section>
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">RECENT UPDATES</h2>
+          
+          <PixelCard className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-light tracking-tight text-white">Advanced Session Management</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🔐 Session Seeding</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    User-specific session seeding with customizable count (1-50 sessions)
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">📊 Session Display</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Compact 3-row session card design with essential information
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Session ID, status, IP address, and expiration date display
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Individual session revocation functionality
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </PixelCard>
+
+          <PixelCard className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-light tracking-tight text-white">IP Geolocation & MaxMind Integration</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🌍 Geolocation Resolution</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    MaxMind GeoLite2-City database integration for accurate IP geolocation
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Fallback to comprehensive default IP database covering 12 countries
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Country flag emoji display next to location information
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Real-time IP resolution with city, country, and region data
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">⚙️ CLI Integration</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    --geo-db CLI option for custom MaxMind database path
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Default MMDB file included in package distribution
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Backend API endpoint for IP geolocation resolution
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </PixelCard>
+
+          {/* Biome Integration & CI/CD */}
+          <PixelCard className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-light tracking-tight text-white">Biome Integration & CI/CD</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🔧 Modern Tooling</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Biome integration for fast linting and formatting
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Comprehensive linting rules with appropriate warning levels
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Automatic code formatting with consistent style
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    TypeScript and JavaScript support with modern configurations
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🚀 CI/CD Pipeline</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    GitHub Actions workflow for automated testing and building
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    pnpm package manager integration for consistent dependency management
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Automated security auditing and vulnerability scanning
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Build artifact verification and deployment readiness checks
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </PixelCard>
+
+          {/* Documentation Enhancements */}
+          <PixelCard className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-light tracking-tight text-white">Documentation Enhancements</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">📋 Copy Functionality</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    One-click copy functionality for all code blocks
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Visual feedback with copy/check icons
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Support for both inline code blocks and syntax-highlighted blocks
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Hover-triggered copy buttons for better UX
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">📚 Beta Version Promotion</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Prominent beta version callout in installation documentation
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Clear installation instructions for beta features
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Updated examples to use beta version commands
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </PixelCard>
           
           {/* CSV Export Feature */}
           <PixelCard className="mb-6">
@@ -288,6 +477,26 @@ export default function Changelog() {
         <section>
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">VERSION HISTORY</h2>
           <div className="space-y-4">
+            <PixelCard>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-light tracking-tight text-white">v1.0.20-beta.5</h3>
+                <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
+              </div>
+              <p className="text-sm font-light tracking-tight text-white/70">
+                Major beta release with advanced session management, IP geolocation, Biome integration, and comprehensive CI/CD pipeline.
+              </p>
+            </PixelCard>
+            
+            <PixelCard>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-light tracking-tight text-white">v1.0.16</h3>
+                <span className="text-sm font-light tracking-tight text-white/50">2025-01-27</span>
+              </div>
+              <p className="text-sm font-light tracking-tight text-white/70">
+                Added CSV export functionality and enhanced user management interface with pixel-perfect design.
+              </p>
+            </PixelCard>
+            
             <PixelCard>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-light tracking-tight text-white">v1.0.15</h3>

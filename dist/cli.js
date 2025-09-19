@@ -4,6 +4,7 @@ import chokidar from 'chokidar';
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { findAuthConfig } from './config.js';
 import { startStudio } from './studio.js';
 async function findAuthConfigPath() {
@@ -141,10 +142,24 @@ async function startStudioWithWatch(options) {
     });
 }
 const program = new Command();
+function getPackageVersion() {
+    try {
+        const __dirname = dirname(fileURLToPath(import.meta.url));
+        const packageJsonPath = join(__dirname, '../package.json');
+        if (existsSync(packageJsonPath)) {
+            const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+            return packageJson.version || '1.0.0';
+        }
+    }
+    catch (error) {
+        console.warn('Failed to read package.json for version:', error);
+    }
+    return '1.0.0';
+}
 program
     .name('better-auth-studio')
     .description('Better Auth Studio - GUI dashboard for Better Auth')
-    .version('1.0.0');
+    .version(getPackageVersion());
 program
     .command('start')
     .description('Start Better Auth Studio')

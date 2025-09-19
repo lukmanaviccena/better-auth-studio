@@ -15,7 +15,6 @@ export default function Dashboard() {
         <h1 className="text-2xl text-white font-normal">Better Auth Studio</h1>
         <p className="text-gray-400 mt-1 font-light">Manage your authentication system</p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="border border-dashed border-white/20 bg-black/30 rounded-none hover:bg-black/50 transition-colors">
           <CardContent className="p-6">

@@ -160,6 +160,7 @@ export default function Settings() {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [plugins, setPlugins] = useState<PluginsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [studioVersion, setStudioVersion] = useState<string | null>(null);
 
   // WebSocket hook to listen for config changes
   useWebSocket((message) => {
@@ -186,7 +187,9 @@ export default function Settings() {
     try {
       const response = await fetch('/api/config');
       const data = await response.json();
-      console.log('Config data:', data);
+      if (data.studio?.version) {
+        setStudioVersion(`v${data.studio.version}`);
+      }
       setConfig(data);
     } catch (error) {
       console.error('Failed to fetch config:', error);
@@ -201,7 +204,7 @@ export default function Settings() {
       const data = await response.json();
       setSystemInfo(
         data.system || {
-          studioVersion: 'v1.0.0',
+          studioVersion: studioVersion || 'v1.0.0',
           nodeVersion: process.version,
           platform: navigator.platform,
           uptime: '2h 15m',
@@ -210,7 +213,7 @@ export default function Settings() {
     } catch (error) {
       console.error('Failed to fetch system info:', error);
       setSystemInfo({
-        studioVersion: 'v1.0.0',
+        studioVersion: studioVersion || 'v1.0.0',
         nodeVersion: 'v18.0.0',
         platform: 'macOS',
         uptime: '2h 15m',
@@ -977,7 +980,7 @@ export default function Settings() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-white">
-                  {systemInfo?.studioVersion || 'v1.0.0'}
+                  {studioVersion || 'v1.0.0'}
                 </p>
                 <p className="text-xs text-gray-400">Latest</p>
               </div>

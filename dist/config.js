@@ -189,29 +189,46 @@ async function loadTypeScriptConfig(configPath) {
                     if (auth && typeof auth === 'object') {
                         try {
                             if (auth.$context) {
+                                console.log('Found auth.$context, attempting to await...');
                                 const context = await auth.$context;
-                                const adapter = context.adapter;
+                                const options = context.options;
+                                console.log({ context });
+                                if (!options) {
+                                    console.warn('No options found in auth context');
+                                    return null;
+                                }
                                 const config = {
                                     database: {
-                                        type: 'drizzle',
+                                        type: options.database ? 'drizzle' : 'unknown',
                                         adapter: 'drizzle-adapter',
+                                        ...options.database,
                                     },
                                     emailAndPassword: {
-                                        enabled: true,
+                                        enabled: options.emailAndPassword?.enabled || false,
+                                        ...options.emailAndPassword,
                                     },
-                                    trustedOrigins: ['http://localhost:3000'],
+                                    socialProviders: options.socialProviders ? Object.keys(options.socialProviders).map(provider => ({
+                                        id: provider,
+                                        name: provider,
+                                        enabled: true
+                                    })) : [],
+                                    trustedOrigins: options.trustedOrigins || ['http://localhost:3000'],
                                     advanced: {
-                                        defaultCookieAttributes: {
+                                        defaultCookieAttributes: options.advanced?.defaultCookieAttributes || {
                                             sameSite: 'none',
                                             secure: true,
                                             httpOnly: true,
                                         },
+                                        ...options.advanced,
                                     },
                                 };
+                                console.log('Returning config from auth.$context:', config);
                                 return config;
                             }
                         }
-                        catch (contextError) { }
+                        catch (contextError) {
+                            console.warn('Failed to await auth.$context:', contextError.message);
+                        }
                     }
                 }
                 catch (importError) {

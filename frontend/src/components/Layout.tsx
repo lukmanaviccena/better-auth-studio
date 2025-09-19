@@ -14,6 +14,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { counts, loading } = useCounts();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [studioVersion, setStudioVersion] = useState('v1.0.0');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -25,6 +26,22 @@ export default function Layout({ children }: LayoutProps) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const fetchVersion = async () => {
+      try {
+        const response = await fetch('/api/config');
+        const data = await response.json();
+        if (data.studio?.version) {
+          setStudioVersion(`v${data.studio.version}`);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch studio version:', error);
+      }
+    };
+
+    fetchVersion();
   }, []);
 
   const formatCount = (count: number): string => {
@@ -53,7 +70,6 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Top Navigation */}
       <div className="bg-black/70 border-b border-white/15">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
@@ -63,7 +79,7 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Better Auth Studio</h1>
-                <p className="text-xs text-gray-300">v1.0.0</p>
+                <p className="text-xs text-gray-300">{studioVersion}</p>
               </div>
             </div>
           </div>

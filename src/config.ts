@@ -21,13 +21,59 @@ export interface AuthDatabase {
 }
 
 export interface AuthConfig {
-  database?: AuthDatabase;
-  providers?: AuthProvider[];
-  socialProviders?: Record<string, any>;
-  emailAndPassword?: any;
-  session?: any;
-  secret?: string;
-  rateLimit?: any;
+  database?: {
+    type?: string;
+    adapter?: string;
+    provider?: string;
+    dialect?: string;
+    casing?: string;
+    debugLogs?: boolean;
+    url?: string;
+    connectionString?: string;
+    [key: string]: any;
+  };
+  emailAndPassword?: {
+    enabled?: boolean;
+    disableSignUp?: boolean;
+    requireEmailVerification?: boolean;
+    maxPasswordLength?: number;
+    minPasswordLength?: number;
+    resetPasswordTokenExpiresIn?: number;
+    autoSignIn?: boolean;
+    revokeSessionsOnPasswordReset?: boolean;
+    [key: string]: any;
+  };
+  socialProviders?: Array<{
+    id: string;
+    name: string;
+    enabled: boolean;
+  }>;
+  trustedOrigins?: string[];
+  advanced?: {
+    defaultCookieAttributes?: {
+      sameSite?: string;
+      secure?: boolean;
+      httpOnly?: boolean;
+    };
+    ipAddress?: {
+      ipAddressHeaders?: string[];
+      disableIpTracking?: boolean;
+    };
+    useSecureCookies?: boolean;
+    disableCSRFCheck?: boolean;
+    crossSubDomainCookies?: {
+      enabled?: boolean;
+      additionalCookies?: string[];
+      domain?: string;
+    };
+    cookies?: Record<string, any>;
+    cookiePrefix?: string;
+    database?: {
+      defaultFindManyLimit?: number;
+      useNumberId?: boolean;
+    };
+    [key: string]: any;
+  };
   [key: string]: any;
 }
 
@@ -239,28 +285,46 @@ async function loadTypeScriptConfig(configPath: string): Promise<AuthConfig | nu
           if (auth && typeof auth === 'object') {
             try {
               if (auth.$context) {
+                console.log('Found auth.$context, attempting to await...');
                 const context = await auth.$context;
-                const adapter = context.adapter;
+                const options = context.options;
+                console.log({context})
+                if (!options) {
+                  console.warn('No options found in auth context');
+                  return null;
+                }
+                
                 const config: AuthConfig = {
                   database: {
-                    type: 'drizzle',
+                    type: options.database ? 'drizzle' : 'unknown',
                     adapter: 'drizzle-adapter',
+                    ...options.database,
                   },
                   emailAndPassword: {
-                    enabled: true,
+                    enabled: options.emailAndPassword?.enabled || false,
+                    ...options.emailAndPassword,
                   },
-                  trustedOrigins: ['http://localhost:3000'],
+                  socialProviders: options.socialProviders ? Object.keys(options.socialProviders).map(provider => ({
+                    id: provider,
+                    name: provider,
+                    enabled: true
+                  })) : [],
+                  trustedOrigins: options.trustedOrigins || ['http://localhost:3000'],
                   advanced: {
-                    defaultCookieAttributes: {
+                    defaultCookieAttributes: options.advanced?.defaultCookieAttributes || {
                       sameSite: 'none',
                       secure: true,
                       httpOnly: true,
                     },
+                    ...options.advanced,
                   },
                 };
+                console.log('Returning config from auth.$context:', config);
                 return config;
               }
-            } catch (contextError: any) {}
+            } catch (contextError: any) {
+              console.warn('Failed to await auth.$context:', contextError.message);
+            }
           }
         } catch (importError: any) {
           console.warn(`Failed to import auth config from ${configPath}:`, importError.message);

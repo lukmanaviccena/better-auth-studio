@@ -2,10 +2,24 @@ import { Router } from 'express';
 import { existsSync, readFileSync } from 'fs';
 import { createJiti } from 'jiti';
 import { dirname, join } from 'path';
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 import { createMockAccount, createMockSession, createMockUser, createMockVerification, getAuthAdapter, } from './auth-adapter.js';
 import { getAuthData } from './data.js';
 import { initializeGeoService, resolveIPLocation, setGeoDbPath } from './geo-service.js';
+function getStudioVersion() {
+    try {
+        const __dirname = dirname(fileURLToPath(import.meta.url));
+        const packageJsonPath = join(__dirname, '../package.json');
+        if (existsSync(packageJsonPath)) {
+            const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+            return packageJson.version || '1.0.0';
+        }
+    }
+    catch (error) {
+        console.warn('Failed to read package.json for version:', error);
+    }
+    return '1.0.0';
+}
 function resolveModuleWithExtensions(id, parent) {
     if (!id.startsWith('./') && !id.startsWith('../')) {
         return id;
@@ -373,7 +387,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 debug: authConfig.telemetry?.debug || false,
             },
             studio: {
-                version: '1.0.0',
+                version: getStudioVersion(),
                 nodeVersion: process.version,
                 platform: process.platform,
                 uptime: process.uptime(),
