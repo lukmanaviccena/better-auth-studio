@@ -14,7 +14,7 @@ export default function Changelog() {
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">LATEST RELEASE</h2>
           <PixelCard variant="highlight">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-light tracking-tight text-white">v1.0.20-beta.5</h3>
+              <h3 className="text-lg font-light tracking-tight text-white">v1.0.21</h3>
               <span className="text-sm font-light tracking-tight text-white/50">2025-01-28</span>
             </div>
             <p className="text-sm font-light tracking-tight text-white/70 mb-4">
@@ -46,6 +46,26 @@ export default function Changelog() {
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
                   <strong className="pr-2">CSV Export functionality</strong> for users and organizations with timestamped downloads
+                </li>
+<li className="flex items-start">
+                  <span className="text-white/50 mr-3">•</span>
+                  <strong className="pr-2">Session Details Page</strong> with session ID, status, IP address, and expiration date display
+                </li>
+                <li className="flex items-start">
+                  <span className="text-white/50 mr-3">•</span>
+                  <strong className="pr-2">Session Revocation Functionality</strong> with individual session revocation functionality
+                </li>
+                <li className="flex items-start">
+                  <span className="text-white/50 mr-3">•</span>
+                  <strong className="pr-2">Session Seeding Functionality</strong> with user-specific session seeding 
+                </li>
+                <li className="flex items-start">
+                  <span className="text-white/50 mr-3">•</span>
+                  <strong className="pr-2">Biome Integration</strong> with comprehensive linting and formatting
+                </li>
+                <li className="flex items-start">
+                  <span className="text-white/50 mr-3">•</span>
+                  <strong className="pr-2">CI/CD Pipeline</strong> with automated testing and building
                 </li>
               </ul>
             </div>

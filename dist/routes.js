@@ -411,6 +411,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             let userCount = 0;
             let sessionCount = 0;
             let organizationCount = 0;
+            let teamCount = 0;
             if (adapter) {
                 try {
                     if (typeof adapter.findMany === 'function') {
@@ -440,11 +441,22 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     console.error('Error fetching organization count:', error);
                     organizationCount = 0;
                 }
+                try {
+                    if (typeof adapter.findMany === 'function') {
+                        const teams = await adapter.findMany({ model: 'team', limit: 10000 });
+                        teamCount = teams?.length || 0;
+                    }
+                }
+                catch (error) {
+                    console.error('Error fetching team count:', error);
+                    teamCount = 0;
+                }
             }
             res.json({
                 users: userCount,
                 sessions: sessionCount,
                 organizations: organizationCount,
+                teams: teamCount,
             });
         }
         catch (error) {

@@ -4,6 +4,7 @@ interface Counts {
   users: number;
   organizations: number;
   sessions: number;
+  teams?: number;
 }
 
 interface CountsContextType {
@@ -19,7 +20,7 @@ interface CountsProviderProps {
 }
 
 export function CountsProvider({ children }: CountsProviderProps) {
-  const [counts, setCounts] = useState<Counts>({ users: 0, organizations: 0, sessions: 0 });
+  const [counts, setCounts] = useState<Counts>({ users: 0, organizations: 0, sessions: 0, teams: 0 });
   const [loading, setLoading] = useState(true);
 
   const fetchCounts = async () => {

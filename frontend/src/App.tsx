@@ -8,6 +8,7 @@ import Organizations from './pages/Organizations';
 import Sessions from './pages/Sessions';
 import Settings from './pages/Settings';
 import TeamDetails from './pages/TeamDetails';
+import Teams from './pages/Teams';
 import UserDetails from './pages/UserDetails';
 import Users from './pages/Users';
 
@@ -22,6 +23,8 @@ function App() {
             <Route path="/users/:userId" element={<UserDetails />} />
             <Route path="/organizations" element={<Organizations />} />
             <Route path="/organizations/:orgId" element={<OrganizationDetails />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/teams/:teamId" element={<TeamDetails />} />
             <Route path="/organizations/:orgId/teams/:teamId" element={<TeamDetails />} />
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/settings" element={<Settings />} />
