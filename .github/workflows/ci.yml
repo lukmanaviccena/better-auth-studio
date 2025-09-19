@@ -67,10 +67,10 @@ jobs:
         cd frontend
         if [ -f "package-lock.json" ]; then
           echo "✅ package-lock.json found, installing with npm ci"
-          npm ci
+          npm ci --no-optional
         else
           echo "⚠️ package-lock.json not found, installing with npm install"
-          npm install
+          npm install --no-optional
         fi
         cd ..
       
@@ -149,10 +149,10 @@ jobs:
         cd frontend
         if [ -f "package-lock.json" ]; then
           echo "✅ package-lock.json found, installing with npm ci"
-          npm ci
+          npm ci --no-optional
         else
           echo "⚠️ package-lock.json not found, installing with npm install"
-          npm install
+          npm install --no-optional
         fi
         cd ..
       
