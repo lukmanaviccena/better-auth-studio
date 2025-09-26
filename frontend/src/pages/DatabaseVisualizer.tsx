@@ -178,18 +178,23 @@ export default function DatabaseVisualizer() {
             type: 'smoothstep',
             animated: false,
             style: {
-              stroke: '#666',
-              strokeWidth: 1,
+              stroke: '#ffffff',
+              strokeWidth: 2,
               strokeDasharray: '5,5',
             },
             label: rel.type.replace('-', ' → '),
             labelStyle: {
               fontSize: '10px',
-              fill: '#666',
+              fill: '#ffffff',
+              fontWeight: 'bold',
             },
             labelBgStyle: {
               fill: 'rgba(0, 0, 0, 0.8)',
-              fillOpacity: 0.8,
+              fillOpacity: 0.9,
+            },
+            markerEnd: {
+              type: 'arrowclosed',
+              color: '#ffffff',
             },
           });
         }
@@ -339,7 +344,7 @@ export default function DatabaseVisualizer() {
 
         {/* ReactFlow Diagram */}
         <div className="col-span-3">
-          <div className="h-full bg-gray-900/30 border border-gray-700 rounded-lg overflow-hidden">
+          <div className="h-full bg-black border border-gray-700 rounded-lg overflow-hidden">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -351,7 +356,16 @@ export default function DatabaseVisualizer() {
               fitViewOptions={{
                 padding: 0.2,
               }}
-              className="bg-gray-900"
+              className="bg-black"
+              defaultEdgeOptions={{
+                style: {
+                  stroke: '#ffffff',
+                  strokeWidth: 2,
+                  strokeDasharray: '5,5',
+                },
+                animated: false,
+                type: 'smoothstep',
+              }}
             >
               <Controls className="bg-gray-800 border-gray-600" />
               <MiniMap 
@@ -360,13 +374,13 @@ export default function DatabaseVisualizer() {
                   if (node.data?.isForeign) return '#374151';
                   return '#1f2937';
                 }}
-                maskColor="rgba(0, 0, 0, 0.6)"
+                maskColor="rgba(0, 0, 0, 0.8)"
               />
               <Background 
                 variant={BackgroundVariant.Dots} 
                 gap={20} 
                 size={1}
-                color="#374151"
+                color="#ffffff"
               />
             </ReactFlow>
           </div>

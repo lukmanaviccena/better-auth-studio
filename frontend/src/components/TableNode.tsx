@@ -45,10 +45,10 @@ const TableNode = ({
 		<>
 			{data.isForeign ? (
 				<header
-					className="text-[0.55rem] px-2 py-1 border-[0.5px] bg-card text-default flex gap-1 items-center"
+					className="text-[0.55rem] px-2 py-1 border-[0.5px] border-gray-600 bg-gray-800 text-white flex gap-1 items-center"
 					id={`${data.name}-foreign-key`}
 				>
-					{data.name}
+					<span className="text-white font-medium">{data.name}</span>
 					{targetPosition && (
 						<Handle
 							type="target"
@@ -60,19 +60,19 @@ const TableNode = ({
 				</header>
 			) : (
 				<div
-					className={cn("border-[0.5px] overflow-hidden shadow-sm")}
+					className={cn("border-[0.5px] border-gray-600 overflow-hidden shadow-sm bg-gray-900")}
 					style={{ width: TABLE_NODE_WIDTH / 2 }}
 					id={`${data.name}-table-node`}
 				>
 					<header
 						className={cn(
-							"text-[0.55rem] pl-2 pr-1 bg-[var(--color-fd-card)] text-default flex items-center justify-between",
+							"text-[0.55rem] pl-2 pr-1 bg-gray-800 text-white flex items-center justify-between border-b border-gray-600",
 							itemHeight,
 						)}
 					>
 						<div className="flex items-center gap-x-1">
-							<Table2 strokeWidth={1} size={12} className="text-light" />
-							{data.name}
+							<Table2 strokeWidth={1} size={12} className="text-white" />
+							<span className="text-white font-medium">{data.name}</span>
 						</div>
 					</header>
 
@@ -80,10 +80,10 @@ const TableNode = ({
 						<div
 							className={cn(
 								"text-[8px] leading-5 relative flex flex-row justify-items-start",
-								"bg-[var(--color-fd-background)]",
+								"bg-gray-900",
 								"border-t",
-								"border-t-[0.5px]",
-								"hover:bg-scale-500 transition cursor-default",
+								"border-t-gray-600",
+								"hover:bg-gray-800 transition cursor-default",
 								itemHeight,
 							)}
 							key={column.id}
@@ -97,11 +97,11 @@ const TableNode = ({
 									<TooltipProvider delayDuration={10}>
 										<Tooltip>
 											<TooltipTrigger asChild>
-												<Key
-													size={8}
-													strokeWidth={1}
-													className={cn("flex-shrink-0", "text-light mr-2")}
-												/>
+											<Key
+												size={8}
+												strokeWidth={1}
+												className={cn("flex-shrink-0", "text-yellow-400 mr-2")}
+											/>
 											</TooltipTrigger>
 											<TooltipContent
 												className="pointer-events-none"
@@ -117,11 +117,11 @@ const TableNode = ({
 									<TooltipProvider delayDuration={10}>
 										<Tooltip>
 											<TooltipTrigger asChild>
-												<Fingerprint
-													size={8}
-													strokeWidth={1}
-													className="flex-shrink-0 mr-2 text-light"
-												/>
+											<Fingerprint
+												size={8}
+												strokeWidth={1}
+												className="flex-shrink-0 mr-2 text-green-400"
+											/>
 											</TooltipTrigger>
 											<TooltipContent
 												className="pointer-events-none "
@@ -136,7 +136,7 @@ const TableNode = ({
 									<Hash
 										size={8}
 										strokeWidth={1}
-										className="flex-shrink-0 text-light"
+										className="flex-shrink-0 text-blue-400"
 									/>
 								)}
 								{!column.isIdentity &&
@@ -164,14 +164,14 @@ const TableNode = ({
 											</Tooltip>
 										</TooltipProvider>
 									)}{" "}
-									<div className="max-w-[100px] w-fit text-ellipsis overflow-hidden">
+									<div className="max-w-[100px] w-fit text-ellipsis overflow-hidden text-white">
 										{column.name}
 									</div>
-									<span className="font-mono text-muted-foreground text-[0.35rem] pl-1 mt-[1px]">
+									<span className="font-mono text-gray-400 text-[0.35rem] pl-1 mt-[1px]">
 										{column.format}
 									</span>
 								</div>
-								<span className="px-2 inline-flex justify-end text-muted-foreground text-[0.4rem] mt-[1px]">
+								<span className="px-2 inline-flex justify-end text-gray-500 text-[0.4rem] mt-[1px]">
 									{column.plugin}
 								</span>
 							</div>
