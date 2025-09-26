@@ -173,16 +173,13 @@ export default function DatabaseVisualizer() {
             id: `${sourceTable}-${targetTable}-${rel.field}`,
             source: sourceTable,
             target: targetTable,
-            sourceHandle: `${sourceTable}-${rel.field}`,
-            targetHandle: `${targetTable}-${rel.field}`,
             type: 'smoothstep',
             animated: false,
             style: {
               stroke: '#000000',
-              strokeWidth: 2,
-              strokeDasharray: '5,5',
+              strokeWidth: 3,
             },
-            label: rel.type.replace('-', ' → '),
+            label: `${rel.field}: ${rel.type.replace('-', ' → ')}`,
             labelStyle: {
               fontSize: '10px',
               fill: '#000000',
@@ -201,6 +198,13 @@ export default function DatabaseVisualizer() {
       });
     });
 
+    // Debug: Log the edges being created
+    if (newEdges.length > 0) {
+      console.log('Creating edges:', newEdges);
+    } else {
+      console.log('No edges created. Schema relationships:', schema.tables.map(t => ({ name: t.name, relationships: t.relationships })));
+    }
+    
     setNodes(newNodes);
     setEdges(newEdges);
   }, [schema, selectedPlugins]);
@@ -261,7 +265,7 @@ export default function DatabaseVisualizer() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <Database className="w-8 h-8 text-gray-900 dark:text-white" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Schema Visualizer</h1>
+            <h1 className="text-2xl font-normal text-gray-900 dark:text-white">Schema Visualizer</h1>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -284,7 +288,7 @@ export default function DatabaseVisualizer() {
       <div className="flex-1 grid grid-cols-4 gap-6">
         {/* Plugin Selector */}
         <div className="col-span-1">
-          <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-700 h-fit shadow-sm">
+          <Card className="rounded-none bg-white dark:bg-black border-gray-200 dark:border-gray-700 h-fit shadow-sm">
             <CardHeader>
               <CardTitle className="text-gray-900 dark:text-white flex items-center space-x-2">
                 <Settings className="w-5 h-5" />
@@ -318,7 +322,7 @@ export default function DatabaseVisualizer() {
 
           {/* Schema Info */}
           {schema && (
-            <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-700 mt-4 shadow-sm">
+            <Card className="rounded-none bg-white dark:bg-black border-gray-200 dark:border-gray-700 mt-4 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-gray-900 dark:text-white text-sm">Schema Info</CardTitle>
               </CardHeader>
@@ -360,8 +364,7 @@ export default function DatabaseVisualizer() {
               defaultEdgeOptions={{
                 style: {
                   stroke: '#000000',
-                  strokeWidth: 2,
-                  strokeDasharray: '5,5',
+                  strokeWidth: 3,
                 },
                 animated: false,
                 type: 'smoothstep',

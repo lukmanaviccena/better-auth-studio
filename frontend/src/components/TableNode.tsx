@@ -8,9 +8,8 @@ import {
 	TooltipContent,
 } from "./ui/tooltip-docs";
 
-// ReactFlow is scaling everything by the factor of 2
-const TABLE_NODE_WIDTH = 420; // before: 320
-const TABLE_NODE_ROW_HEIGHT = 40; // before: 40
+const TABLE_NODE_WIDTH = 420; 
+const TABLE_NODE_ROW_HEIGHT = 40; 
 
 export type TableNodeData = {
 	id?: number;
@@ -34,8 +33,6 @@ const TableNode = ({
 	sourcePosition,
 }: NodeProps & { placeholder?: boolean }) => {
 	const data = data_ as TableNodeData;
-	// Important styles is a nasty hack to use Handles (required for edges calculations), but do not show them in the UI.
-	// ref: https://github.com/wbkd/react-flow/discussions/2698
 	const hiddenNodeConnector =
 		"!h-px !w-px !min-w-0 !min-h-0 !cursor-grab !border-0 opacity-100";
 
