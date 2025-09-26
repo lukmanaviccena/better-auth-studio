@@ -247,7 +247,7 @@ export default function DatabaseVisualizer() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-6">
+        <div className="bg-red-900/20 border border-red-500/20 rounded-none p-6">
           <h2 className="text-xl font-semibold text-red-400 mb-2">Error Loading Schema</h2>
           <p className="text-gray-300">{error}</p>
         </div>
@@ -344,7 +344,7 @@ export default function DatabaseVisualizer() {
 
         {/* ReactFlow Diagram */}
         <div className="col-span-3">
-          <div className="h-full bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+          <div className="h-full bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-none overflow-hidden shadow-sm">
             <ReactFlow
               nodes={nodes}
               edges={edges}
