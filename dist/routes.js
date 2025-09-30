@@ -79,7 +79,7 @@ export async function safeImportAuthConfig(authConfigPath) {
                 }
             }
             const jiti = createJiti(import.meta.url, {
-                debug: true, // Enable debug to see what's happening
+                debug: true,
                 fsCache: true,
                 moduleCache: true,
                 interopDefault: true,
@@ -119,17 +119,7 @@ export async function safeImportAuthConfig(authConfigPath) {
                 }
                 currentDir = dirname(currentDir);
             }
-            resolvedContent = resolvedContent.replace(/import\s+prisma\s+from\s+["']\.\/prisma["'];/g, `const prisma = {
-  user: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  session: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  account: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  verification: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  organization: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  member: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  invitation: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  team: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) },
-  teamMember: { findMany: () => [], create: () => ({}), update: () => ({}), delete: () => ({}) }
-};`);
+            resolvedContent = '';
             resolvedContent = resolvedContent.replace(/import\s+([^"']*)\s+from\s+["']\.\/[^"']*["'];/g, '// Ignored local import');
             resolvedContent = resolvedContent.replace(/import\s+{\s*magicLink\s*}\s+from\s+["']\.\/magic-link["'];/g, `const magicLink = () => ({ id: 'magic-link', name: 'Magic Link' });`);
             if (nodeModulesPath) {
@@ -138,8 +128,8 @@ export async function safeImportAuthConfig(authConfigPath) {
                 let commonJsContent = resolvedContent
                     .replace(/export\s+const\s+(\w+)\s*=/g, 'const $1 =')
                     .replace(/export\s+default\s+/g, 'module.exports = ')
-                    .replace(/export\s+type\s+.*$/gm, '// $&') // Comment out type exports
-                    .replace(/import\s+type\s+.*$/gm, '// $&'); // Comment out type imports
+                    .replace(/export\s+type\s+.*$/gm, '// $&')
+                    .replace(/import\s+type\s+.*$/gm, '// $&');
                 if (!commonJsContent.includes('module.exports')) {
                     commonJsContent += '\nmodule.exports = { auth };';
                 }
@@ -170,7 +160,7 @@ export async function safeImportAuthConfig(authConfigPath) {
         }
         catch (resolveError) {
             console.error('Import resolution also failed:', resolveError);
-            throw importError; // Throw original error
+            throw importError;
         }
     }
 }
@@ -178,7 +168,7 @@ async function findAuthConfigPath() {
     const { join, dirname } = await import('path');
     const { existsSync } = await import('fs');
     const possiblePaths = [
-        'auth.js', // Prioritize the working CommonJS file
+        'auth.js',
         'auth.ts',
         'src/auth.js',
         'src/auth.ts',
