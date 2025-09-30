@@ -24,11 +24,11 @@ export type TableNodeData = {
 
 const TableNode = ({
   data: data_,
-  targetPosition,
+  targetPosition, 
   sourcePosition,
 }: NodeProps & { placeholder?: boolean }) => {
   const data = data_ as TableNodeData;
-  const hiddenNodeConnector = '!h-px !w-px !min-w-0 !min-h-0 !cursor-grab !border-0 opacity-100';
+  const hiddenNodeConnector = '!h-1.5 !w-1.5 !min-w-0 !min-h-0 !cursor-grab !border-0 opacity-100';
 
   const itemHeight = 'h-[22px]';
 
@@ -52,14 +52,14 @@ const TableNode = ({
       ) : (
         <div
           className={cn(
-            'border-[0.5px] border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm bg-black'
+            'border border-gray-200 dark:border-gray-700 overflow-hidden shadow-lg bg-white dark:bg-gray-900 rounded-none'
           )}
           style={{ width: TABLE_NODE_WIDTH / 2 }}
           id={`${data.name}-table-node`}
         >
           <header
             className={cn(
-              'text-[0.55rem] pl-2 pr-1 bg-gray-800 text-white flex items-center justify-between border-b border-gray-600',
+              'text-[0.55rem] pl-3 pr-2 bg-black text-white flex items-center justify-between border-b border-gray-300',
               itemHeight
             )}
           >
@@ -73,10 +73,10 @@ const TableNode = ({
             <div
               className={cn(
                 'text-[8px] leading-5 relative flex flex-row justify-items-start',
-                'bg-black',
+                'bg-white dark:bg-gray-900',
                 'border-t',
-                'border-t-gray-600',
-                'hover:bg-gray-800 transition cursor-default',
+                'border-t-gray-200 dark:border-t-gray-700',
+                'hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-default',
                 itemHeight
               )}
               key={column.id}
@@ -142,33 +142,45 @@ const TableNode = ({
                       </Tooltip>
                     </TooltipProvider>
                   )}{' '}
-                  <div className="max-w-[100px] w-fit text-ellipsis overflow-hidden text-white">
+                  <div className="max-w-[100px] w-fit text-ellipsis overflow-hidden text-gray-900 dark:text-white">
                     {column.name}
                   </div>
-                  <span className="font-mono text-gray-400 text-[0.35rem] pl-1 mt-[1px]">
+                  <span className="font-mono text-gray-500 dark:text-gray-400 text-[0.35rem] pl-1 mt-[1px]">
                     {column.format}
                   </span>
                 </div>
-                <span className="px-2 inline-flex justify-end text-gray-500 text-[0.4rem] mt-[1px]">
+                <span className="px-2 inline-flex justify-end text-gray-400 dark:text-gray-500 text-[0.4rem] mt-[1px]">
                   {column.plugin}
                 </span>
               </div>
-              {targetPosition && (
-                <Handle
-                  type="target"
-                  id={column.id}
-                  position={targetPosition}
-                  className={cn(hiddenNodeConnector, '!left-0')}
-                />
-              )}
-              {sourcePosition && (
-                <Handle
-                  type="source"
-                  id={column.id}
-                  position={sourcePosition}
-                  className={cn(hiddenNodeConnector, '!right-0')}
-                />
-              )}
+              <Handle
+                type="target"
+                id={column.id}
+                position={targetPosition || "left" as any}
+                className={cn(hiddenNodeConnector, '!left-[-6px] !top-1/2 !transform !-translate-y-1/2')}
+                style={{ 
+                  background: '#000000', 
+                  border: '1px solid #ffffff',
+                  left: '-6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.1)'
+                }}
+              />
+              <Handle
+                type="source"
+                id={column.id}
+                position={sourcePosition || "right" as any}
+                className={cn(hiddenNodeConnector, '!right-[-6px] !top-1/2 !transform !-translate-y-1/2')}
+                style={{ 
+                  background: '#000000', 
+                  border: '1px solid #ffffff',
+                  right: '-6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </div>
           ))}
         </div>

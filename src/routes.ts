@@ -1674,11 +1674,9 @@ export function createRoutes(
     },
   };
 
-  // Function to generate schema based on selected plugins
   function generateSchema(selectedPlugins: string[]) {
     const schema: { tables: any[] } = { tables: [] };
 
-    // Start with base tables (deep clone to avoid mutations)
     const baseTables = Object.values(BASE_SCHEMA).map((table) => ({
       ...table,
       fields: [...table.fields],
@@ -1686,12 +1684,10 @@ export function createRoutes(
     }));
     schema.tables.push(...baseTables);
 
-    // Apply plugin extensions
     selectedPlugins.forEach((pluginName) => {
       const plugin = PLUGIN_SCHEMAS[pluginName as keyof typeof PLUGIN_SCHEMAS];
       if (!plugin) return;
 
-      // Add plugin-specific tables
       if (plugin.tables) {
         Object.values(plugin.tables).forEach((table: any) => {
           schema.tables.push({
@@ -1702,17 +1698,14 @@ export function createRoutes(
         });
       }
 
-      // Extend existing tables (with duplicate prevention)
       if ('userExtensions' in plugin && plugin.userExtensions) {
         const userTable = schema.tables.find((t: any) => t.name === 'user');
         if (userTable && 'fields' in plugin.userExtensions) {
-          // Add fields only if they don't already exist
           (plugin.userExtensions.fields || []).forEach((field: any) => {
             if (!userTable.fields.some((f: any) => f.name === field.name)) {
               userTable.fields.push(field);
             }
           });
-          // Add relationships only if they don't already exist
           (plugin.userExtensions.relationships || []).forEach((rel: any) => {
             if (
               !userTable.relationships.some(
@@ -1728,13 +1721,11 @@ export function createRoutes(
       if ('sessionExtensions' in plugin && plugin.sessionExtensions) {
         const sessionTable = schema.tables.find((t: any) => t.name === 'session');
         if (sessionTable && 'fields' in plugin.sessionExtensions) {
-          // Add fields only if they don't already exist
           (plugin.sessionExtensions.fields || []).forEach((field: any) => {
             if (!sessionTable.fields.some((f: any) => f.name === field.name)) {
               sessionTable.fields.push(field);
             }
           });
-          // Add relationships only if they don't already exist
           (plugin.sessionExtensions.relationships || []).forEach((rel: any) => {
             if (
               !sessionTable.relationships.some(
@@ -1750,7 +1741,6 @@ export function createRoutes(
       if ('organizationExtensions' in plugin && plugin.organizationExtensions) {
         const orgTable = schema.tables.find((t: any) => t.name === 'organization');
         if (orgTable) {
-          // Add relationships only if they don't already exist
           (plugin.organizationExtensions.relationships || []).forEach((rel: any) => {
             if (
               !orgTable.relationships.some(

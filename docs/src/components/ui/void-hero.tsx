@@ -184,8 +184,6 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links }) => {
         <p className="font-mono text-xs md:text-sm leading-relaxed font-light tracking-tight text-white/50 mb-6">
             {description}
         </p>
-        
-        {/* Installation Command */}
         <div className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-none p-4 font-mono text-xs">
           <div className="text-white/70 mb-2">Install Better Auth Studio</div>
           <div className="flex items-center gap-2">

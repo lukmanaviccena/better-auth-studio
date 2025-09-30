@@ -1548,22 +1548,18 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             },
         },
     };
-    // Function to generate schema based on selected plugins
     function generateSchema(selectedPlugins) {
         const schema = { tables: [] };
-        // Start with base tables (deep clone to avoid mutations)
         const baseTables = Object.values(BASE_SCHEMA).map((table) => ({
             ...table,
             fields: [...table.fields],
             relationships: [...table.relationships],
         }));
         schema.tables.push(...baseTables);
-        // Apply plugin extensions
         selectedPlugins.forEach((pluginName) => {
             const plugin = PLUGIN_SCHEMAS[pluginName];
             if (!plugin)
                 return;
-            // Add plugin-specific tables
             if (plugin.tables) {
                 Object.values(plugin.tables).forEach((table) => {
                     schema.tables.push({
@@ -1573,17 +1569,14 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     });
                 });
             }
-            // Extend existing tables (with duplicate prevention)
             if ('userExtensions' in plugin && plugin.userExtensions) {
                 const userTable = schema.tables.find((t) => t.name === 'user');
                 if (userTable && 'fields' in plugin.userExtensions) {
-                    // Add fields only if they don't already exist
                     (plugin.userExtensions.fields || []).forEach((field) => {
                         if (!userTable.fields.some((f) => f.name === field.name)) {
                             userTable.fields.push(field);
                         }
                     });
-                    // Add relationships only if they don't already exist
                     (plugin.userExtensions.relationships || []).forEach((rel) => {
                         if (!userTable.relationships.some((r) => r.target === rel.target && r.field === rel.field && r.type === rel.type)) {
                             userTable.relationships.push(rel);
@@ -1594,13 +1587,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if ('sessionExtensions' in plugin && plugin.sessionExtensions) {
                 const sessionTable = schema.tables.find((t) => t.name === 'session');
                 if (sessionTable && 'fields' in plugin.sessionExtensions) {
-                    // Add fields only if they don't already exist
                     (plugin.sessionExtensions.fields || []).forEach((field) => {
                         if (!sessionTable.fields.some((f) => f.name === field.name)) {
                             sessionTable.fields.push(field);
                         }
                     });
-                    // Add relationships only if they don't already exist
                     (plugin.sessionExtensions.relationships || []).forEach((rel) => {
                         if (!sessionTable.relationships.some((r) => r.target === rel.target && r.field === rel.field && r.type === rel.type)) {
                             sessionTable.relationships.push(rel);
@@ -1611,7 +1602,6 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if ('organizationExtensions' in plugin && plugin.organizationExtensions) {
                 const orgTable = schema.tables.find((t) => t.name === 'organization');
                 if (orgTable) {
-                    // Add relationships only if they don't already exist
                     (plugin.organizationExtensions.relationships || []).forEach((rel) => {
                         if (!orgTable.relationships.some((r) => r.target === rel.target && r.field === rel.field && r.type === rel.type)) {
                             orgTable.relationships.push(rel);

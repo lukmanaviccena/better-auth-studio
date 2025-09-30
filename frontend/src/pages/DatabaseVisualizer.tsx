@@ -29,7 +29,7 @@ interface Field {
   required: boolean;
   primaryKey?: boolean;
   unique?: boolean;
-  defaultValue?: any;
+  defaultValue?: unknown;
   description: string;
 }
 
@@ -94,10 +94,39 @@ export default function DatabaseVisualizer() {
   const [schema, setSchema] = useState<Schema | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPlugins, setSelectedPlugins] = useState<string[]>(['organization']);
+  const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
+  const [availablePlugins, setAvailablePlugins] = useState<PluginInfo[]>([]);
   const [showPluginLabels, setShowPluginLabels] = useState(true);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  const fetchEnabledPlugins = useCallback(async () => {
+    try {
+      const response = await fetch('/api/plugins');
+      const data = await response.json();
+      
+      if (data.plugins && Array.isArray(data.plugins)) {
+        const enabledPlugins = data.plugins.map((plugin: any) => ({
+          name: plugin.id,
+          displayName: plugin.name || plugin.id,
+          description: plugin.description || `${plugin.id} plugin for Better Auth`,
+          color: getPluginColor(plugin.id),
+        }));
+        
+        setAvailablePlugins(enabledPlugins);
+        setSelectedPlugins(enabledPlugins.map(p => p.name));
+      }
+    } catch (err) {
+      console.error('Error fetching enabled plugins:', err);
+      setAvailablePlugins(AVAILABLE_PLUGINS);
+      setSelectedPlugins(['organization']);
+    }
+  }, []);
+
+  const getPluginColor = (pluginId: string): string => {
+    const plugin = AVAILABLE_PLUGINS.find(p => p.name === pluginId);
+    return plugin?.color || 'bg-gray-500';
+  };
 
   const fetchSchema = useCallback(async (plugins: string[]) => {
     try {
@@ -120,17 +149,21 @@ export default function DatabaseVisualizer() {
   }, []);
 
   useEffect(() => {
-    fetchSchema(selectedPlugins);
+    fetchEnabledPlugins();
+  }, [fetchEnabledPlugins]);
+
+  useEffect(() => {
+    if (selectedPlugins.length > 0) {
+      fetchSchema(selectedPlugins);
+    }
   }, [selectedPlugins, fetchSchema]);
 
-  // Convert schema to ReactFlow nodes and edges
   useEffect(() => {
     if (!schema) return;
 
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
 
-    // Create nodes for each table
     schema.tables.forEach((table, index) => {
       const columns = table.fields.map((field) => ({
         id: `${table.name}-${field.name}`,
@@ -147,8 +180,8 @@ export default function DatabaseVisualizer() {
         id: table.name,
         type: 'tableNode',
         position: {
-          x: (index % 3) * 250,
-          y: Math.floor(index / 3) * 200,
+          x: (index % 4) * 350,
+          y: Math.floor(index / 4) * 300,
         },
         data: {
           name: table.name,
@@ -158,17 +191,21 @@ export default function DatabaseVisualizer() {
       });
     });
 
-    // Create edges for relationships
     schema.tables.forEach((table) => {
       table.relationships.forEach((rel) => {
+        if (rel.type === 'many-to-one') {
+          return;
+        }
+
         const sourceTable = table.name;
         const targetTable = rel.target;
 
-        // Find the source and target nodes
         const sourceNode = newNodes.find((n) => n.id === sourceTable);
         const targetNode = newNodes.find((n) => n.id === targetTable);
 
         if (sourceNode && targetNode) {
+          const relationshipLabel = rel.type === 'one-to-one' ? '1:1' : '1:N';
+
           newEdges.push({
             id: `${sourceTable}-${targetTable}-${rel.field}`,
             source: sourceTable,
@@ -176,22 +213,28 @@ export default function DatabaseVisualizer() {
             type: 'smoothstep',
             animated: false,
             style: {
-              stroke: '#000000',
-              strokeWidth: 3,
+              stroke: '#ffffff',
+              strokeWidth: 1.5,
+              strokeDasharray: '0',
             },
-            label: `${rel.field}: ${rel.type.replace('-', ' → ')}`,
+            label: relationshipLabel,
             labelStyle: {
-              fontSize: '10px',
-              fill: '#000000',
-              fontWeight: 'bold',
+              fontSize: '11px',
+              fill: '#6b7280',
+              fontWeight: '500',
             },
             labelBgStyle: {
-              fill: 'rgba(255, 255, 255, 0.8)',
-              fillOpacity: 0.9,
+              fill: 'rgba(255, 255, 255, 0.95)',
+              fillOpacity: 1,
+              // @ts-ignore
+              rx: 4,
+              ry: 4,
             },
             markerEnd: {
               type: 'arrowclosed',
-              color: '#000000',
+              color: '#ffffff',
+              width: 12,
+              height: 12,
             },
           });
         }
@@ -200,10 +243,9 @@ export default function DatabaseVisualizer() {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [schema, selectedPlugins]);
+  }, [schema, selectedPlugins, setNodes, setEdges]);
 
   const getPluginForField = (tableName: string, _fieldName: string, plugins: string[]): string => {
-    // Determine which plugin a field belongs to
     if (
       tableName === 'user' ||
       tableName === 'session' ||
@@ -242,6 +284,9 @@ export default function DatabaseVisualizer() {
           <div className="h-8 bg-gray-700 rounded w-1/3 mb-6"></div>
           <div className="h-96 bg-gray-700 rounded"></div>
         </div>
+        <div className="text-center text-gray-500 dark:text-gray-400 mt-4">
+          Loading plugins and schema...
+        </div>
       </div>
     );
   }
@@ -258,7 +303,7 @@ export default function DatabaseVisualizer() {
   }
 
   return (
-    <div className="p-6 h-screen flex flex-col bg-white dark:bg-black">
+    <div className="p-6 h-screen flex flex-col">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
@@ -286,7 +331,6 @@ export default function DatabaseVisualizer() {
       </div>
 
       <div className="flex-1 grid grid-cols-4 gap-6">
-        {/* Plugin Selector */}
         <div className="col-span-1">
           <Card className="rounded-none bg-white dark:bg-black border-gray-200 dark:border-gray-700 h-fit shadow-sm">
             <CardHeader>
@@ -296,29 +340,34 @@ export default function DatabaseVisualizer() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {AVAILABLE_PLUGINS.map((plugin) => (
-                <div key={plugin.name} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={plugin.name}
-                    checked={selectedPlugins.includes(plugin.name)}
-                    onCheckedChange={(checked: boolean) => handlePluginToggle(plugin.name, checked)}
-                  />
-                  <div className="flex-1">
-                    <label
-                      htmlFor={plugin.name}
-                      className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
-                    >
-                      {plugin.displayName}
-                    </label>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{plugin.description}</p>
+              {availablePlugins.length > 0 ? (
+                availablePlugins.map((plugin) => (
+                  <div key={plugin.name} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={plugin.name}
+                      checked={selectedPlugins.includes(plugin.name)}
+                      onCheckedChange={(checked: boolean) => handlePluginToggle(plugin.name, checked)}
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor={plugin.name}
+                        className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
+                      >
+                        {plugin.displayName}
+                      </label>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{plugin.description}</p>
+                    </div>
+                    <div className={`w-3 h-3 rounded-full ${plugin.color}`} />
                   </div>
-                  <div className={`w-3 h-3 rounded-full ${plugin.color}`} />
+                ))
+              ) : (
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  No plugins detected in configuration
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
 
-          {/* Schema Info */}
           {schema && (
             <Card className="rounded-none bg-white dark:bg-black border-gray-200 dark:border-gray-700 mt-4 shadow-sm">
               <CardHeader>
@@ -336,7 +385,11 @@ export default function DatabaseVisualizer() {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Plugins:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Available Plugins:</span>
+                  <span className="text-gray-900 dark:text-white">{availablePlugins.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Selected Plugins:</span>
                   <span className="text-gray-900 dark:text-white">{selectedPlugins.length}</span>
                 </div>
               </CardContent>
@@ -344,7 +397,6 @@ export default function DatabaseVisualizer() {
           )}
         </div>
 
-        {/* ReactFlow Diagram */}
         <div className="col-span-3">
           <div className="h-full bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-none overflow-hidden shadow-sm">
             <ReactFlow
@@ -356,17 +408,23 @@ export default function DatabaseVisualizer() {
               nodeTypes={nodeTypes}
               fitView
               fitViewOptions={{
-                padding: 0.2,
+                padding: 0.1,
+                includeHiddenNodes: false,
               }}
               className="bg-white dark:bg-black"
+              // @ts-ignore
+              connectionLineType='smoothstep' 
               defaultEdgeOptions={{
                 style: {
-                  stroke: '#000000',
-                  strokeWidth: 3,
+                  stroke: '#ffffff',
+                  strokeWidth: 1.5,
                 },
                 animated: false,
                 type: 'smoothstep',
               }}
+              nodesDraggable={true}
+              nodesConnectable={false}
+              elementsSelectable={true}
             >
               <Controls className="bg-white dark:bg-black border-gray-200 dark:border-gray-600" />
               <MiniMap
@@ -377,7 +435,7 @@ export default function DatabaseVisualizer() {
                 }}
                 maskColor="rgba(255, 255, 255, 0.8)"
               />
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#000000" />
+              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
             </ReactFlow>
           </div>
         </div>
