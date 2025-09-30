@@ -24,7 +24,7 @@ export type TableNodeData = {
 
 const TableNode = ({
   data: data_,
-  targetPosition, 
+  targetPosition,
   sourcePosition,
 }: NodeProps & { placeholder?: boolean }) => {
   const data = data_ as TableNodeData;
@@ -156,29 +156,35 @@ const TableNode = ({
               <Handle
                 type="target"
                 id={column.id}
-                position={targetPosition || "left" as any}
-                className={cn(hiddenNodeConnector, '!left-[-6px] !top-1/2 !transform !-translate-y-1/2')}
-                style={{ 
-                  background: '#000000', 
+                position={targetPosition || ('left' as any)}
+                className={cn(
+                  hiddenNodeConnector,
+                  '!left-[-6px] !top-1/2 !transform !-translate-y-1/2'
+                )}
+                style={{
+                  background: '#000000',
                   border: '1px solid #ffffff',
                   left: '-6px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.1)',
                 }}
               />
               <Handle
                 type="source"
                 id={column.id}
-                position={sourcePosition || "right" as any}
-                className={cn(hiddenNodeConnector, '!right-[-6px] !top-1/2 !transform !-translate-y-1/2')}
-                style={{ 
-                  background: '#000000', 
+                position={sourcePosition || ('right' as any)}
+                className={cn(
+                  hiddenNodeConnector,
+                  '!right-[-6px] !top-1/2 !transform !-translate-y-1/2'
+                )}
+                style={{
+                  background: '#000000',
                   border: '1px solid #ffffff',
                   right: '-6px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.1)',
                 }}
               />
             </div>

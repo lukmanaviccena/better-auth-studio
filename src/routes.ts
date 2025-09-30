@@ -97,7 +97,7 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
       }
 
       const jiti = createJiti(import.meta.url, {
-        debug: true, 
+        debug: true,
         fsCache: true,
         moduleCache: true,
         interopDefault: true,
@@ -143,7 +143,7 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
         currentDir = dirname(currentDir);
       }
 
-      resolvedContent = '' 
+      resolvedContent = '';
 
       resolvedContent = resolvedContent.replace(
         /import\s+([^"']*)\s+from\s+["']\.\/[^"']*["'];/g,
@@ -162,7 +162,7 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
         let commonJsContent = resolvedContent
           .replace(/export\s+const\s+(\w+)\s*=/g, 'const $1 =')
           .replace(/export\s+default\s+/g, 'module.exports = ')
-          .replace(/export\s+type\s+.*$/gm, '// $&') 
+          .replace(/export\s+type\s+.*$/gm, '// $&')
           .replace(/import\s+type\s+.*$/gm, '// $&');
 
         if (!commonJsContent.includes('module.exports')) {
@@ -197,7 +197,7 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
       }
     } catch (resolveError) {
       console.error('Import resolution also failed:', resolveError);
-      throw importError; 
+      throw importError;
     }
   }
 }
@@ -207,7 +207,7 @@ async function findAuthConfigPath(): Promise<string | null> {
   const { existsSync } = await import('fs');
 
   const possiblePaths = [
-    'auth.js', 
+    'auth.js',
     'auth.ts',
     'src/auth.js',
     'src/auth.ts',
@@ -1811,9 +1811,7 @@ export function createRoutes(
         });
         if (betterAuthConfig) {
           const plugins = betterAuthConfig.plugins || [];
-          const organizationPlugin = plugins.find(
-            (plugin: any) => plugin.id === 'organization'
-          );
+          const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
 
           if (organizationPlugin) {
             const teamsEnabled = organizationPlugin.options?.teams?.enabled === true;

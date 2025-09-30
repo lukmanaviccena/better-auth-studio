@@ -847,16 +847,6 @@ export default function OrganizationDetails() {
                   })}
                 </p>
               </div>
-              <div>
-                <label className="text-sm text-gray-400 font-light">Last Updated</label>
-                <p className="text-white mt-1">
-                  {new Date(organization.updatedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </p>
-              </div>
             </div>
           </div>
 

@@ -104,7 +104,7 @@ export default function DatabaseVisualizer() {
     try {
       const response = await fetch('/api/plugins');
       const data = await response.json();
-      
+
       if (data.plugins && Array.isArray(data.plugins)) {
         const enabledPlugins = data.plugins.map((plugin: any) => ({
           name: plugin.id,
@@ -112,7 +112,7 @@ export default function DatabaseVisualizer() {
           description: plugin.description || `${plugin.id} plugin for Better Auth`,
           color: getPluginColor(plugin.id),
         }));
-        
+
         setAvailablePlugins(enabledPlugins);
         setSelectedPlugins(enabledPlugins.map((p: any) => p.name));
       }
@@ -124,7 +124,7 @@ export default function DatabaseVisualizer() {
   }, []);
 
   const getPluginColor = (pluginId: string): string => {
-    const plugin = AVAILABLE_PLUGINS.find(p => p.name === pluginId);
+    const plugin = AVAILABLE_PLUGINS.find((p) => p.name === pluginId);
     return plugin?.color || 'bg-gray-500';
   };
 
@@ -226,7 +226,7 @@ export default function DatabaseVisualizer() {
             labelBgStyle: {
               fill: 'rgba(255, 255, 255, 0.95)',
               fillOpacity: 1,
-              // @ts-ignore
+              // @ts-expect-error
               rx: 4,
               ry: 4,
             },
@@ -346,7 +346,9 @@ export default function DatabaseVisualizer() {
                     <Checkbox
                       id={plugin.name}
                       checked={selectedPlugins.includes(plugin.name)}
-                      onCheckedChange={(checked: boolean) => handlePluginToggle(plugin.name, checked)}
+                      onCheckedChange={(checked: boolean) =>
+                        handlePluginToggle(plugin.name, checked)
+                      }
                     />
                     <div className="flex-1">
                       <label
@@ -355,7 +357,9 @@ export default function DatabaseVisualizer() {
                       >
                         {plugin.displayName}
                       </label>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{plugin.description}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {plugin.description}
+                      </p>
                     </div>
                     <div className={`w-3 h-3 rounded-full ${plugin.color}`} />
                   </div>
@@ -412,8 +416,8 @@ export default function DatabaseVisualizer() {
                 includeHiddenNodes: false,
               }}
               className="bg-white dark:bg-black"
-              // @ts-ignore
-              connectionLineType='smoothstep' 
+              // @ts-expect-error
+              connectionLineType="smoothstep"
               defaultEdgeOptions={{
                 style: {
                   stroke: '#ffffff',
