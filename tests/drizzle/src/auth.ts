@@ -23,7 +23,6 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     autoSignIn: true,
     sendResetPassword: async ({ user, url, token }) => {
-      // Send reset password email
       console.log(`Reset password email for ${user.email}: ${url}`);
     },
     resetPasswordTokenExpiresIn: 3600 // 1 hour
@@ -34,6 +33,7 @@ export const auth = betterAuth({
         enabled: true
       }
     }),
+    admin(),
     twoFactor({}),
     admin(),
     apiKey()
