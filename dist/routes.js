@@ -1,11 +1,12 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Router } from 'express';
-import { existsSync, readFileSync } from 'fs';
 import { createJiti } from 'jiti';
-import { dirname, join } from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
 import { createMockAccount, createMockSession, createMockUser, createMockVerification, getAuthAdapter, } from './auth-adapter.js';
 import { getAuthData } from './data.js';
 import { initializeGeoService, resolveIPLocation, setGeoDbPath } from './geo-service.js';
+import { detectDatabaseWithDialect } from './utils/database-detection.js';
 function getStudioVersion() {
     try {
         const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,12 +16,10 @@ function getStudioVersion() {
             return packageJson.version || '1.0.0';
         }
     }
-    catch (error) {
-        console.warn('Failed to read package.json for version:', error);
-    }
+    catch (_error) { }
     return '1.0.0';
 }
-function resolveModuleWithExtensions(id, parent) {
+function _resolveModuleWithExtensions(id, parent) {
     if (!id.startsWith('./') && !id.startsWith('../')) {
         return id;
     }
@@ -35,7 +34,7 @@ function resolveModuleWithExtensions(id, parent) {
     }
     if (existsSync(basePath)) {
         for (const ext of extensions) {
-            const indexPath = join(basePath, 'index' + ext);
+            const indexPath = join(basePath, `index${ext}`);
             if (existsSync(indexPath)) {
                 return pathToFileURL(indexPath).href;
             }
@@ -62,10 +61,10 @@ export async function safeImportAuthConfig(authConfigPath) {
             for (const importPath of foundImports) {
                 const importName = importPath.replace('./', '');
                 const possiblePaths = [
-                    join(authConfigDir, importName + '.ts'),
-                    join(authConfigDir, importName + '.js'),
-                    join(authConfigDir, importName + '.mjs'),
-                    join(authConfigDir, importName + '.cjs'),
+                    join(authConfigDir, `${importName}.ts`),
+                    join(authConfigDir, `${importName}.js`),
+                    join(authConfigDir, `${importName}.mjs`),
+                    join(authConfigDir, `${importName}.cjs`),
                     join(authConfigDir, importName, 'index.ts'),
                     join(authConfigDir, importName, 'index.js'),
                     join(authConfigDir, importName, 'index.mjs'),
@@ -88,7 +87,7 @@ export async function safeImportAuthConfig(authConfigPath) {
             try {
                 return await jiti.import(authConfigPath);
             }
-            catch (importError) {
+            catch (_importError) {
                 const content = readFileSync(authConfigPath, 'utf-8');
                 return {
                     auth: {
@@ -103,9 +102,9 @@ export async function safeImportAuthConfig(authConfigPath) {
     }
     catch (importError) {
         try {
-            const { dirname, join } = await import('path');
-            const { existsSync, readFileSync, writeFileSync, mkdtempSync, unlinkSync, rmdirSync } = await import('fs');
-            const { tmpdir } = await import('os');
+            const { dirname, join } = await import('node:path');
+            const { existsSync, readFileSync, writeFileSync, mkdtempSync, unlinkSync, rmdirSync } = await import('node:fs');
+            const { tmpdir } = await import('node:os');
             const projectDir = dirname(authConfigPath);
             const content = readFileSync(authConfigPath, 'utf-8');
             let resolvedContent = content;
@@ -158,15 +157,14 @@ export async function safeImportAuthConfig(authConfigPath) {
                 throw new Error('No node_modules found');
             }
         }
-        catch (resolveError) {
-            console.error('Import resolution also failed:', resolveError);
+        catch (_resolveError) {
             throw importError;
         }
     }
 }
 async function findAuthConfigPath() {
-    const { join, dirname } = await import('path');
-    const { existsSync } = await import('fs');
+    const { join, dirname } = await import('node:path');
+    const { existsSync } = await import('node:fs');
     const possiblePaths = [
         'auth.js',
         'auth.ts',
@@ -190,7 +188,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
     }
     initializeGeoService().catch(console.error);
     const getAuthAdapterWithConfig = () => getAuthAdapter(configPath);
-    router.get('/api/health', (req, res) => {
+    router.get('/api/health', (_req, res) => {
         const uptime = process.uptime();
         const hours = Math.floor(uptime / 3600);
         const minutes = Math.floor((uptime % 3600) / 60);
@@ -236,35 +234,49 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 location,
             });
         }
-        catch (error) {
-            console.error('Error resolving IP location:', error);
+        catch (_error) {
             res.status(500).json({
                 success: false,
                 error: 'Failed to resolve IP location',
             });
         }
     });
-    router.get('/api/config', async (req, res) => {
+    router.get('/api/config', async (_req, res) => {
         let databaseType = 'unknown';
-        const configPath = await findAuthConfigPath();
-        if (configPath) {
-            const content = readFileSync(configPath, 'utf-8');
-            if (content.includes('drizzleAdapter')) {
-                databaseType = 'Drizzle';
-            }
-            else if (content.includes('prismaAdapter')) {
-                databaseType = 'Prisma';
-            }
-            else if (content.includes('better-sqlite3') || content.includes('new Database(')) {
-                databaseType = 'SQLite';
+        let databaseDialect = 'unknown';
+        let databaseAdapter = 'unknown';
+        let databaseVersion = 'unknown';
+        try {
+            const detectedDb = await detectDatabaseWithDialect();
+            if (detectedDb) {
+                databaseType = detectedDb.name.charAt(0).toUpperCase() + detectedDb.name.slice(1);
+                databaseDialect = detectedDb.dialect || detectedDb.name;
+                databaseAdapter = detectedDb.adapter || detectedDb.name;
+                databaseVersion = detectedDb.version;
             }
         }
+        catch (_error) { }
         if (databaseType === 'unknown') {
-            let type = authConfig.database?.type || authConfig.database?.adapter || 'unknown';
-            if (type && type !== 'unknown') {
-                type = type.charAt(0).toUpperCase() + type.slice(1);
+            const configPath = await findAuthConfigPath();
+            if (configPath) {
+                const content = readFileSync(configPath, 'utf-8');
+                if (content.includes('drizzleAdapter')) {
+                    databaseType = 'Drizzle';
+                }
+                else if (content.includes('prismaAdapter')) {
+                    databaseType = 'Prisma';
+                }
+                else if (content.includes('better-sqlite3') || content.includes('new Database(')) {
+                    databaseType = 'SQLite';
+                }
             }
-            databaseType = type;
+            if (databaseType === 'unknown') {
+                let type = authConfig.database?.type || authConfig.database?.adapter || 'unknown';
+                if (type && type !== 'unknown') {
+                    type = type.charAt(0).toUpperCase() + type.slice(1);
+                }
+                databaseType = type;
+            }
         }
         const config = {
             appName: authConfig.appName || 'Better Auth',
@@ -273,7 +285,9 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             secret: authConfig.secret ? 'Configured' : 'Not set',
             database: {
                 type: databaseType,
-                dialect: authConfig.database?.dialect || authConfig.database?.provider || 'unknown',
+                dialect: authConfig.database?.dialect || authConfig.database?.provider || databaseDialect,
+                adapter: authConfig.database?.adapter || databaseAdapter,
+                version: databaseVersion,
                 casing: authConfig.database?.casing || 'camel',
                 debugLogs: authConfig.database?.debugLogs || false,
                 url: authConfig.database?.url,
@@ -295,12 +309,12 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 revokeSessionsOnPasswordReset: authConfig.emailAndPassword?.revokeSessionsOnPasswordReset ?? false,
             },
             socialProviders: authConfig.socialProviders
-                ? Object.entries(authConfig.socialProviders).map(([provider, config]) => ({
-                    type: provider,
-                    clientId: config.clientId,
-                    clientSecret: config.clientSecret,
-                    redirectUri: config.redirectUri,
-                    ...config,
+                ? authConfig.socialProviders.map((provider) => ({
+                    type: provider.id,
+                    clientId: provider.clientId,
+                    clientSecret: provider.clientSecret,
+                    redirectUri: provider.redirectUri,
+                    ...provider,
                 }))
                 : authConfig.providers || [],
             user: {
@@ -384,17 +398,16 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         };
         res.json(config);
     });
-    router.get('/api/stats', async (req, res) => {
+    router.get('/api/stats', async (_req, res) => {
         try {
             const stats = await getAuthData(authConfig, 'stats', undefined, configPath);
             res.json(stats);
         }
-        catch (error) {
-            console.error('Error fetching stats:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch statistics' });
         }
     });
-    router.get('/api/counts', async (req, res) => {
+    router.get('/api/counts', async (_req, res) => {
         try {
             const adapter = await getAuthAdapterWithConfig();
             let userCount = 0;
@@ -422,8 +435,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     }
                 }
             }
-            catch (error) {
-                console.error('Error checking plugin status:', error);
+            catch (_error) {
                 organizationPluginEnabled = false;
                 teamsPluginEnabled = false;
             }
@@ -434,18 +446,14 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         userCount = users?.length || 0;
                     }
                 }
-                catch (error) {
-                    console.error('Error fetching user count:', error);
-                }
+                catch (_error) { }
                 try {
                     if (typeof adapter.findMany === 'function') {
                         const sessions = await adapter.findMany({ model: 'session', limit: 10000 });
                         sessionCount = sessions?.length || 0;
                     }
                 }
-                catch (error) {
-                    console.error('Error fetching session count:', error);
-                }
+                catch (_error) { }
                 if (organizationPluginEnabled) {
                     try {
                         if (typeof adapter.findMany === 'function') {
@@ -453,8 +461,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                             organizationCount = organizations?.length || 0;
                         }
                     }
-                    catch (error) {
-                        console.error('Error fetching organization count:', error);
+                    catch (_error) {
                         organizationCount = 0;
                     }
                 }
@@ -465,8 +472,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                             teamCount = teams?.length || 0;
                         }
                     }
-                    catch (error) {
-                        console.error('Error fetching team count:', error);
+                    catch (_error) {
                         teamCount = 0;
                     }
                 }
@@ -478,12 +484,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 teams: teamCount,
             });
         }
-        catch (error) {
-            console.error('Error fetching counts:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch counts' });
         }
     });
-    router.get('/api/users/all', async (req, res) => {
+    router.get('/api/users/all', async (_req, res) => {
         try {
             const adapter = await getAuthAdapterWithConfig();
             if (!adapter) {
@@ -497,8 +502,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 res.json({ success: true, users: [] });
             }
         }
-        catch (error) {
-            console.error('Error fetching all users:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch users' });
         }
     });
@@ -520,8 +524,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             }
             res.json({ user });
         }
-        catch (error) {
-            console.error('Error fetching user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch user' });
         }
     });
@@ -540,8 +543,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, user });
         }
-        catch (error) {
-            console.error('Error updating user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to update user' });
         }
     });
@@ -555,8 +557,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             await adapter.delete({ model: 'user', where: [{ field: 'id', value: userId }] });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error deleting user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to delete user' });
         }
     });
@@ -596,8 +597,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ memberships: formattedMemberships });
         }
-        catch (error) {
-            console.error('Error fetching user organizations:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch user organizations' });
         }
     });
@@ -642,8 +642,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ memberships: formattedMemberships });
         }
-        catch (error) {
-            console.error('Error fetching user teams:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch user teams' });
         }
     });
@@ -657,8 +656,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             await adapter.delete({ model: 'member', id: membershipId });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error removing user from organization:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to remove user from organization' });
         }
     });
@@ -672,8 +670,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             await adapter.delete({ model: 'teamMember', id: membershipId });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error removing user from team:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to remove user from team' });
         }
     });
@@ -691,8 +688,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, user });
         }
-        catch (error) {
-            console.error('Error banning user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to ban user' });
         }
     });
@@ -721,8 +717,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             }));
             res.json({ sessions: formattedSessions });
         }
-        catch (error) {
-            console.error('Error fetching user sessions:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch user sessions' });
         }
     });
@@ -736,8 +731,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             await adapter.delete({ model: 'session', id: sessionId });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error deleting session:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to delete session' });
         }
     });
@@ -767,9 +761,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 });
                 organization = orgs && orgs.length > 0 ? orgs[0] : null;
             }
-            catch (error) {
-                console.error('Error fetching organization for team:', error);
-            }
+            catch (_error) { }
             const transformedTeam = {
                 id: team.id,
                 name: team.name,
@@ -787,8 +779,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             };
             res.json({ success: true, team: transformedTeam });
         }
-        catch (error) {
-            console.error('Error fetching team:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch team' });
         }
     });
@@ -818,15 +809,14 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             };
             res.json({ success: true, organization: transformedOrganization });
         }
-        catch (error) {
-            console.error('Error fetching organization:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch organization' });
         }
     });
     router.get('/api/users', async (req, res) => {
         try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 20;
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = parseInt(req.query.limit, 10) || 20;
             const search = req.query.search;
             try {
                 const adapter = await getAuthAdapterWithConfig();
@@ -848,14 +838,16 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         emailVerified: user.emailVerified,
                         createdAt: user.createdAt,
                         updatedAt: user.updatedAt,
+                        role: user.role,
+                        banned: user.banned,
+                        banReason: user.banReason,
+                        banExpires: user.banExpires,
                     }));
                     res.json({ users: transformedUsers });
                     return;
                 }
             }
-            catch (adapterError) {
-                console.error('Error fetching users from adapter:', adapterError);
-            }
+            catch (_adapterError) { }
             const result = await getAuthData(authConfig, 'users', { page, limit, search }, configPath);
             const transformedUsers = (result.data || []).map((user) => ({
                 id: user.id,
@@ -865,33 +857,35 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 emailVerified: user.emailVerified,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
+                role: user.role,
+                banned: user.banned,
+                banReason: user.banReason,
+                banExpires: user.banExpires,
+                ...user,
             }));
             res.json({ users: transformedUsers });
         }
-        catch (error) {
-            console.error('Error fetching users:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch users' });
         }
     });
     router.get('/api/sessions', async (req, res) => {
         try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 20;
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = parseInt(req.query.limit, 10) || 20;
             const sessions = await getAuthData(authConfig, 'sessions', { page, limit }, configPath);
             res.json(sessions);
         }
-        catch (error) {
-            console.error('Error fetching sessions:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch sessions' });
         }
     });
-    router.get('/api/providers', async (req, res) => {
+    router.get('/api/providers', async (_req, res) => {
         try {
             const providers = await getAuthData(authConfig, 'providers', undefined, configPath);
             res.json(providers);
         }
-        catch (error) {
-            console.error('Error fetching providers:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch providers' });
         }
     });
@@ -901,12 +895,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             await getAuthData(authConfig, 'deleteUser', { id }, configPath);
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error deleting user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to delete user' });
         }
     });
-    router.get('/api/plugins', async (req, res) => {
+    router.get('/api/plugins', async (_req, res) => {
         try {
             const authConfigPath = configPath
                 ? join(process.cwd(), configPath)
@@ -923,7 +916,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 try {
                     authModule = await safeImportAuthConfig(authConfigPath);
                 }
-                catch (importError) {
+                catch (_importError) {
                     // Fallback: read file content directly
                     const content = readFileSync(authConfigPath, 'utf-8');
                     authModule = {
@@ -956,14 +949,13 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     totalPlugins: pluginInfo.length,
                 });
             }
-            catch (error) {
-                console.error('Error importing auth config:', error);
+            catch (_error) {
                 try {
-                    const { readFileSync } = await import('fs');
+                    const { readFileSync } = await import('node:fs');
                     const content = readFileSync(authConfigPath, 'utf-8');
                     const { extractBetterAuthConfig } = await import('./config');
                     const config = extractBetterAuthConfig(content);
-                    if (config && config.plugins) {
+                    if (config?.plugins) {
                         const pluginInfo = config.plugins.map((plugin) => ({
                             id: plugin.id || 'unknown',
                             name: plugin.name || plugin.id || 'unknown',
@@ -979,9 +971,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         });
                     }
                 }
-                catch (fallbackError) {
-                    console.error('Fallback extraction also failed:', fallbackError);
-                }
+                catch (_fallbackError) { }
                 res.json({
                     plugins: [],
                     error: 'Failed to load auth config - import failed and regex extraction unavailable',
@@ -989,12 +979,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 });
             }
         }
-        catch (error) {
-            console.error('Error fetching plugins:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch plugins' });
         }
     });
-    router.get('/api/database/info', async (req, res) => {
+    router.get('/api/database/info', async (_req, res) => {
         try {
             const authConfigPath = configPath || (await findAuthConfigPath());
             if (!authConfigPath) {
@@ -1020,14 +1009,13 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     configPath: authConfigPath,
                 });
             }
-            catch (error) {
-                console.error('Error getting database info:', error);
+            catch (_error) {
                 try {
-                    const { readFileSync } = await import('fs');
+                    const { readFileSync } = await import('node:fs');
                     const content = readFileSync(authConfigPath, 'utf-8');
                     const { extractBetterAuthConfig } = await import('./config');
                     const config = extractBetterAuthConfig(content);
-                    if (config && config.database) {
+                    if (config?.database) {
                         return res.json({
                             database: config.database,
                             configPath: authConfigPath,
@@ -1035,9 +1023,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         });
                     }
                 }
-                catch (fallbackError) {
-                    console.error('Fallback extraction also failed:', fallbackError);
-                }
+                catch (_fallbackError) { }
                 res.json({
                     database: null,
                     error: 'Failed to load auth config - import failed and regex extraction unavailable',
@@ -1045,9 +1031,219 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 });
             }
         }
-        catch (error) {
-            console.error('Error fetching database info:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch database info' });
+        }
+    });
+    // Database Detection endpoint - Auto-detect database from installed packages
+    router.get('/api/database/detect', async (_req, res) => {
+        try {
+            const detectedDb = await detectDatabaseWithDialect();
+            if (detectedDb) {
+                res.json({
+                    success: true,
+                    database: {
+                        name: detectedDb.name,
+                        version: detectedDb.version,
+                        dialect: detectedDb.dialect,
+                        adapter: detectedDb.adapter,
+                        displayName: detectedDb.name.charAt(0).toUpperCase() + detectedDb.name.slice(1),
+                    },
+                });
+            }
+            else {
+                res.json({
+                    success: false,
+                    database: null,
+                    message: 'No supported database packages detected',
+                });
+            }
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to detect database',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    });
+    router.get('/api/db', async (_req, res) => {
+        try {
+            const detectedDb = await detectDatabaseWithDialect();
+            if (detectedDb) {
+                res.json({
+                    success: true,
+                    name: detectedDb.name,
+                    version: detectedDb.version,
+                    dialect: detectedDb.dialect,
+                    adapter: detectedDb.adapter,
+                    displayName: detectedDb.name.charAt(0).toUpperCase() + detectedDb.name.slice(1),
+                    autoDetected: true,
+                });
+            }
+            else {
+                res.json({
+                    success: false,
+                    name: 'unknown',
+                    version: 'unknown',
+                    dialect: 'unknown',
+                    adapter: 'unknown',
+                    displayName: 'Unknown',
+                    autoDetected: false,
+                    message: 'No supported database packages detected',
+                });
+            }
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to get database information',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    });
+    router.post('/api/admin/ban-user', async (req, res) => {
+        try {
+            const authConfigPath = configPath || (await findAuthConfigPath());
+            if (!authConfigPath) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'No auth config found',
+                });
+            }
+            const { getConfig } = await import('./config.js');
+            const auth = await getConfig({
+                cwd: process.cwd(),
+                configPath: authConfigPath,
+                shouldThrowOnError: false,
+            });
+            if (!auth) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Failed to load auth config',
+                });
+            }
+            const plugins = auth.plugins || [];
+            const adminPlugin = plugins.find((plugin) => plugin.id === 'admin');
+            if (!adminPlugin) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Admin plugin is not enabled. Please enable the admin plugin in your Better Auth configuration.',
+                });
+            }
+            const adapter = await getAuthAdapterWithConfig();
+            if (!adapter || !adapter.update) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Auth adapter not available',
+                });
+            }
+            const bannedUser = await adapter.update({
+                model: 'user',
+                where: [{ field: 'id', value: req.body.userId }],
+                update: { banned: true, banReason: req.body.banReason, banExpires: req.body.banExpires },
+            });
+            res.json({ success: true, user: bannedUser });
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to ban user',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    });
+    router.post('/api/admin/unban-user', async (req, res) => {
+        try {
+            const authConfigPath = configPath || (await findAuthConfigPath());
+            if (!authConfigPath) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'No auth config found',
+                });
+            }
+            const { getConfig } = await import('./config.js');
+            const auth = await getConfig({
+                cwd: process.cwd(),
+                configPath: authConfigPath,
+                shouldThrowOnError: false,
+            });
+            if (!auth) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Failed to load auth config',
+                });
+            }
+            const plugins = auth.plugins || [];
+            const adminPlugin = plugins.find((plugin) => plugin.id === 'admin');
+            if (!adminPlugin) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Admin plugin is not enabled. Please enable the admin plugin in your Better Auth configuration.',
+                });
+            }
+            const adapter = await getAuthAdapterWithConfig();
+            if (!adapter || !adapter.update) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Auth adapter not available',
+                });
+            }
+            const unbannedUser = await adapter.update({
+                model: 'user',
+                where: [{ field: 'id', value: req.body.userId }],
+                update: { banned: false, banReason: null, banExpires: null },
+            });
+            res.json({ success: true, user: unbannedUser });
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to unban user',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    });
+    router.get('/api/admin/status', async (_req, res) => {
+        try {
+            const authConfigPath = configPath || (await findAuthConfigPath());
+            if (!authConfigPath) {
+                return res.json({
+                    enabled: false,
+                    error: 'No auth config found',
+                    configPath: null,
+                });
+            }
+            const { getConfig } = await import('./config.js');
+            const betterAuthConfig = await getConfig({
+                cwd: process.cwd(),
+                configPath: authConfigPath,
+                shouldThrowOnError: false,
+            });
+            if (!betterAuthConfig) {
+                return res.json({
+                    enabled: false,
+                    error: 'Failed to load auth config',
+                    configPath: authConfigPath,
+                });
+            }
+            const plugins = betterAuthConfig.plugins || [];
+            const adminPlugin = plugins.find((plugin) => plugin.id === 'admin');
+            res.json({
+                enabled: !!adminPlugin,
+                configPath: authConfigPath,
+                adminPlugin: adminPlugin || null,
+                message: adminPlugin
+                    ? 'Admin plugin is enabled. Use Better Auth admin endpoints directly for ban/unban functionality.'
+                    : 'Admin plugin is not enabled. Please enable the admin plugin in your Better Auth configuration.',
+            });
+        }
+        catch (error) {
+            res.status(500).json({
+                enabled: false,
+                error: 'Failed to check admin status',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
         }
     });
     // Database Schema Visualization endpoint
@@ -1664,15 +1860,14 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 selectedPlugins: selectedPlugins,
             });
         }
-        catch (error) {
-            console.error('Error fetching database schema:', error);
+        catch (_error) {
             res.status(500).json({
                 success: false,
                 error: 'Failed to fetch database schema',
             });
         }
     });
-    router.get('/api/plugins/teams/status', async (req, res) => {
+    router.get('/api/plugins/teams/status', async (_req, res) => {
         try {
             const authConfigPath = configPath || (await findAuthConfigPath());
             if (!authConfigPath) {
@@ -1710,11 +1905,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     }
                 }
                 try {
-                    const { readFileSync } = await import('fs');
+                    const { readFileSync } = await import('node:fs');
                     const content = readFileSync(authConfigPath, 'utf-8');
                     const { extractBetterAuthConfig } = await import('./config.js');
                     const config = extractBetterAuthConfig(content);
-                    if (config && config.plugins) {
+                    if (config?.plugins) {
                         const organizationPlugin = config.plugins.find((plugin) => plugin.id === 'organization');
                         const teamsEnabled = organizationPlugin?.teams?.enabled === true;
                         return res.json({
@@ -1725,22 +1920,18 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         });
                     }
                 }
-                catch (fallbackError) {
-                    console.error('Fallback extraction also failed:', fallbackError);
-                }
+                catch (_fallbackError) { }
                 res.json({
                     enabled: false,
                     error: 'Failed to load auth config - getConfig failed and regex extraction unavailable',
                     configPath: authConfigPath,
                 });
             }
-            catch (error) {
-                console.error('Error checking teams plugin:', error);
+            catch (_error) {
                 res.status(500).json({ error: 'Failed to check teams status' });
             }
         }
-        catch (error) {
-            console.error('Error checking teams status:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to check teams status' });
         }
     });
@@ -1771,14 +1962,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     res.json({ success: true, invitations: transformedInvitations });
                     return;
                 }
-                catch (error) {
-                    console.error('Error fetching invitations from adapter:', error);
-                }
+                catch (_error) { }
             }
             res.json({ success: true, invitations: [] });
         }
-        catch (error) {
-            console.error('Error fetching invitations:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch invitations' });
         }
     });
@@ -1821,23 +2009,19 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                             }
                             return null;
                         }
-                        catch (error) {
-                            console.error('Error fetching user for member:', error);
+                        catch (_error) {
                             return null;
                         }
                     }));
-                    const validMembers = membersWithUsers.filter((member) => member && member.user);
+                    const validMembers = membersWithUsers.filter((member) => member?.user);
                     res.json({ success: true, members: validMembers });
                     return;
                 }
-                catch (error) {
-                    console.error('Error fetching members from adapter:', error);
-                }
+                catch (_error) { }
             }
             res.json({ success: true, members: [] });
         }
-        catch (error) {
-            console.error('Error fetching members:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch members' });
         }
     });
@@ -1911,8 +2095,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding members:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed members' });
         }
     });
@@ -1983,8 +2166,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding teams:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed teams' });
         }
     });
@@ -2004,8 +2186,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error removing member:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to remove member' });
         }
     });
@@ -2029,8 +2210,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error resending invitation:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to resend invitation' });
         }
     });
@@ -2054,8 +2234,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error cancelling invitation:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to cancel invitation' });
         }
     });
@@ -2100,8 +2279,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, invitation });
         }
-        catch (error) {
-            console.error('Error creating invitation:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to create invitation' });
         }
     });
@@ -2138,14 +2316,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     res.json({ success: true, teams: transformedTeams });
                     return;
                 }
-                catch (error) {
-                    console.error('Error fetching teams from adapter:', error);
-                }
+                catch (_error) { }
             }
             res.json({ success: true, teams: [] });
         }
-        catch (error) {
-            console.error('Error fetching teams:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch teams' });
         }
     });
@@ -2182,8 +2357,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, team });
         }
-        catch (error) {
-            console.error('Error creating team:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to create team' });
         }
     });
@@ -2226,23 +2400,19 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                             }
                             return null;
                         }
-                        catch (error) {
-                            console.error('Error fetching user for team member:', error);
+                        catch (_error) {
                             return null;
                         }
                     }));
-                    const validMembers = membersWithUsers.filter((member) => member && member.user);
+                    const validMembers = membersWithUsers.filter((member) => member?.user);
                     res.json({ success: true, members: validMembers });
                     return;
                 }
-                catch (error) {
-                    console.error('Error fetching team members from adapter:', error);
-                }
+                catch (_error) { }
             }
             res.json({ success: true, members: [] });
         }
-        catch (error) {
-            console.error('Error fetching team members:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch team members' });
         }
     });
@@ -2285,8 +2455,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error adding team members:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to add team members' });
         }
     });
@@ -2303,8 +2472,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error removing team member:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to remove team member' });
         }
     });
@@ -2332,8 +2500,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, team: updatedTeam });
         }
-        catch (error) {
-            console.error('Error updating team:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to update team' });
         }
     });
@@ -2353,12 +2520,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true });
         }
-        catch (error) {
-            console.error('Error deleting team:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to delete team' });
         }
     });
-    router.get('/api/plugins/organization/status', async (req, res) => {
+    router.get('/api/plugins/organization/status', async (_req, res) => {
         try {
             const authConfigPath = configPath || (await findAuthConfigPath());
             if (!authConfigPath) {
@@ -2386,11 +2552,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     });
                 }
                 try {
-                    const { readFileSync } = await import('fs');
+                    const { readFileSync } = await import('node:fs');
                     const content = readFileSync(authConfigPath, 'utf-8');
                     const { extractBetterAuthConfig } = await import('./config.js');
                     const config = extractBetterAuthConfig(content);
-                    if (config && config.plugins) {
+                    if (config?.plugins) {
                         const hasOrganizationPlugin = config.plugins.find((plugin) => plugin.id === 'organization');
                         return res.json({
                             enabled: !!hasOrganizationPlugin,
@@ -2401,29 +2567,25 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         });
                     }
                 }
-                catch (fallbackError) {
-                    console.error('Fallback extraction also failed:', fallbackError);
-                }
+                catch (_fallbackError) { }
                 res.json({
                     enabled: false,
                     error: 'Failed to load auth config - getConfig failed and regex extraction unavailable',
                     configPath: authConfigPath,
                 });
             }
-            catch (error) {
-                console.error('Error checking organization plugin:', error);
+            catch (_error) {
                 res.status(500).json({ error: 'Failed to check plugin status' });
             }
         }
-        catch (error) {
-            console.error('Error checking plugin status:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to check plugin status' });
         }
     });
     router.get('/api/organizations', async (req, res) => {
         try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 20;
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = parseInt(req.query.limit, 10) || 20;
             const search = req.query.search;
             try {
                 const adapter = await getAuthAdapterWithConfig();
@@ -2449,9 +2611,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     return;
                 }
             }
-            catch (adapterError) {
-                console.error('Error fetching organizations from adapter:', adapterError);
-            }
+            catch (_adapterError) { }
             const mockOrganizations = [
                 {
                     id: 'org_1',
@@ -2472,8 +2632,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             ];
             res.json({ organizations: mockOrganizations });
         }
-        catch (error) {
-            console.error('Error fetching organizations:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to fetch organizations' });
         }
     });
@@ -2493,8 +2652,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             const organization = await adapter.createOrganization(orgData);
             res.json({ success: true, organization });
         }
-        catch (error) {
-            console.error('Error creating organization:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to create organization' });
         }
     });
@@ -2524,8 +2682,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, organization: updatedOrg });
         }
-        catch (error) {
-            console.error('Error updating organization:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to update organization' });
         }
     });
@@ -2542,8 +2699,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             });
             res.json({ success: true, organization: deletedOrg });
         }
-        catch (error) {
-            console.error('Error deleting organization:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to delete organization' });
         }
     });
@@ -2557,8 +2713,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             const user = await adapter.createUser(userData);
             res.json({ success: true, user });
         }
-        catch (error) {
-            console.error('Error creating user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to create user' });
         }
     });
@@ -2569,8 +2724,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             const updatedUser = await getAuthData(authConfig, 'updateUser', { id, userData }, configPath);
             res.json({ success: true, user: updatedUser });
         }
-        catch (error) {
-            console.error('Error updating user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to update user' });
         }
     });
@@ -2613,8 +2767,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding users:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed users' });
         }
     });
@@ -2629,7 +2782,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             try {
                 user = await createMockUser(adapter, 1);
             }
-            catch (error) {
+            catch (_error) {
                 return res.status(500).json({ error: 'Failed to create user for session' });
             }
             const results = [];
@@ -2663,8 +2816,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding sessions:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed sessions' });
         }
     });
@@ -2718,8 +2870,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding sessions for user:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed sessions for user' });
         }
     });
@@ -2734,7 +2885,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             try {
                 user = await createMockUser(adapter, 1);
             }
-            catch (error) {
+            catch (_error) {
                 return res.status(500).json({ error: 'Failed to create user for account' });
             }
             const results = [];
@@ -2769,8 +2920,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding accounts:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed accounts' });
         }
     });
@@ -2812,8 +2962,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding verifications:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed verifications' });
         }
     });
@@ -2869,8 +3018,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 results,
             });
         }
-        catch (error) {
-            console.error('Error seeding organizations:', error);
+        catch (_error) {
             res.status(500).json({ error: 'Failed to seed organizations' });
         }
     });

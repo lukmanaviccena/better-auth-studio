@@ -1,4 +1,5 @@
 import {
+  Ban,
   Check,
   Database,
   Download,
@@ -7,6 +8,8 @@ import {
   Filter,
   Loader,
   Mail,
+  MoreVertical,
+  Plus,
   Search,
   Trash2,
   UserPlus,
@@ -14,20 +17,16 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Terminal } from '../components/Terminal';
 import { Button } from '../components/ui/button';
+import { DateRangePicker } from '../components/ui/date-range-picker';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Pagination } from '../components/ui/pagination';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '../components/ui/select';
 import { useCounts } from '../contexts/CountsContext';
 
 interface User {
@@ -38,15 +37,25 @@ interface User {
   image?: string;
   createdAt: string;
   updatedAt: string;
+  banned?: boolean;
+  banReason?: string;
+  banExpires?: string;
+  role?: string;
 }
 
 export default function Users() {
   const navigate = useNavigate();
   const { refetchCounts } = useCounts();
+  interface FilterConfig {
+    type: string;
+    value?: any;
+    dateRange?: DateRange;
+  }
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [activeFilters, setActiveFilters] = useState<FilterConfig[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(20);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -54,7 +63,13 @@ export default function Users() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [showUnbanModal, setShowUnbanModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [banReason, setBanReason] = useState('');
+  const [banExpiresIn, setBanExpiresIn] = useState<number | undefined>();
+  const [adminPluginEnabled, setAdminPluginEnabled] = useState(false);
   const [seedingLogs, setSeedingLogs] = useState<
     Array<{
       id: string;
@@ -66,21 +81,41 @@ export default function Users() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+    const fetchUsers = async () => {
     try {
       const response = await fetch('/api/users?limit=10000');
       const data = await response.json();
       setUsers(data.users || []);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
+    } catch (_error) {
     } finally {
       setLoading(false);
     }
   };
+
+  const checkAdminPlugin = async () => {
+    try {
+      const response = await fetch('/api/admin/status');
+      const data = await response.json();
+      setAdminPluginEnabled(data.enabled);
+    } catch (_error) {
+      setAdminPluginEnabled(false);
+    }
+  };
+  useEffect(() => {
+    fetchUsers();
+    checkAdminPlugin();
+
+    const handleClickOutside = () => {
+      if (actionMenuOpen) {
+        setActionMenuOpen(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [actionMenuOpen, checkAdminPlugin, fetchUsers]);
+
+
 
   const handleSeedUsers = async (count: number) => {
     setSeedingLogs([]);
@@ -211,8 +246,7 @@ export default function Users() {
       } else {
         toast.error(`Error creating user: ${result.error || 'Unknown error'}`, { id: toastId });
       }
-    } catch (error) {
-      console.error('Error creating user:', error);
+    } catch (_error) {
       toast.error('Error creating user', { id: toastId });
     }
   };
@@ -250,8 +284,7 @@ export default function Users() {
       } else {
         toast.error(`Error updating user: ${result.error || 'Unknown error'}`, { id: toastId });
       }
-    } catch (error) {
-      console.error('Error updating user:', error);
+    } catch (_error) {
       toast.error('Error updating user', { id: toastId });
     }
   };
@@ -281,9 +314,82 @@ export default function Users() {
       } else {
         toast.error(`Error deleting user: ${result.error || 'Unknown error'}`, { id: toastId });
       }
-    } catch (error) {
-      console.error('Error deleting user:', error);
+    } catch (_error) {
       toast.error('Error deleting user', { id: toastId });
+    }
+  };
+
+  const handleBanUser = async () => {
+    if (!selectedUser) return;
+
+    if (!adminPluginEnabled) {
+      toast.error('Admin plugin is not enabled');
+      return;
+    }
+
+    const toastId = toast.loading('Banning user...');
+    try {
+      const response = await fetch('/api/admin/ban-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          banReason: banReason || 'No reason provided',
+          banExpiresIn: banExpiresIn,
+        }),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success('User banned successfully!', { id: toastId });
+        setShowBanModal(false);
+        setBanReason('');
+        setBanExpiresIn(undefined);
+        setSelectedUser(null);
+        setActionMenuOpen(null);
+        fetchUsers();
+      } else {
+        toast.error(`Error banning user: ${result.error || result.message || 'Unknown error'}`, {
+          id: toastId,
+        });
+      }
+    } catch (_error) {
+      toast.error('Error banning user', { id: toastId });
+    }
+  };
+
+  const handleUnbanUser = async () => {
+    if (!selectedUser) return;
+
+    if (!adminPluginEnabled) {
+      toast.error('Admin plugin is not enabled');
+      return;
+    }
+
+    const toastId = toast.loading('Unbanning user...');
+    try {
+      const response = await fetch('/api/admin/unban-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+        }),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success('User unbanned successfully!', { id: toastId });
+        setShowUnbanModal(false);
+        setSelectedUser(null);
+        setActionMenuOpen(null);
+        fetchUsers();
+      } else {
+        toast.error(`Error unbanning user: ${result.error || result.message || 'Unknown error'}`, {
+          id: toastId,
+        });
+      }
+    } catch (_error) {
+      toast.error('Error unbanning user', { id: toastId });
     }
   };
 
@@ -298,7 +404,7 @@ export default function Users() {
       user.id,
       user.name || '',
       user.email || '',
-      user.emailVerified ? true : false,
+      !!user.emailVerified,
       new Date(user.createdAt).toLocaleString(),
       new Date(user.updatedAt).toLocaleString(),
     ]);
@@ -321,13 +427,65 @@ export default function Users() {
     toast.success(`Exported ${users.length} users to CSV`);
   };
 
+  const addFilter = (filterType: string) => {
+    const exists = activeFilters.some((f) => f.type === filterType);
+    if (!exists) {
+      setActiveFilters((prev) => [...prev, { type: filterType }]);
+      setCurrentPage(1);
+    }
+  };
+
+  const removeFilter = (filterType: string) => {
+    setActiveFilters((prev) => prev.filter((f) => f.type !== filterType));
+    setCurrentPage(1);
+  };
+
+  const updateFilterValue = (filterType: string, value: any) => {
+    setActiveFilters((prev) => prev.map((f) => (f.type === filterType ? { ...f, value } : f)));
+  };
+
+  const updateFilterDateRange = (filterType: string, dateRange?: DateRange) => {
+    setActiveFilters((prev) => prev.map((f) => (f.type === filterType ? { ...f, dateRange } : f)));
+  };
+
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all';
-    return matchesSearch && matchesFilter;
+
+    if (activeFilters.length === 0) {
+      return matchesSearch;
+    }
+
+    const matchesFilters = activeFilters.every((filter) => {
+      switch (filter.type) {
+        case 'emailVerified':
+          if (filter.value === undefined) return true;
+          return user.emailVerified === (filter.value === 'true');
+        case 'banned':
+          if (filter.value === undefined) return true;
+          return user.banned === (filter.value === 'true');
+        case 'active':
+          return user.banned !== true;
+        case 'createdAt': {
+          if (!filter.dateRange?.from && !filter.dateRange?.to) return true;
+          const userDate = new Date(user.createdAt);
+          if (filter.dateRange?.from && filter.dateRange.from > userDate) return false;
+          if (filter.dateRange?.to && filter.dateRange.to < userDate) return false;
+          return true;
+        }
+        case 'role':
+          if (!filter.value) return true;
+          return user.role?.toLowerCase().includes(filter.value.toLowerCase());
+        default:
+          return true;
+      }
+    });
+
+    return matchesSearch && matchesFilters;
   });
+
+  const bannedCount = users.filter((u) => u.banned).length;
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const startIndex = (currentPage - 1) * usersPerPage;
@@ -355,6 +513,14 @@ export default function Users() {
         <div>
           <h1 className="text-2xl text-white font-light">Users ({users.length})</h1>
           <p className="text-gray-400 mt-1">Manage your application users</p>
+          <div className="flex items-center space-x-4 mt-2">
+            {bannedCount > 0 && (
+              <span className="text-sm text-red-400 flex items-center space-x-1">
+                <Ban className="w-3 h-3" />
+                <span>{bannedCount} Banned</span>
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center space-x-3">
           <Button
@@ -382,30 +548,147 @@ export default function Users() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
-          />
+      <div className="space-y-3">
+        <div className="flex items-center space-x-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Select value="" onValueChange={addFilter}>
+              <SelectTrigger className="w-[180px]">
+                <div className="flex items-center space-x-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Add Filter</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {!activeFilters.some((f) => f.type === 'emailVerified') && (
+                  <SelectItem value="emailVerified">Email Verified</SelectItem>
+                )}
+                {!activeFilters.some((f) => f.type === 'banned') && (
+                  <SelectItem value="banned">Banned Status</SelectItem>
+                )}
+                {!activeFilters.some((f) => f.type === 'createdAt') && (
+                  <SelectItem value="createdAt">Created Date</SelectItem>
+                )}
+                {!activeFilters.some((f) => f.type === 'role') && (
+                  <SelectItem value="role">Role</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Active Filters */}
+        {activeFilters.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Active filters:</span>
+              <button
+                onClick={() => setActiveFilters([])}
+                className="text-xs text-gray-400 hover:text-white underline"
+              >
+                Clear all
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {activeFilters.map((filter) => (
+                <div
+                  key={filter.type}
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-sm"
+                >
+                  <Filter className="w-3 h-3 text-white" />
+
+                  {filter.type === 'emailVerified' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white">Email Verified:</span>
+                      <Select
+                        value={filter.value || ''}
+                        onValueChange={(val) => updateFilterValue('emailVerified', val)}
+                      >
+                        <SelectTrigger className="h-7 w-24 text-xs">
+                          <span>
+                            {filter.value === 'true'
+                              ? 'True'
+                              : filter.value === 'false'
+                                ? 'False'
+                                : 'Select'}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">True</SelectItem>
+                          <SelectItem value="false">False</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {filter.type === 'banned' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white">Banned:</span>
+                      <Select
+                        value={filter.value || ''}
+                        onValueChange={(val) => updateFilterValue('banned', val)}
+                      >
+                        <SelectTrigger className="h-7 w-24 text-xs">
+                          <span>
+                            {filter.value === 'true'
+                              ? 'Yes'
+                              : filter.value === 'false'
+                                ? 'No'
+                                : 'Select'}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Yes</SelectItem>
+                          <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {filter.type === 'createdAt' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white">Created:</span>
+                      <DateRangePicker
+                        value={filter.dateRange}
+                        onChange={(range) => updateFilterDateRange('createdAt', range)}
+                      />
+                    </div>
+                  )}
+
+                  {filter.type === 'role' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white">Role:</span>
+                      <Input
+                        type="text"
+                        value={filter.value || ''}
+                        onChange={(e) => updateFilterValue('role', e.target.value)}
+                        className="h-7 w-32 text-xs bg-black border-white/20 text-white"
+                        placeholder="Enter role..."
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => removeFilter(filter.type)}
+                    className="ml-1 hover:bg-white/20 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Users Table */}
@@ -415,8 +698,7 @@ export default function Users() {
             <thead>
               <tr className="border-b border-dashed border-white/10">
                 <th className="text-left py-4 px-4 text-white font-light">User</th>
-                <th className="text-left py-4 px-4 text-white font-light">Email</th>
-                <th className="text-left py-4 px-4 text-white font-light">Email Verified</th>
+                <th className="text-left py-4 px-4 text-white font-light">Email Status</th>
                 <th className="text-left py-4 px-4 text-white font-light">Created</th>
                 <th className="text-right py-4 px-4 text-white font-light">Actions</th>
               </tr>
@@ -424,7 +706,7 @@ export default function Users() {
             <tbody>
               {currentUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 px-4 text-center">
+                  <td colSpan={4} className="py-12 px-4 text-center">
                     <div className="flex flex-col items-center space-y-4">
                       <div className="w-16 h-16 rounded-none border border-dashed border-white/20 bg-white/10 flex items-center justify-center">
                         <UsersIcon className="w-8 h-8 text-white/50" />
@@ -432,12 +714,12 @@ export default function Users() {
                       <div>
                         <h3 className="text-white font-medium text-lg">No users found</h3>
                         <p className="text-gray-400 text-sm mt-1">
-                          {searchTerm || filter !== 'all'
+                          {searchTerm || activeFilters.length > 0
                             ? 'Try adjusting your search or filter criteria'
                             : 'Get started by creating your first user or seeding some data'}
                         </p>
                       </div>
-                      {!searchTerm && filter === 'all' && (
+                      {!searchTerm && activeFilters.length === 0 && (
                         <div className="flex items-center space-x-3">
                           <Button
                             onClick={() => setShowCreateModal(true)}
@@ -462,26 +744,43 @@ export default function Users() {
                 currentUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-dashed border-white/5 hover:bg-white/5 cursor-pointer"
+                    className={`border-b border-dashed hover:bg-white/5 cursor-pointer ${
+                      user.banned ? 'border-red-500/30 bg-red-500/5' : 'border-white/5'
+                    }`}
                     onClick={() => navigate(`/users/${user.id}`)}
                   >
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
-                        <img
-                          src={
-                            user.image ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
-                          }
-                          alt={user.name}
-                          className="w-10 h-10 rounded-none border border-dashed border-white/20"
-                        />
-                        <div>
-                          <div className="text-white font-light">{user.name}</div>
-                          <div className="text-sm text-gray-400">ID: {user.id}</div>
+                        <div className="relative">
+                          <img
+                            src={
+                              user.image ||
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
+                            }
+                            alt={user.name}
+                            className={`w-10 h-10 rounded-none border border-dashed ${
+                              user.banned ? 'border-red-400/50 opacity-60' : 'border-white/20'
+                            }`}
+                          />
+                          {user.banned && (
+                            <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5">
+                              <Ban className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="text-white font-light">{user.name}</div>
+                            {user.banned && (
+                              <span className="px-2 py-0.5 text-[10px] font-semibold bg-red-500/20 border border-red-500/50 text-red-400 rounded-sm uppercase tracking-wide">
+                                Banned
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-400 mt-0.5">{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-white">{user.email}</td>
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-2">
                         {user.emailVerified ? (
@@ -507,40 +806,88 @@ export default function Users() {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="relative flex items-center justify-end">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-gray-400 hover:text-white rounded-none"
                           onClick={(e) => {
                             e.stopPropagation();
-                            openViewModal(user);
+                            setActionMenuOpen(actionMenuOpen === user.id ? null : user.id);
                           }}
                         >
-                          <Eye className="w-4 h-4" />
+                          <MoreVertical className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-400 hover:text-white rounded-none"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(user);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-400 hover:text-red-300 rounded-none"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDeleteModal(user);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+
+                        {actionMenuOpen === user.id && (
+                          <div
+                            className="absolute right-0 top-full mt-1 w-48 bg-black border border-white/20 rounded-none shadow-lg z-50"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center space-x-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionMenuOpen(null);
+                                openViewModal(user);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span>View Details</span>
+                            </button>
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center space-x-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionMenuOpen(null);
+                                openEditModal(user);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                              <span>Edit User</span>
+                            </button>
+                            {adminPluginEnabled &&
+                              (user.banned ? (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-white/10 flex items-center space-x-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedUser(user);
+                                    setShowUnbanModal(true);
+                                    setActionMenuOpen(null);
+                                  }}
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  <span>Unban User</span>
+                                </button>
+                              ) : (
+                                <button
+                                  className="w-full px-4 py-2 text-left text-sm text-yellow-400 hover:bg-white/10 flex items-center space-x-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedUser(user);
+                                    setShowBanModal(true);
+                                    setActionMenuOpen(null);
+                                  }}
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  <span>Ban User</span>
+                                </button>
+                              ))}
+                            <div className="border-t border-white/10 my-1"></div>
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/10 flex items-center space-x-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionMenuOpen(null);
+                                openDeleteModal(user);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>Delete User</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -600,7 +947,8 @@ export default function Users() {
                   <Button
                     onClick={() => {
                       const count = parseInt(
-                        (document.getElementById('user-count') as HTMLInputElement)?.value || '5'
+                        (document.getElementById('user-count') as HTMLInputElement)?.value || '5',
+                        10
                       );
                       handleSeedUsers(count);
                     }}
@@ -896,6 +1244,104 @@ export default function Users() {
                 className="bg-white hover:bg-white/90 text-black border border-white/20 rounded-none"
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ban User Modal */}
+      {showBanModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-black border border-dashed border-red-400/50 rounded-none p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-white mb-4">Ban User</h2>
+            <p className="text-gray-400 mb-4">
+              Ban <strong>{selectedUser.name}</strong> from accessing the system.
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <Label htmlFor="banReason" className="text-white">
+                  Ban Reason
+                </Label>
+                <Input
+                  id="banReason"
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  placeholder="Enter reason for ban (optional)"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="banExpires" className="text-white">
+                  Ban Duration (seconds)
+                </Label>
+                <Input
+                  id="banExpires"
+                  type="number"
+                  value={banExpiresIn || ''}
+                  onChange={(e) =>
+                    setBanExpiresIn(e.target.value ? Number(e.target.value) : undefined)
+                  }
+                  placeholder="Leave empty for permanent ban"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Examples: 3600 (1 hour), 86400 (1 day), 604800 (1 week)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowBanModal(false);
+                  setBanReason('');
+                  setBanExpiresIn(undefined);
+                  setSelectedUser(null);
+                }}
+                className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBanUser}
+                className="bg-red-600 text-white hover:bg-red-700 rounded-none"
+              >
+                Ban User
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unban User Modal */}
+      {showUnbanModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-black border border-dashed border-green-400/50 rounded-none p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-white mb-4">Unban User</h2>
+            <p className="text-gray-400 mb-6">
+              Are you sure you want to unban <strong>{selectedUser.name}</strong>? This will restore
+              their access to the system.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowUnbanModal(false);
+                  setSelectedUser(null);
+                }}
+                className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUnbanUser}
+                className="bg-green-600 text-white hover:bg-green-700 rounded-none"
+              >
+                Unban User
               </Button>
             </div>
           </div>

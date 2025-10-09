@@ -7,7 +7,7 @@ import * as schema from "../auth-schema";
 
 export const auth = betterAuth({
   secret: process.env.AUTH_SECRET || "better-auth-secret-123456789",
-  database: drizzleAdapter(db, { provider: "pg", schema: schemat  }),
+  database: drizzleAdapter(db, { provider: "pg", schema: schema  }),
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
@@ -23,7 +23,6 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     autoSignIn: true,
     sendResetPassword: async ({ user, url, token }) => {
-      // Send reset password email
       console.log(`Reset password email for ${user.email}: ${url}`);
     },
     resetPasswordTokenExpiresIn: 3600 // 1 hour
@@ -34,6 +33,7 @@ export const auth = betterAuth({
         enabled: true
       }
     }),
+    admin(),
     twoFactor({}),
     admin(),
     apiKey()

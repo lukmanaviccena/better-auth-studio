@@ -32,6 +32,8 @@ interface AuthConfig {
     type?: string;
     url?: string;
     dialect?: string;
+    adapter?: string;
+    version?: string;
     casing?: string;
     debugLogs?: boolean;
   };
@@ -155,35 +157,40 @@ interface PluginsResponse {
   error?: string;
 }
 
+interface DatabaseInfo {
+  success: boolean;
+  name: string;
+  version: string;
+  dialect: string;
+  adapter: string;
+  displayName: string;
+  autoDetected: boolean;
+  message?: string;
+}
+
 export default function Settings() {
   const [config, setConfig] = useState<AuthConfig | null>(null);
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [plugins, setPlugins] = useState<PluginsResponse | null>(null);
+  const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [studioVersion, setStudioVersion] = useState<string | null>(null);
 
   // WebSocket hook to listen for config changes
   useWebSocket((message) => {
     if (message.type === 'config_changed') {
-      console.log('🔄 Config changed, refreshing data...');
       // Add a small delay to ensure the server is fully reloaded
       setTimeout(() => {
         fetchConfig();
         fetchSystemInfo();
         fetchPlugins();
+        fetchDatabaseInfo();
       }, 500);
     } else if (message.type === 'connected') {
-      console.log('✅ Connected to Better Auth Studio WebSocket');
     }
   });
 
-  useEffect(() => {
-    fetchConfig();
-    fetchSystemInfo();
-    fetchPlugins();
-  }, []);
-
-  const fetchConfig = async () => {
+    const fetchConfig = async () => {
     try {
       const response = await fetch('/api/config');
       const data = await response.json();
@@ -191,8 +198,7 @@ export default function Settings() {
         setStudioVersion(`v${data.studio.version}`);
       }
       setConfig(data);
-    } catch (error) {
-      console.error('Failed to fetch config:', error);
+    } catch (_error) {
     } finally {
       setLoading(false);
     }
@@ -210,8 +216,7 @@ export default function Settings() {
           uptime: '2h 15m',
         }
       );
-    } catch (error) {
-      console.error('Failed to fetch system info:', error);
+    } catch (_error) {
       setSystemInfo({
         studioVersion: studioVersion || 'v1.0.0',
         nodeVersion: 'v18.0.0',
@@ -226,13 +231,31 @@ export default function Settings() {
       const response = await fetch('/api/plugins');
       const data = await response.json();
       setPlugins(data);
-    } catch (error) {
-      console.error('Failed to fetch plugins:', error);
+    } catch (_error) {
       setPlugins({
         plugins: [],
         configPath: null,
         totalPlugins: 0,
         error: 'Failed to fetch plugins',
+      });
+    }
+  };
+
+  const fetchDatabaseInfo = async () => {
+    try {
+      const response = await fetch('/api/db');
+      const data = await response.json();
+      setDatabaseInfo(data);
+    } catch (_error) {
+      setDatabaseInfo({
+        success: false,
+        name: 'unknown',
+        version: 'unknown',
+        dialect: 'unknown',
+        adapter: 'unknown',
+        displayName: 'Unknown',
+        autoDetected: false,
+        message: 'Failed to fetch database info',
       });
     }
   };
@@ -282,6 +305,14 @@ export default function Settings() {
         );
     }
   };
+  useEffect(() => {
+    fetchConfig();
+    fetchSystemInfo();
+    fetchPlugins();
+    fetchDatabaseInfo();
+  }, [fetchConfig, fetchDatabaseInfo, fetchPlugins, fetchSystemInfo]);
+
+
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
@@ -388,7 +419,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Database Configuration */}
+        {/* Enhanced Database Configuration */}
         <Card className="border-white/15 bg-black/70 px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0 rounded-none">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
@@ -399,37 +430,63 @@ export default function Settings() {
           </CardHeader>
           <hr className="w-full border-white/15 h-px -mt-3 mb-1" />
           <CardContent className="space-y-0 px-0 pb-0 border-b-none">
+            {/* Database Type */}
             <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
               <div className="flex items-center space-x-3">
                 <Database className="w-5 h-5 text-white" />
                 <div>
                   <p className="text-sm font-medium text-white">
-                    {(config?.database?.type &&
-                      config?.database?.type.charAt(0).toUpperCase() +
-                        config?.database?.type.slice(1)) ||
+                    {databaseInfo?.displayName ||
+                      (config?.database?.type &&
+                        config?.database?.type.charAt(0).toUpperCase() +
+                          config?.database?.type.slice(1)) ||
                       'Unknown'}
                   </p>
                   <p className="text-xs text-gray-400">Database Type</p>
                 </div>
               </div>
-              {config?.database?.type && getConnectionStatus(config.database.type)}
+              {(databaseInfo?.name || config?.database?.type) &&
+                getConnectionStatus(databaseInfo?.name || config?.database?.type || '')}
             </div>
 
-            {config?.database?.dialect && (
-              <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
-                <div className="flex items-center space-x-3">
-                  <Database className="w-5 h-5 text-white" />
-                  <div>
-                    <p className="text-sm font-medium text-white">Dialect</p>
-                    <p className="text-xs text-gray-400">Database dialect</p>
+            {(databaseInfo?.dialect || config?.database?.dialect) &&
+              databaseInfo?.dialect !== 'unknown' && (
+                <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
+                  <div className="flex items-center space-x-3">
+                    <Database className="w-5 h-5 text-white" />
+                    <div>
+                      <p className="text-sm font-medium text-white">Dialect</p>
+                      <p className="text-xs text-gray-400">Database dialect</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-white">
+                      {databaseInfo?.dialect || config?.database?.dialect}
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-white">{config.database.dialect}</p>
+              )}
+
+            {config?.database?.url && (
+              <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
+                <div className="flex items-center space-x-3">
+                  <Key className="w-5 h-5 text-white" />
+                  <div>
+                    <p className="text-sm font-medium text-white">Connection URL</p>
+                    <p className="text-xs text-gray-400">Database connection string</p>
+                  </div>
                 </div>
+                <Badge
+                  variant="secondary"
+                  className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                >
+                  <CheckCircle className="w-3 h-3" />
+                  Configured
+                </Badge>
               </div>
             )}
 
+            {/* Casing (from config only) */}
             {config?.database?.casing && (
               <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
                 <div className="flex items-center space-x-3">
@@ -446,31 +503,56 @@ export default function Settings() {
                 </div>
               </div>
             )}
-            <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
-              <div className="flex items-center space-x-3">
-                <RefreshCw className="w-5 h-5 text-white" />
-                <div>
-                  <p className="text-sm font-medium text-white">Debug Logs</p>
-                  <p className="text-xs text-gray-400">Database debug logging</p>
+
+            {/* Debug Logs (from config only) */}
+            {config?.database && (
+              <div className="flex items-center justify-between p-4 px-5 border-b border-white/15">
+                <div className="flex items-center space-x-3">
+                  <RefreshCw className="w-5 h-5 text-white" />
+                  <div>
+                    <p className="text-sm font-medium text-white">Debug Logs</p>
+                    <p className="text-xs text-gray-400">Database debug logging</p>
+                  </div>
                 </div>
+                <Badge
+                  variant="secondary"
+                  className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                >
+                  {config.database.debugLogs ? (
+                    <>
+                      <AlertTriangle className="w-3 h-3" />
+                      Enabled
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      Disabled
+                    </>
+                  )}
+                </Badge>
               </div>
-              <Badge
-                variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
-              >
-                {config?.database?.debugLogs ? (
-                  <>
-                    <AlertTriangle className="w-3 h-3" />
-                    Enabled
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-3 h-3" />
-                    Disabled
-                  </>
-                )}
-              </Badge>
-            </div>
+            )}
+
+            {/* No Database Detected */}
+            {!databaseInfo?.success && !config?.database && (
+              <div className="flex items-center justify-between p-4 px-5">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                  <div>
+                    <p className="text-sm font-medium text-white">No Database Detected</p>
+                    <p className="text-xs text-gray-400">
+                      {databaseInfo?.message || 'No supported database packages found'}
+                    </p>
+                  </div>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-yellow-900/50 border border-yellow-500/30 text-yellow-400 rounded-sm"
+                >
+                  Unknown
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
 

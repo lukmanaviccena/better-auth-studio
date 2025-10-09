@@ -100,6 +100,12 @@ export default function DatabaseVisualizer() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
+
+
+  const getPluginColor = (pluginId: string): string => {
+    const plugin = AVAILABLE_PLUGINS.find((p) => p.name === pluginId);
+    return plugin?.color || 'bg-gray-500';
+  };
   const fetchEnabledPlugins = useCallback(async () => {
     try {
       const response = await fetch('/api/plugins');
@@ -116,17 +122,11 @@ export default function DatabaseVisualizer() {
         setAvailablePlugins(enabledPlugins);
         setSelectedPlugins(enabledPlugins.map((p: any) => p.name));
       }
-    } catch (err) {
-      console.error('Error fetching enabled plugins:', err);
+    } catch (_err) {
       setAvailablePlugins(AVAILABLE_PLUGINS);
       setSelectedPlugins(['organization']);
     }
-  }, []);
-
-  const getPluginColor = (pluginId: string): string => {
-    const plugin = AVAILABLE_PLUGINS.find((p) => p.name === pluginId);
-    return plugin?.color || 'bg-gray-500';
-  };
+  }, [getPluginColor]);
 
   const fetchSchema = useCallback(async (plugins: string[]) => {
     try {
@@ -140,9 +140,8 @@ export default function DatabaseVisualizer() {
       } else {
         setError(data.error || 'Failed to fetch schema');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to fetch database schema');
-      console.error('Error fetching schema:', err);
     } finally {
       setLoading(false);
     }
@@ -190,7 +189,24 @@ export default function DatabaseVisualizer() {
         } as TableNodeData,
       });
     });
+    const getPluginForField = (tableName: string, _fieldName: string, plugins: string[]): string => {
+      if (
+        tableName === 'user' ||
+        tableName === 'session' ||
+        tableName === 'account' ||
+        tableName === 'verification'
+      ) {
+        return 'core';
+      }
 
+      for (const plugin of plugins) {
+        if (tableName === plugin || tableName.includes(plugin)) {
+          return plugin;
+        }
+      }
+
+      return 'core';
+    };
     schema.tables.forEach((table) => {
       table.relationships.forEach((rel) => {
         if (rel.type === 'many-to-one') {
@@ -245,24 +261,7 @@ export default function DatabaseVisualizer() {
     setEdges(newEdges);
   }, [schema, selectedPlugins, setNodes, setEdges]);
 
-  const getPluginForField = (tableName: string, _fieldName: string, plugins: string[]): string => {
-    if (
-      tableName === 'user' ||
-      tableName === 'session' ||
-      tableName === 'account' ||
-      tableName === 'verification'
-    ) {
-      return 'core';
-    }
 
-    for (const plugin of plugins) {
-      if (tableName === plugin || tableName.includes(plugin)) {
-        return plugin;
-      }
-    }
-
-    return 'core';
-  };
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -303,14 +302,12 @@ export default function DatabaseVisualizer() {
   }
 
   return (
-    <div className="p-6 h-screen flex flex-col">
+    <div className="p-6 h-screen flex flex-col bg-black">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <Database className="w-8 h-8 text-gray-900 dark:text-white" />
-            <h1 className="text-2xl font-normal text-gray-900 dark:text-white">
-              Schema Visualizer
-            </h1>
+            <Database className="w-8 h-8 text-white" />
+            <h1 className="text-2xl font-normal text-white">Schema Visualizer</h1>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -402,7 +399,7 @@ export default function DatabaseVisualizer() {
         </div>
 
         <div className="col-span-3">
-          <div className="h-full bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-none overflow-hidden shadow-sm">
+          <div className="h-full bg-black border border-white/20 rounded-none overflow-hidden shadow-sm">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -415,7 +412,7 @@ export default function DatabaseVisualizer() {
                 padding: 0.1,
                 includeHiddenNodes: false,
               }}
-              className="bg-white dark:bg-black"
+              className="bg-black"
               // @ts-expect-error
               connectionLineType="smoothstep"
               defaultEdgeOptions={{
@@ -430,16 +427,16 @@ export default function DatabaseVisualizer() {
               nodesConnectable={false}
               elementsSelectable={true}
             >
-              <Controls className="bg-white dark:bg-black border-gray-200 dark:border-gray-600" />
+              <Controls className="bg-black border-white/20" />
               <MiniMap
-                className="bg-white dark:bg-black border-gray-200 dark:border-gray-600"
+                className="bg-black border-white/20"
                 nodeColor={(node) => {
-                  if (node.data?.isForeign) return '#e5e7eb';
-                  return '#f3f4f6';
+                  if (node.data?.isForeign) return '#ffffff';
+                  return '#ffffff';
                 }}
-                maskColor="rgba(255, 255, 255, 0.8)"
+                maskColor="rgba(0, 0, 0, 0.8)"
               />
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
+              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#ffffff" />
             </ReactFlow>
           </div>
         </div>
