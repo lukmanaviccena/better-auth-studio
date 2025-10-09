@@ -190,14 +190,7 @@ export default function Settings() {
     }
   });
 
-  useEffect(() => {
-    fetchConfig();
-    fetchSystemInfo();
-    fetchPlugins();
-    fetchDatabaseInfo();
-  }, [fetchConfig, fetchDatabaseInfo, fetchPlugins, fetchSystemInfo]);
-
-  const fetchConfig = async () => {
+    const fetchConfig = async () => {
     try {
       const response = await fetch('/api/config');
       const data = await response.json();
@@ -312,6 +305,14 @@ export default function Settings() {
         );
     }
   };
+  useEffect(() => {
+    fetchConfig();
+    fetchSystemInfo();
+    fetchPlugins();
+    fetchDatabaseInfo();
+  }, [fetchConfig, fetchDatabaseInfo, fetchPlugins, fetchSystemInfo]);
+
+
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {

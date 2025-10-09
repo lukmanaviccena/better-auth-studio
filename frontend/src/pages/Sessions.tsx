@@ -42,10 +42,6 @@ export default function Sessions() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
-
   const fetchSessions = async () => {
     try {
       const response = await fetch('/api/sessions');
@@ -56,6 +52,10 @@ export default function Sessions() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
 
   const handleSeedSessions = async (count: number) => {
     setSeedingLogs([]);

@@ -81,22 +81,7 @@ export default function Users() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-    checkAdminPlugin();
-
-    // Close action menu when clicking outside
-    const handleClickOutside = () => {
-      if (actionMenuOpen) {
-        setActionMenuOpen(null);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [actionMenuOpen, checkAdminPlugin, fetchUsers]);
-
-  const fetchUsers = async () => {
+    const fetchUsers = async () => {
     try {
       const response = await fetch('/api/users?limit=10000');
       const data = await response.json();
@@ -116,6 +101,21 @@ export default function Users() {
       setAdminPluginEnabled(false);
     }
   };
+  useEffect(() => {
+    fetchUsers();
+    checkAdminPlugin();
+
+    const handleClickOutside = () => {
+      if (actionMenuOpen) {
+        setActionMenuOpen(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [actionMenuOpen, checkAdminPlugin, fetchUsers]);
+
+
 
   const handleSeedUsers = async (count: number) => {
     setSeedingLogs([]);

@@ -100,6 +100,12 @@ export default function DatabaseVisualizer() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
+
+
+  const getPluginColor = (pluginId: string): string => {
+    const plugin = AVAILABLE_PLUGINS.find((p) => p.name === pluginId);
+    return plugin?.color || 'bg-gray-500';
+  };
   const fetchEnabledPlugins = useCallback(async () => {
     try {
       const response = await fetch('/api/plugins');
@@ -121,11 +127,6 @@ export default function DatabaseVisualizer() {
       setSelectedPlugins(['organization']);
     }
   }, [getPluginColor]);
-
-  const getPluginColor = (pluginId: string): string => {
-    const plugin = AVAILABLE_PLUGINS.find((p) => p.name === pluginId);
-    return plugin?.color || 'bg-gray-500';
-  };
 
   const fetchSchema = useCallback(async (plugins: string[]) => {
     try {
@@ -188,7 +189,24 @@ export default function DatabaseVisualizer() {
         } as TableNodeData,
       });
     });
+    const getPluginForField = (tableName: string, _fieldName: string, plugins: string[]): string => {
+      if (
+        tableName === 'user' ||
+        tableName === 'session' ||
+        tableName === 'account' ||
+        tableName === 'verification'
+      ) {
+        return 'core';
+      }
 
+      for (const plugin of plugins) {
+        if (tableName === plugin || tableName.includes(plugin)) {
+          return plugin;
+        }
+      }
+
+      return 'core';
+    };
     schema.tables.forEach((table) => {
       table.relationships.forEach((rel) => {
         if (rel.type === 'many-to-one') {
@@ -241,26 +259,9 @@ export default function DatabaseVisualizer() {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [schema, selectedPlugins, setNodes, setEdges, getPluginForField]);
+  }, [schema, selectedPlugins, setNodes, setEdges]);
 
-  const getPluginForField = (tableName: string, _fieldName: string, plugins: string[]): string => {
-    if (
-      tableName === 'user' ||
-      tableName === 'session' ||
-      tableName === 'account' ||
-      tableName === 'verification'
-    ) {
-      return 'core';
-    }
 
-    for (const plugin of plugins) {
-      if (tableName === plugin || tableName.includes(plugin)) {
-        return plugin;
-      }
-    }
-
-    return 'core';
-  };
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),

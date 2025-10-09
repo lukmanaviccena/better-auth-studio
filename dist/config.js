@@ -1,5 +1,6 @@
 import fs, { existsSync } from 'node:fs';
 import path from 'node:path';
+// @ts-expect-error
 import babelPresetReact from '@babel/preset-react';
 // @ts-expect-error
 import babelPresetTypeScript from '@babel/preset-typescript';

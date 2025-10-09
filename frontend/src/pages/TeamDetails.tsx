@@ -70,14 +70,7 @@ export default function TeamDetails() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [teamFormData, setTeamFormData] = useState({ name: '' });
 
-  useEffect(() => {
-    if (teamId) {
-      fetchTeam();
-      fetchTeamMembers();
-    }
-  }, [teamId, fetchTeam, fetchTeamMembers]);
-
-  const fetchTeam = async () => {
+    const fetchTeam = async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}`);
       const data = await response.json();
@@ -125,6 +118,14 @@ export default function TeamDetails() {
       toast.error('Failed to load users');
     }
   };
+  useEffect(() => {
+    if (teamId) {
+      fetchTeam();
+      fetchTeamMembers();
+    }
+  }, [teamId, fetchTeam, fetchTeamMembers]);
+
+
 
   const handleUpdateTeam = async () => {
     if (!teamFormData.name) {

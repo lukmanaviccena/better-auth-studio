@@ -119,15 +119,7 @@ export default function UserDetails() {
   const [isSeeding, setIsSeeding] = useState(false);
   const [sessionLocations, setSessionLocations] = useState<Record<string, LocationData>>({});
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserDetails();
-      fetchUserMemberships();
-      checkAdminPlugin();
-    }
-  }, [userId, checkAdminPlugin, fetchUserDetails, fetchUserMemberships]);
-
-  const checkAdminPlugin = async () => {
+    const checkAdminPlugin = async () => {
     try {
       const response = await fetch('/api/admin/status');
       const data = await response.json();
@@ -136,6 +128,7 @@ export default function UserDetails() {
       setAdminPluginEnabled(false);
     }
   };
+
 
   const resolveIPLocation = async (ipAddress: string): Promise<LocationData | null> => {
     try {
@@ -432,6 +425,14 @@ export default function UserDetails() {
       toast.error('Error deleting session', { id: toastId });
     }
   };
+  useEffect(() => {
+    if (userId) {
+      fetchUserDetails();
+      fetchUserMemberships();
+      checkAdminPlugin();
+    }
+  }, [userId, checkAdminPlugin, fetchUserDetails, fetchUserMemberships]);
+
 
   const handleSeedSessions = async (count: number = 3) => {
     if (!userId) return;
@@ -533,6 +534,7 @@ export default function UserDetails() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-black w-full">
