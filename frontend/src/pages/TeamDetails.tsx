@@ -70,7 +70,7 @@ export default function TeamDetails() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [teamFormData, setTeamFormData] = useState({ name: '' });
 
-    const fetchTeam = async () => {
+  const fetchTeam = async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}`);
       const data = await response.json();
@@ -124,8 +124,6 @@ export default function TeamDetails() {
       fetchTeamMembers();
     }
   }, [teamId, fetchTeam, fetchTeamMembers]);
-
-
 
   const handleUpdateTeam = async () => {
     if (!teamFormData.name) {

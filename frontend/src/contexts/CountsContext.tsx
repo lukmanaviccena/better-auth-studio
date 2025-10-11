@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 interface Counts {
   users: number;
@@ -28,7 +28,7 @@ export function CountsProvider({ children }: CountsProviderProps) {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchCounts = async () => {
+  const fetchCounts = useCallback(async () => {
     try {
       const response = await fetch('/api/counts');
       const data = await response.json();
@@ -37,12 +37,12 @@ export function CountsProvider({ children }: CountsProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const refetchCounts = async () => {
+  const refetchCounts = useCallback(async () => {
     setLoading(true);
     await fetchCounts();
-  };
+  }, [fetchCounts]);
 
   useEffect(() => {
     fetchCounts();

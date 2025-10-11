@@ -100,8 +100,6 @@ export default function DatabaseVisualizer() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-
-
   const getPluginColor = (pluginId: string): string => {
     const plugin = AVAILABLE_PLUGINS.find((p) => p.name === pluginId);
     return plugin?.color || 'bg-gray-500';
@@ -189,7 +187,11 @@ export default function DatabaseVisualizer() {
         } as TableNodeData,
       });
     });
-    const getPluginForField = (tableName: string, _fieldName: string, plugins: string[]): string => {
+    const getPluginForField = (
+      tableName: string,
+      _fieldName: string,
+      plugins: string[]
+    ): string => {
       if (
         tableName === 'user' ||
         tableName === 'session' ||
@@ -260,8 +262,6 @@ export default function DatabaseVisualizer() {
     setNodes(newNodes);
     setEdges(newEdges);
   }, [schema, selectedPlugins, setNodes, setEdges]);
-
-
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),

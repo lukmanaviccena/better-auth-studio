@@ -1,5 +1,5 @@
 import { Database, Edit, Eye, Filter, Loader, Plus, Search, Trash2, User, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Terminal } from '../components/Terminal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -42,7 +42,7 @@ export default function Sessions() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const response = await fetch('/api/sessions');
       const data = await response.json();
@@ -51,7 +51,7 @@ export default function Sessions() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSessions();

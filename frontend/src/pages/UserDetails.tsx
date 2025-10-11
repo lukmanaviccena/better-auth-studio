@@ -15,7 +15,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Terminal } from '../components/Terminal';
@@ -119,7 +119,7 @@ export default function UserDetails() {
   const [isSeeding, setIsSeeding] = useState(false);
   const [sessionLocations, setSessionLocations] = useState<Record<string, LocationData>>({});
 
-    const checkAdminPlugin = async () => {
+  const checkAdminPlugin = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/status');
       const data = await response.json();
@@ -127,8 +127,7 @@ export default function UserDetails() {
     } catch (_error) {
       setAdminPluginEnabled(false);
     }
-  };
-
+  }, []);
 
   const resolveIPLocation = async (ipAddress: string): Promise<LocationData | null> => {
     try {
@@ -188,7 +187,7 @@ export default function UserDetails() {
     return String.fromCodePoint(...codePoints);
   };
 
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       const response = await fetch(`/api/users/${userId}`);
       if (response.ok) {
@@ -204,9 +203,9 @@ export default function UserDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, navigate]);
 
-  const fetchUserMemberships = async () => {
+  const fetchUserMemberships = useCallback(async () => {
     try {
       const [orgResponse, teamResponse, sessionResponse] = await Promise.all([
         fetch(`/api/users/${userId}/organizations`),
@@ -232,7 +231,7 @@ export default function UserDetails() {
         resolveSessionLocations(sessions);
       }
     } catch (_error) {}
-  };
+  }, [userId]);
 
   const handleEditUser = async () => {
     if (!user) return;
@@ -433,7 +432,6 @@ export default function UserDetails() {
     }
   }, [userId, checkAdminPlugin, fetchUserDetails, fetchUserMemberships]);
 
-
   const handleSeedSessions = async (count: number = 3) => {
     if (!userId) return;
 
@@ -535,7 +533,6 @@ export default function UserDetails() {
     );
   }
 
-
   return (
     <div className="min-h-screen bg-black w-full">
       <div className="w-full px-6 py-8">
@@ -632,12 +629,6 @@ export default function UserDetails() {
                   <Ban className="w-4 h-4 mr-2" />
                   Ban User
                 </Button>
-              )}
-              {!adminPluginEnabled && (
-                <p className="text-xs text-yellow-400 mt-1">
-                  Admin plugin required for ban/unban functionality. Please enable the admin plugin
-                  in your Better Auth configuration.
-                </p>
               )}
             </div>
           </div>

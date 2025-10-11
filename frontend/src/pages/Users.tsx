@@ -16,7 +16,7 @@ import {
   Users as UsersIcon,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -81,7 +81,7 @@ export default function Users() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
 
-    const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch('/api/users?limit=10000');
       const data = await response.json();
@@ -90,9 +90,9 @@ export default function Users() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const checkAdminPlugin = async () => {
+  const checkAdminPlugin = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/status');
       const data = await response.json();
@@ -100,7 +100,7 @@ export default function Users() {
     } catch (_error) {
       setAdminPluginEnabled(false);
     }
-  };
+  }, []);
   useEffect(() => {
     fetchUsers();
     checkAdminPlugin();
@@ -114,8 +114,6 @@ export default function Users() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [actionMenuOpen, checkAdminPlugin, fetchUsers]);
-
-
 
   const handleSeedUsers = async (count: number) => {
     setSeedingLogs([]);

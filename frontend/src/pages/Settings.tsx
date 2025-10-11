@@ -190,7 +190,7 @@ export default function Settings() {
     }
   });
 
-    const fetchConfig = async () => {
+  const fetchConfig = async () => {
     try {
       const response = await fetch('/api/config');
       const data = await response.json();
@@ -311,8 +311,6 @@ export default function Settings() {
     fetchPlugins();
     fetchDatabaseInfo();
   }, [fetchConfig, fetchDatabaseInfo, fetchPlugins, fetchSystemInfo]);
-
-
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {

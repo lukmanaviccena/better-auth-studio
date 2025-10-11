@@ -7,13 +7,13 @@ import prisma from "./prisma";
 export const auth = betterAuth({
   secret: process.env.AUTH_SECRET || "better-auth-secret-123456789",
   database: new Database("./better-auth.db"),
-  socialProviders: {
+  socialProviders: process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET ? {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
       redirectUri: "http://localhost:3000/api/auth/callback/github",
     },
-  },
+  } : undefined,
   emailAndPassword: {
     enabled: true,
     disableSignUp: false,

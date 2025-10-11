@@ -2833,7 +2833,7 @@ export function createRoutes(
       try {
         const adapter = await getAuthAdapterWithConfig();
         if (adapter && typeof adapter.findMany === 'function') {
-          const allOrganizations = await adapter.findMany({ model: 'organization' });
+          const allOrganizations = await adapter.findMany({ model: 'organization' , limit });
 
           let filteredOrganizations = allOrganizations || [];
           if (search) {
