@@ -14,58 +14,46 @@ export default function Changelog() {
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">LATEST RELEASE</h2>
           <PixelCard variant="highlight">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-light tracking-tight text-white">v1.0.23</h3>
-              <span className="text-sm font-light tracking-tight text-white/50">2025-01-30</span>
+              <h3 className="text-lg font-light tracking-tight text-white">v1.0.26</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-09</span>
             </div>
             <p className="text-sm font-light tracking-tight text-white/70 mb-4">
-              Major release introducing the Database Schema Visualizer - an interactive ReactFlow-powered tool for visualizing Better Auth database schemas with plugin-based configuration and real-time relationship mapping.
+              Major release introducing Shadcn UI components, comprehensive admin functionality with user banning/unbanning, advanced filtering system with date range picker, and pure black & white theme overhaul.
             </p>
             <div className="space-y-3">
               <h4 className="font-light tracking-tight text-white">✨ New Features</h4>
               <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Database Schema Visualizer</strong> with interactive ReactFlow diagrams, plugin-based configuration, and real-time relationship mapping
+                  <strong className="pr-2">Shadcn UI Components</strong> with Calendar, Popover, and DateRangePicker for modern UI interactions
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Advanced Session Management</strong> with user-specific session seeding
+                  <strong className="pr-2">Admin Functionality</strong> with comprehensive user banning/unbanning system including ban reasons and expiration dates
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">IP Geolocation Resolution</strong> using MaxMind databases with country flags and location display
+                  <strong className="pr-2">Advanced Filtering System</strong> with dynamic filters, date range picker, and real-time filter application
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Biome Integration</strong> for modern linting and formatting with comprehensive CI/CD
+                  <strong className="pr-2">Pure Black & White Theme</strong> with sharp, modern aesthetic and consistent styling across all pages
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">CLI Geo Database Support</strong> with --geo-db option and default IP database
+                  <strong className="pr-2">Enhanced Database Visualization</strong> with plugin-aware coloring and improved schema display
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Copy Functionality</strong> for all code blocks in documentation
+                  <strong className="pr-2">User Management Enhancements</strong> with ban status indicators, warning banners, and action menus
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">CSV Export functionality</strong> for users and organizations with timestamped downloads
-                </li>
-<li className="flex items-start">
-                  <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Session Details Page</strong> with session ID, status, IP address, and expiration date display
+                  <strong className="pr-2">React Day Picker v9</strong> integration with dual-month calendar view and keyboard navigation
                 </li>
                 <li className="flex items-start">
                   <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Session Revocation Functionality</strong> with individual session revocation functionality
-                </li>
-                <li className="flex items-start">
-                  <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Session Seeding Functionality</strong> with user-specific session seeding 
-                </li>
-                <li className="flex items-start">
-                  <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">CI/CD Pipeline</strong> with automated testing and building
+                  <strong className="pr-2">API Endpoints</strong> for admin functionality including ban-user, unban-user, and admin status checking
                 </li>
               </ul>
             </div>
@@ -74,6 +62,69 @@ export default function Changelog() {
 
         <section>
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">RECENT UPDATES</h2>
+          
+          {/* v1.0.26 - Shadcn UI & Admin Features */}
+          <PixelCard className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-light tracking-tight text-white">Shadcn UI Integration & Admin Functionality</h3>
+              <span className="text-sm font-light tracking-tight text-white/50">2025-01-09</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🎨 Shadcn UI Components</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Calendar component with react-day-picker v9 integration and dual-month view
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    DateRangePicker component for advanced date filtering with auto-close functionality
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Popover component with proper positioning and accessibility features
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Pure black and white theme with CSS variables and consistent styling
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🛡️ Admin Functionality</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Comprehensive user banning/unbanning system with admin plugin detection
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Ban reason and expiration date support for temporary and permanent bans
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Visual ban indicators with warning banners and status badges
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    API endpoints for ban-user, unban-user, and admin status checking
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-light tracking-tight mb-2 text-white">🔍 Advanced Filtering</h4>
+                <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                  <li className="flex items-start">
+                    <span className="text-white/50 mr-3">•</span>
+                    Dynamic filter system with Email Verified, Banned Status, Created Date, and Role filters
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </PixelCard>
           
           <PixelCard className="mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -482,6 +533,26 @@ export default function Changelog() {
         <section>
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">VERSION HISTORY</h2>
           <div className="space-y-4">
+            <PixelCard>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-light tracking-tight text-white">v1.0.26</h3>
+                <span className="text-sm font-light tracking-tight text-white/50">2025-01-09</span>
+              </div>
+              <p className="text-sm font-light tracking-tight text-white/70">
+                Major release with Shadcn UI components, admin functionality for user banning/unbanning, advanced filtering system with date range picker, and pure black & white theme overhaul.
+              </p>
+            </PixelCard>
+            
+            <PixelCard>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-light tracking-tight text-white">v1.0.23</h3>
+                <span className="text-sm font-light tracking-tight text-white/50">2025-01-30</span>
+              </div>
+              <p className="text-sm font-light tracking-tight text-white/70">
+                Release with Database Schema Visualizer - an interactive ReactFlow-powered tool for visualizing Better Auth database schemas with plugin-based configuration.
+              </p>
+            </PixelCard>
+            
             <PixelCard>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-light tracking-tight text-white">v1.0.22</h3>
