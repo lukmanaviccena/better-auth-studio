@@ -16,7 +16,6 @@ import '@xyflow/react/dist/style.css';
 import { Database, Settings } from 'lucide-react';
 import { DatabaseSchemaNode, type DatabaseSchemaNodeData } from '../components/DatabaseSchemaNode';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Checkbox } from '../components/ui/checkbox';
 
 const nodeTypes = {
   databaseSchemaNode: DatabaseSchemaNode,
@@ -215,7 +214,7 @@ export default function DatabaseVisualizer() {
         } as DatabaseSchemaNodeData,
       });
     });
-    
+
     schema.tables.forEach((table) => {
       table.relationships.forEach((rel) => {
         if (rel.type === 'many-to-one') {
@@ -275,13 +274,13 @@ export default function DatabaseVisualizer() {
     [setEdges]
   );
 
-  const handlePluginToggle = (pluginName: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPlugins((prev) => [...prev, pluginName]);
-    } else {
-      setSelectedPlugins((prev) => prev.filter((p) => p !== pluginName));
-    }
-  };
+  // const handlePluginToggle = (pluginName: string, checked: boolean) => {
+  //   if (checked) {
+  //     setSelectedPlugins((prev) => [...prev, pluginName]);
+  //   } else {
+  //     setSelectedPlugins((prev) => prev.filter((p) => p !== pluginName));
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -326,7 +325,7 @@ export default function DatabaseVisualizer() {
         <div className="col-span-1">
           <Card className="rounded-none bg-black h-fit shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white flex items-center space-x-2">
+              <CardTitle className="font-light text-xl text-white flex items-center space-x-2">
                 <Settings className="w-5 h-5" />
                 <span>Plugins</span>
               </CardTitle>
@@ -335,25 +334,13 @@ export default function DatabaseVisualizer() {
               {availablePlugins.length > 0 ? (
                 availablePlugins.map((plugin) => (
                   <div key={plugin.name} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={plugin.name}
-                      checked={selectedPlugins.includes(plugin.name)}
-                      onCheckedChange={(checked: boolean) =>
-                        handlePluginToggle(plugin.name, checked)
-                      }
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor={plugin.name}
-                        className="text-sm font-medium text-white cursor-pointer"
-                      >
-                        {plugin.displayName.slice(0, 1).toUpperCase() + plugin.displayName.slice(1).replace('-', ' ')}
-                      </label>
-                      <p className="text-xs text-white">
-                        {plugin.description}
-                      </p>
-                    </div>
-                    {/* <div className={`w-3 h-3 rounded-full ${plugin.color}`} /> */}
+                    <div className={`w-3 h-3 rounded-full ${plugin.color}`} />
+                    <label
+                      htmlFor={plugin.name}
+                      className="text-sm font-medium text-white cursor-pointer"
+                    >
+                      {plugin.displayName.slice(0, 1).toUpperCase() + plugin.displayName.slice(1).replace('-', ' ')}
+                    </label>
                   </div>
                 ))
               ) : (
