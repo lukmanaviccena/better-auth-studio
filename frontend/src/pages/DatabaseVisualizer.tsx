@@ -102,28 +102,27 @@ export default function DatabaseVisualizer() {
     return plugin?.color || 'bg-gray-500';
   }, []);
 
-  const getPluginForField = useCallback((
-    tableName: string,
-    _fieldName: string,
-    plugins: string[]
-  ): string => {
-    if (
-      tableName === 'user' ||
-      tableName === 'session' ||
-      tableName === 'account' ||
-      tableName === 'verification'
-    ) {
-      return 'core';
-    }
-
-    for (const plugin of plugins) {
-      if (tableName === plugin || tableName.includes(plugin)) {
-        return plugin;
+  const getPluginForField = useCallback(
+    (tableName: string, _fieldName: string, plugins: string[]): string => {
+      if (
+        tableName === 'user' ||
+        tableName === 'session' ||
+        tableName === 'account' ||
+        tableName === 'verification'
+      ) {
+        return 'core';
       }
-    }
 
-    return 'core';
-  }, []);
+      for (const plugin of plugins) {
+        if (tableName === plugin || tableName.includes(plugin)) {
+          return plugin;
+        }
+      }
+
+      return 'core';
+    },
+    []
+  );
 
   const fetchEnabledPlugins = useCallback(async () => {
     try {
@@ -206,9 +205,9 @@ export default function DatabaseVisualizer() {
           displayName: table.displayName,
           isForeign: false,
           plugin: getPluginForField(table.name, '', selectedPlugins),
-          columns: columns.map(col => ({
+          columns: columns.map((col) => ({
             ...col,
-            description: table.fields.find(f => f.name === col.name)?.description || '',
+            description: table.fields.find((f) => f.name === col.name)?.description || '',
           })),
           relationships: table.relationships,
         } as DatabaseSchemaNodeData,
@@ -339,14 +338,13 @@ export default function DatabaseVisualizer() {
                       htmlFor={plugin.name}
                       className="text-sm font-medium text-white cursor-pointer"
                     >
-                      {plugin.displayName.slice(0, 1).toUpperCase() + plugin.displayName.slice(1).replace('-', ' ')}
+                      {plugin.displayName.slice(0, 1).toUpperCase() +
+                        plugin.displayName.slice(1).replace('-', ' ')}
                     </label>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-white/70">
-                  No plugins detected in configuration
-                </div>
+                <div className="text-sm text-white/70">No plugins detected in configuration</div>
               )}
             </CardContent>
           </Card>

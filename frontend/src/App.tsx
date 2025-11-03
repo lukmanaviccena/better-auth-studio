@@ -1,10 +1,10 @@
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import DatabaseSchemaNodeDemo from './components/DatabaseSchemaNodeDemo';
 import Layout from './components/Layout';
 import { CountsProvider } from './contexts/CountsContext';
 import Dashboard from './pages/Dashboard';
 import DatabaseVisualizer from './pages/DatabaseVisualizer';
-import DatabaseSchemaNodeDemo from './components/DatabaseSchemaNodeDemo';
 import OrganizationDetails from './pages/OrganizationDetails';
 import Organizations from './pages/Organizations';
 import Sessions from './pages/Sessions';
