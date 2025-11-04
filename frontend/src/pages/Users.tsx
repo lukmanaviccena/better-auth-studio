@@ -1,5 +1,6 @@
 import {
   Ban,
+  Calendar as CalendarIcon,
   Check,
   Database,
   Download,
@@ -18,11 +19,13 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Terminal } from '../components/Terminal';
 import { Button } from '../components/ui/button';
-import { DateRangePicker } from '../components/ui/date-range-picker';
+import { Calendar } from '../components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Pagination } from '../components/ui/pagination';
@@ -509,7 +512,14 @@ export default function Users() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl text-white font-light">Users ({users.length})</h1>
+          <h1 className="text-2xl relative text-white font-light inline-flex items-start">
+            Users
+            <sup className="text-xs text-gray-500 ml-1 mt-0">
+              <span className='mr-1'>[</span>
+              <span className='text-white font-mono text-sm'>{users.length}</span>
+              <span className='ml-1'>]</span>
+            </sup>
+          </h1>
           <p className="text-gray-400 mt-1">Manage your application users</p>
           <div className="flex items-center space-x-4 mt-2">
             {bannedCount > 0 && (
@@ -561,7 +571,7 @@ export default function Users() {
           <div className="flex items-center space-x-2">
             <Select value="" onValueChange={addFilter}>
               <SelectTrigger className="w-[180px]">
-                <div className="flex items-center space-x-2">
+                <div className="flex mr-3 items-center space-x-2">
                   <Plus className="w-4 h-4" />
                   <span>Add Filter</span>
                 </div>
@@ -582,21 +592,21 @@ export default function Users() {
               </SelectContent>
             </Select>
           </div>
+          {activeFilters.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setActiveFilters([])}
+                className=""
+              >
+                Clear all
+              </Button>
+            </div>
+            )}
         </div>
 
         {/* Active Filters */}
         {activeFilters.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Active filters:</span>
-              <button
-                onClick={() => setActiveFilters([])}
-                className="text-xs text-gray-400 hover:text-white underline"
-              >
-                Clear all
-              </button>
-            </div>
-
             <div className="flex flex-wrap gap-3">
               {activeFilters.map((filter) => (
                 <div
@@ -656,10 +666,48 @@ export default function Users() {
                   {filter.type === 'createdAt' && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-white">Created:</span>
-                      <DateRangePicker
-                        value={filter.dateRange}
-                        onChange={(range) => updateFilterDateRange('createdAt', range)}
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-8 px-3 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {filter.dateRange?.from ? format(filter.dateRange.from, 'MMM dd yyyy') : 'From'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={filter.dateRange?.from}
+                            onSelect={(date) => updateFilterDateRange('createdAt', { from: date, to: filter.dateRange?.to })}
+                            initialFocus
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-8 px-3 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {filter.dateRange?.to ? format(filter.dateRange.to, 'MMM dd yyyy') : 'To'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={filter.dateRange?.to}
+                            onSelect={(date) => updateFilterDateRange('createdAt', { from: filter.dateRange?.from, to: date })}
+                            initialFocus
+                            disabled={(date) => filter.dateRange?.from ? date < filter.dateRange.from : false}
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
 
