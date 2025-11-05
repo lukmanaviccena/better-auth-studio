@@ -36,7 +36,7 @@ export default function Layout({ children }: LayoutProps) {
         if (data.studio?.version) {
           setStudioVersion(`v${data.studio.version}`);
         }
-      } catch (_error) {}
+      } catch (_error) { }
     };
 
     fetchVersion();
@@ -72,13 +72,19 @@ export default function Layout({ children }: LayoutProps) {
       <div className="bg-black/70 border-b border-white/15">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-lg">⚡</span>
+            <div className="flex items-end justify-end space-x-2">
+              <div className="w-7 h-7 border border-dashed border-white/20 rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold text-md">⚡</span>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">Better Auth Studio</h1>
-                <p className="text-xs text-gray-300">{studioVersion}</p>
+              <div className='mb-0'>
+                <h1 className="text-md inline-flex mb-0 items-start font-light font-mono uppercase text-white">Better-Auth Studio
+                  <sup className="text-sm text-gray-500 ml-1 mt-0">
+                    <span className='mr-1'>[</span>
+                    <span className='text-white/80 lowercase font-mono text-xs'>{studioVersion}</span>
+                    <span className='ml-1'>]</span>
+                  </sup>
+                </h1>
+                {/* <p className="text-xs text-gray-300">{studioVersion}</p> */}
               </div>
             </div>
           </div>
@@ -126,11 +132,10 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
-                    isActive
+                  className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${isActive
                       ? 'border-white text-white'
                       : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-4 h-4" />
                   <span>{item.name}</span>
