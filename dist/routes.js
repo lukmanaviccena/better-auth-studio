@@ -212,6 +212,66 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             },
         });
     });
+    router.get('/api/version-check', async (_req, res) => {
+        try {
+            const __dirname = dirname(fileURLToPath(import.meta.url));
+            const projectRoot = join(__dirname, '..');
+            let currentVersion = '1.0.0';
+            try {
+                const betterAuthPkgPath = join(projectRoot, 'node_modules', 'better-auth', 'package.json');
+                if (existsSync(betterAuthPkgPath)) {
+                    const betterAuthPkg = JSON.parse(readFileSync(betterAuthPkgPath, 'utf-8'));
+                    currentVersion = betterAuthPkg.version || '1.0.0';
+                }
+            }
+            catch (error) {
+                // Fallback: Try to find better-auth in package.json
+                try {
+                    const packageJsonPath = join(projectRoot, 'package.json');
+                    if (existsSync(packageJsonPath)) {
+                        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+                        let versionString = packageJson.dependencies?.['better-auth'] ||
+                            packageJson.devDependencies?.['better-auth'] ||
+                            '1.0.0';
+                        currentVersion = versionString.replace(/[\^~>=<]/g, '');
+                    }
+                }
+                catch { }
+            }
+            let latestVersion = currentVersion; // Default to current if fetch fails
+            let isOutdated = false;
+            try {
+                const npmResponse = await fetch('https://registry.npmjs.org/better-auth/latest');
+                if (npmResponse.ok) {
+                    const npmData = await npmResponse.json();
+                    latestVersion = npmData.version || currentVersion;
+                    // Compare versions
+                    isOutdated = currentVersion !== latestVersion;
+                }
+            }
+            catch (fetchError) {
+                console.error('Failed to fetch latest version from npm:', fetchError);
+                // If npm fetch fails, just report current version without update needed
+                latestVersion = currentVersion;
+                isOutdated = false;
+            }
+            res.json({
+                current: currentVersion,
+                latest: latestVersion,
+                isOutdated,
+                updateCommand: 'npm install better-auth@latest',
+            });
+        }
+        catch (error) {
+            console.error('Version check error:', error);
+            res.status(500).json({
+                error: 'Failed to check version',
+                current: 'unknown',
+                latest: 'unknown',
+                isOutdated: false,
+            });
+        }
+    });
     // IP Geolocation endpoint
     router.post('/api/geo/resolve', (req, res) => {
         try {
@@ -821,7 +881,6 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             try {
                 const adapter = await getAuthAdapterWithConfig();
                 if (adapter && typeof adapter.findMany === 'function') {
-                    // If limit is very high (like 10000), fetch all users without pagination
                     const shouldPaginate = limit < 1000;
                     const fetchLimit = shouldPaginate ? limit : undefined;
                     const allUsers = await adapter.findMany({

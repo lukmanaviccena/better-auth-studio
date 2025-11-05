@@ -6,10 +6,11 @@ import {
   Clock,
   Database,
   Edit,
-  Globe,
+  HashIcon,
   Loader,
   Mail,
   Monitor,
+  Phone,
   User,
   UserMinus,
   Users,
@@ -29,12 +30,15 @@ interface User {
   name: string;
   email: string;
   emailVerified: boolean;
+  twoFactorEnabled?: boolean;
   image?: string;
   createdAt: string;
   updatedAt: string;
   banned?: boolean;
   banReason?: string;
   banExpires?: string;
+  phoneNumber?: string
+  username?: string
   role?: string;
 }
 
@@ -230,7 +234,7 @@ export default function UserDetails() {
         // Resolve locations for sessions
         resolveSessionLocations(sessions);
       }
-    } catch (_error) {}
+    } catch (_error) { }
   }, [userId]);
 
   const handleEditUser = async () => {
@@ -537,14 +541,16 @@ export default function UserDetails() {
     <div className="min-h-screen bg-black w-full">
       <div className="w-full flex flex-col px-6 py-8">
         <Button
-            variant="outline"
-            onClick={() => navigate('/users')}
-            className="mb-4 flex justify-start items-start text-left border-none text-white"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Users
-          </Button>
-        {user.banned && (
+          variant="outline"
+          onClick={() => navigate('/users')}
+          className="mb-4 flex justify-start items-start text-left border-none text-white"
+        >
+          <span className='font-light'>
+            <span className='uppercase text-white/80 font-mono text-sm'>users / </span>
+            <span className='text-white font-mono text-sm'>{user.id}</span>
+          </span>
+        </Button>
+        {/* {user.banned && (
           <div className="mb-6 border-l-4 border-red-500 bg-red-500/10 p-4">
             <div className="flex items-start space-x-3">
               <Ban className="w-5 h-5 text-red-400 mt-0.5" />
@@ -572,10 +578,10 @@ export default function UserDetails() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         <div className="mb-8">
-                    <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gray-800 border border-dashed border-white/20 flex items-center justify-center">
                 {user.image ? (
@@ -585,15 +591,34 @@ export default function UserDetails() {
                 )}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">{user.name}</h1>
-                <p className="text-gray-400">{user.email}</p>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge
-                    variant={user.emailVerified ? 'default' : 'destructive'}
-                    className="rounded-none"
+                <h1 className="text-3xl font-light text-white inline-flex items-start">
+                  {user.name}
+                  <sup
+                    className="text-xs text-gray-500 ml-2 mt-1 cursor-pointer hover:text-white transition-colors"
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.id);
+                      toast.success('User ID copied to clipboard');
+                    }}
+                    title="Click to copy User ID"
                   >
-                    {user.emailVerified ? 'Verified' : 'Unverified'}
-                  </Badge>
+                    <span className='mr-1'>[</span>
+                    <span className='text-white/80 font-mono text-xs'>{user.id.slice(0, 8)}...</span>
+                    <span className='ml-1'>]</span>
+                  </sup>
+                  {user.banned && (
+                    <span className="ml-2 mt-1 px-2 py-0.5 text-[10px] font-mono uppercase border border-dashed border-red-500/30 bg-red-500/10 text-red-400/80 rounded-none">
+                      Banned
+                    </span>
+                  )}
+                </h1>
+                <p className="text-gray-400 font-mono text-sm">{user.email}</p>
+                <div className="flex items-center space-x-2 mt-2">
+                  {user.role && (
+                    <div className="flex items-center space-x-1 px-2 py-1 rounded-sm text-xs font-mono bg-purple-500/20 text-purple-400">
+                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                      <span>{user.role}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -602,7 +627,7 @@ export default function UserDetails() {
               <Button
                 variant="outline"
                 onClick={() => setShowEditModal(true)}
-                className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                className="border border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit User
@@ -611,7 +636,7 @@ export default function UserDetails() {
                 <Button
                   variant="outline"
                   onClick={() => setShowUnbanModal(true)}
-                  className="border border-dashed border-green-400/50 text-green-400 hover:bg-green-400/10 rounded-none"
+                  className="border border-green-400/20 text-green-400 hover:bg-green-400/10 rounded-none"
                   disabled={!adminPluginEnabled}
                 >
                   <Ban className="w-4 h-4 mr-2" />
@@ -621,7 +646,7 @@ export default function UserDetails() {
                 <Button
                   variant="outline"
                   onClick={() => setShowBanModal(true)}
-                  className="border border-dashed border-red-400/50 text-red-400 hover:bg-red-400/10 rounded-none"
+                  className="border border-red-400/20 text-red-400 hover:bg-red-400/10 rounded-none"
                   disabled={!adminPluginEnabled}
                 >
                   <Ban className="w-4 h-4 mr-2" />
@@ -649,19 +674,22 @@ export default function UserDetails() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-white text-white'
-                      : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                  }`}
+                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
+                    ? 'border-white text-white'
+                    : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+                    }`}
                 >
                   <tab.icon className="w-4 h-4" />
-                  <span>{tab.name}</span>
-                  {tab.count !== undefined && (
-                    <Badge variant="outline" className="rounded-none text-xs">
-                      {tab.count}
-                    </Badge>
-                  )}
+                  <span className="inline-flex items-start">
+                    {tab.name}
+                    {tab.count !== undefined && (
+                      <sup className="text-xs text-gray-500 ml-1">
+                        <span className='mr-0.5'>[</span>
+                        <span className='text-white/80 font-mono text-xs'>{tab.count}</span>
+                        <span className='ml-0.5'>]</span>
+                      </sup>
+                    )}
+                  </span>
                 </button>
               ))}
             </nav>
@@ -669,81 +697,97 @@ export default function UserDetails() {
 
           <div className="p-6">
             {activeTab === 'details' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="overflow-x-hidden bg-white/[3%] border border-white/10 p-6 rounded-none">
+                  <h3 className="text-sm uppercase font-mono text-gray-400 mb-4 tracking-wider">
+                    BASIC INFORMATION
+                  </h3>
+                  <hr className="border-white/10 -mx-10 border-dashed my-4" />
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Name</label>
-                      <div className="text-white">{user.name}</div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
-                      <div className="text-white flex items-center space-x-2">
-                        <Mail className="w-4 h-4" />
-                        <span>{user.email}</span>
+                    <div className="flex items-start space-x-3">
+                      <User className="w-4 h-4 text-gray-400 mt-1" />
+                      <div className="flex-1">
+                        <div className="text-xs uppercase font-mono text-gray-500 mb-1">Username</div>
+                        <div className="text-white font-sans text-sm">{user.name.toLowerCase().replace(/\s+/g, '')}</div>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Email Status
-                      </label>
-                      <Badge
-                        variant={user.emailVerified ? 'default' : 'destructive'}
-                        className="rounded-none"
-                      >
-                        {user.emailVerified ? 'Verified' : 'Unverified'}
-                      </Badge>
+                    <div className="flex items-start space-x-3">
+                      <Mail className="w-4 h-4 text-gray-400 mt-1" />
+                      <div className="flex-1">
+                        <div className="text-xs uppercase font-mono text-gray-500 mb-1">Email</div>
+                        <div className="text-white font-mono text-sm">{user.email}</div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Account Status
-                      </label>
-                      <Badge
-                        variant={user.banned ? 'destructive' : 'default'}
-                        className="rounded-none"
-                      >
-                        {user.banned ? 'Banned' : 'Active'}
-                      </Badge>
-                      {user.banned && user.banReason && (
-                        <div className="mt-2 text-sm text-red-400">Reason: {user.banReason}</div>
-                      )}
-                      {user.banned && user.banExpires && (
-                        <div className="mt-1 text-sm text-yellow-400">
-                          Expires: {new Date(user.banExpires).toLocaleDateString()}
+                    {user.username && (
+                      <div className="flex items-start space-x-3">
+                        <HashIcon className="w-4 h-4 text-gray-400 mt-1" />
+                        <div className="flex-1">
+                          <div className="text-xs uppercase font-mono text-gray-500 mb-1">Username</div>
+                          <div className="text-white font-mono text-sm">{user.username}</div>
                         </div>
-                      )}
+                      </div>
+                    )}
+                    {user.phoneNumber && (
+                      <div className="flex items-start space-x-3">
+                        <Phone className="w-4 h-4 text-gray-400 mt-1" />
+                        <div className="flex-1">
+                          <div className="text-xs uppercase font-mono text-gray-500 mb-1">Phone</div>
+                          <div className="text-white font-mono text-sm">+251 91 234 5678</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-start space-x-3">
+                      <Calendar className="w-4 h-4 text-gray-400 mt-1" />
+                      <div className="flex-1">
+                        <div className="text-xs uppercase font-mono text-gray-500 mb-1">Member Since</div>
+                        <div className="text-white font-mono text-sm">
+                          {new Date(user.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="overflow-x-hidden bg-white/[3%] border border-white/10 p-6 rounded-none">
+                  <h3 className="text-sm uppercase font-mono text-gray-400 mb-4 tracking-wider">
+                    SECURITY
+                  </h3>
+                  <hr className="border-white/10 -mx-10 border-dashed my-4" />
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Created
-                      </label>
-                      <div className="text-white flex items-center space-x-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between p-3 bg-black/30 border border-white/5 rounded-none">
+                      <div className="flex items-center space-x-3">
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <div className="text-xs uppercase font-mono text-gray-500">Email Verification</div>
+                        </div>
+                      </div>
+                      <div className={`px-2 rounded-none py-1 text-xs font-mono ${user.emailVerified ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {user.emailVerified ? 'Verified' : 'Unverified'}
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Last Updated
-                      </label>
-                      <div className="text-white flex items-center space-x-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(user.updatedAt).toLocaleDateString()}</span>
+
+                    <div className="flex items-center justify-between p-3 bg-black/30 border border-white/5 rounded-none">
+                      <div className="flex items-center space-x-3">
+                        <Database className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <div className="text-xs uppercase font-mono text-gray-500">Two-Factor Authentication</div>
+                          
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        User ID
-                      </label>
-                      <div className="text-white font-mono text-sm">{user.id}</div>
+                      <div className={`px-2 rounded-none py-1 text-xs font-mono ${user.twoFactorEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {user.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
-
             {activeTab === 'organizations' && (
               <div className="space-y-4">
                 {organizations.length === 0 ? (
@@ -899,15 +943,16 @@ export default function UserDetails() {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center space-x-3 mb-2">
-                                <h3 className="text-white font-medium">
+                                <h3 className="text-white font-light inline-flex items-start">
                                   Session {session.id.substring(0, 8)}...
+                                  <sup className="text-xs text-gray-500 ml-2 mt-0.5">
+                                    <span className='mr-1'>[</span>
+                                    <span className='text-white/80 font-mono text-xs'>{session.ipAddress}</span>
+                                    <span className='ml-1'>]</span>
+                                  </sup>
                                 </h3>
                               </div>
                               <div className="flex items-center space-x-4 mb-1">
-                                <div className="flex items-center space-x-2">
-                                  <Globe className="w-4 h-4 text-white" />
-                                  <span className="text-white text-sm">{session.ipAddress}</span>
-                                </div>
                                 <div className="flex items-center space-x-1">
                                   <span className="text-gray-400 text-xs">📍</span>
                                   <span className="text-gray-300 text-sm">
@@ -1027,7 +1072,7 @@ export default function UserDetails() {
 
       {showBanModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-black border border-dashed border-red-400/50 rounded-none p-6 w-full max-w-md">
+          <div className="bg-black border border-red-400/50 rounded-none p-6 w-full max-w-md">
             <h2 className="text-xl font-bold text-white mb-4">Ban User</h2>
             <p className="text-gray-400 mb-4">
               Ban <strong>{user.name}</strong> from accessing the system.
@@ -1092,7 +1137,7 @@ export default function UserDetails() {
 
       {showUnbanModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-black border border-dashed border-green-400/50 rounded-none p-6 w-full max-w-md">
+          <div className="bg-black border border-green-400/20 rounded-none p-6 w-full max-w-md">
             <h2 className="text-xl font-bold text-white mb-4">Unban User</h2>
             <p className="text-gray-400 mb-6">
               Are you sure you want to unban <strong>{user.name}</strong>? This will restore their
@@ -1108,7 +1153,7 @@ export default function UserDetails() {
               </Button>
               <Button
                 onClick={handleUnbanUser}
-                className="bg-green-600 text-white hover:bg-green-700 rounded-none"
+                className="bg-green-400 text-white hover:bg-green-700 rounded-none"
               >
                 Unban User
               </Button>

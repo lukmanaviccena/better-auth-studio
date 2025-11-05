@@ -29,7 +29,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '../components/ui/select';
 import { useCounts } from '../contexts/CountsContext';
 
@@ -64,12 +63,12 @@ export default function Organizations() {
   const [loading, setLoading] = useState(true);
   const [pluginStatus, setPluginStatus] = useState<PluginStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, _] = useState('all');
+  const [filter, _setFilter] = useState('all');
   const [activeFilters, setActiveFilters] = useState<FilterConfig[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [organizationsPerPage] = useState(20);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [_, _setShowCreateTeamModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -86,7 +85,6 @@ export default function Organizations() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
   const [createFormData, setCreateFormData] = useState({ name: '', slug: '' });
-  const [createTeamFormData, setCreateTeamFormData] = useState({ name: '', organizationId: '' });
   const [editFormData, setEditFormData] = useState({ name: '', slug: '' });
 
   useEffect(() => {
@@ -294,45 +292,6 @@ export default function Organizations() {
       toast.error('Error creating organization', { id: toastId });
     }
   };
-
-  const handleCreateTeam = async () => {
-    if (!createTeamFormData.name) {
-      toast.error('Please fill in the team name');
-      return;
-    }
-
-    if (!createTeamFormData.organizationId) {
-      toast.error('Please select an organization');
-      return;
-    }
-
-    const toastId = toast.loading('Creating team...');
-
-    try {
-      const response = await fetch('/api/teams', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: createTeamFormData.name,
-          organizationId: createTeamFormData.organizationId,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setShowCreateTeamModal(false);
-        setCreateTeamFormData({ name: '', organizationId: '' });
-        toast.success('Team created successfully!', { id: toastId });
-      } else {
-        toast.error(`Error creating team: ${result.error || 'Unknown error'}`, { id: toastId });
-      }
-    } catch (error) {
-      console.error('Error creating team:', error);
-      toast.error('Error creating team', { id: toastId });
-    }
-  };
-
   const handleUpdateOrganization = async () => {
     if (!selectedOrganization) {
       toast.error('No organization selected');

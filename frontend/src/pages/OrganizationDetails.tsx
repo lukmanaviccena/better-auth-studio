@@ -901,8 +901,15 @@ export default function OrganizationDetails() {
           {/* Teams Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg text-white font-light">Teams ({teams.length})</h3>
-              <p className="text-gray-400 mt-1">Manage teams within this organization</p>
+              <h3 className="text-lg relative text-white font-light inline-flex items-start">
+                Teams
+                <sup className="text-xs text-gray-500 ml-1 mt-0">
+                  <span className='mr-1'>[</span>
+                  <span className='text-white font-mono text-xs'>{teams.length}</span>
+                  <span className='ml-1'>]</span>
+                </sup>
+              </h3>
+              <p className="text-gray-400 mt-1 uppercase font-mono text-xs font-light">Manage teams within this organization</p>
             </div>
             <div className="flex items-center space-x-3">
               <Button

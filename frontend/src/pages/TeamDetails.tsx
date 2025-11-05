@@ -331,15 +331,16 @@ export default function TeamDetails() {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>Members</span>
-            {members.length > 0 && (
-              <Badge
-                variant="secondary"
-                className="text-xs bg-white/10 border border-white/20 rounded-sm"
-              >
-                {members.length}
-              </Badge>
-            )}
+            <span className="inline-flex items-start">
+              Members
+              {members.length > 0 && (
+                <sup className="text-xs text-gray-500 ml-1">
+                  <span className='mr-0.5'>[</span>
+                  <span className='text-white/80 font-mono text-xs'>{members.length}</span>
+                  <span className='ml-0.5'>]</span>
+                </sup>
+              )}
+            </span>
           </button>
         </nav>
       </div>

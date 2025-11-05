@@ -3,7 +3,6 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCounts } from '../contexts/CountsContext';
 import CommandPalette from './CommandPalette';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 
 interface LayoutProps {
@@ -138,15 +137,16 @@ export default function Layout({ children }: LayoutProps) {
                     }`}
                 >
                   <item.icon className="w-4 h-4" />
-                  <span>{item.name}</span>
-                  {item.badge && (
-                    <Badge
-                      variant="secondary"
-                      className="text-xs bg-white/10 border border-white/20 rounded-sm"
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
+                  <span className="inline-flex items-start">
+                    {item.name}
+                    {item.badge && (
+                      <sup className="text-xs text-gray-500 ml-1">
+                        <span className='mr-0.5'>[</span>
+                        <span className='text-white/80 font-mono text-xs'>{item.badge}</span>
+                        <span className='ml-0.5'>]</span>
+                      </sup>
+                    )}
+                  </span>
                 </Link>
               );
             })}
