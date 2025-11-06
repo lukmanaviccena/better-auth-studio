@@ -15,7 +15,7 @@ import {
   Users,
   X,
 } from '../components/PixelIcons';
-import { Edit } from 'lucide-react';
+import { Clock1, Edit } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -538,8 +538,8 @@ export default function UserDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-black w-full">
-      <div className="w-full flex flex-col px-6 py-8 pt-4">
+    <div className="space-y-6 p-6 bg-black w-full">
+      <div className="w-full flex flex-col">
         <span
           className="mb-4 ml-0 flex justify-start items-start text-left border-none text-white"
         >
@@ -929,7 +929,7 @@ export default function UserDetails() {
 
                 {sessions.length === 0 ? (
                   <div className="text-center py-12">
-                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Clock1 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-white mb-2">No Sessions</h3>
                     <p className="text-gray-400">This user has no active sessions.</p>
                   </div>
