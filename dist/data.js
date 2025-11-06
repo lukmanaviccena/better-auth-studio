@@ -318,6 +318,10 @@ async function getRealAnalytics(adapter, options) {
                 case '1Y':
                     startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
                     break;
+                case 'Custom':
+                    // For Custom, use from date if provided, otherwise default to 30 days
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
                 case 'ALL':
                 default:
                     // Get the earliest creation date from users
@@ -412,15 +416,31 @@ async function getRealAnalytics(adapter, options) {
                 buckets.push({ start: bucketStart, end: bucketEnd, label: monthName });
             }
         }
-        else {
-            // ALL - divide into equal buckets
+        else if (period === 'Custom' || period === 'ALL') {
+            // Custom or ALL - divide into equal buckets
             const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-            const bucketCount = Math.min(totalDays, 12); // Max 12 buckets
+            const bucketCount = Math.min(Math.max(totalDays, 1), 30); // Max 30 buckets, min 1
             const bucketSize = totalDays / bucketCount;
             for (let i = 0; i < bucketCount; i++) {
                 const bucketStart = new Date(startDate.getTime() + i * bucketSize * 24 * 60 * 60 * 1000);
-                const bucketEnd = new Date(bucketStart.getTime() + bucketSize * 24 * 60 * 60 * 1000);
-                buckets.push({ start: bucketStart, end: bucketEnd, label: `Period ${i + 1}` });
+                const bucketEnd = i === bucketCount - 1
+                    ? endDate
+                    : new Date(bucketStart.getTime() + bucketSize * 24 * 60 * 60 * 1000);
+                // Generate better labels based on date range
+                let label;
+                if (totalDays <= 7) {
+                    // For short ranges, show day names
+                    label = bucketStart.toLocaleDateString('en-US', { weekday: 'short' });
+                }
+                else if (totalDays <= 30) {
+                    // For medium ranges, show month and day
+                    label = bucketStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
+                else {
+                    // For long ranges, show month only
+                    label = bucketStart.toLocaleDateString('en-US', { month: 'short' });
+                }
+                buckets.push({ start: bucketStart, end: bucketEnd, label });
             }
         }
         // Count items in each bucket based on type

@@ -600,7 +600,7 @@ export default function Users() {
                 Clear all
               </Button>
             </div>
-          )}
+            )}
         </div>
 
         {/* Active Filters */}
@@ -790,7 +790,7 @@ export default function Users() {
                   <tr
                     key={user.id}
                     className={`border-b border-dashed hover:bg-white/5 cursor-pointer ${user.banned ? 'border-red-500/30 bg-red-500/5' : 'border-white/5'
-                      }`}
+                    }`}
                     onClick={() => navigate(`/users/${user.id}`)}
                   >
                     <td className="py-4 px-4">
@@ -803,7 +803,7 @@ export default function Users() {
                             }
                             alt={user.name}
                             className={`w-10 h-10 rounded-none border border-dashed ${user.banned ? 'border-red-400/50 opacity-60' : 'border-white/20'
-                              }`}
+                            }`}
                           />
                           {user.banned && (
                             <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5">

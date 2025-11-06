@@ -530,7 +530,6 @@ export function createRoutes(
         uptime: process.uptime(),
       },
     };
-
     res.json(config);
   });
 
@@ -649,12 +648,15 @@ export function createRoutes(
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
 
-      if (adapter.getUsers) {
-        const users = await adapter.getUsers();
-        res.json({ success: true, users });
-      } else {
-        res.json({ success: true, users: [] });
+      let users: any[] = [];
+      if (adapter.findMany) {
+        // Use findMany with high limit to get all users
+        users = await adapter.findMany({ model: 'user', limit: 100000 }).catch(() => []);
+      } else if (adapter.getUsers) {
+        users = await adapter.getUsers();
       }
+      
+      res.json({ success: true, users });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch users' });
     }

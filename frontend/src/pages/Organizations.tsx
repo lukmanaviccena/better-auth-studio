@@ -612,32 +612,32 @@ export default function Organizations() {
 
       {/* Filters */}
       <div className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search organizations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
-            />
-          </div>
+      <div className="flex items-center space-x-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search organizations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
+          />
+        </div>
 
           <div className="flex items-center space-x-2">
             <Select value="add-filter" onValueChange={addFilter}>
               <SelectTrigger className="w-[180px]">
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center space-x-2">
+          <Filter className="w-4 h-4 text-gray-400" />
                   <span>Add Filter</span>
                 </div>
-              </SelectTrigger>
-              <SelectContent>
+            </SelectTrigger>
+            <SelectContent>
                 {!activeFilters.some((f) => f.type === 'createdAt') && (
                   <SelectItem value="createdAt">Created Date</SelectItem>
                 )}
-              </SelectContent>
-            </Select>
-          </div>
+            </SelectContent>
+          </Select>
+        </div>
           {activeFilters.length > 0 && (
             <div className="flex items-center space-x-2">
               <Button

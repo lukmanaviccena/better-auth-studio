@@ -49,8 +49,8 @@ export default function Dashboard() {
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
   const [activeUsersDaily, setActiveUsersDaily] = useState(0);
   const [newUsersDaily, setNewUsersDaily] = useState(0);
-  const [selectedUserPeriod, setSelectedUserPeriod] = useState('ALL');
-  const [selectedSubscriptionPeriod, setSelectedSubscriptionPeriod] = useState('ALL');
+  const [selectedUserPeriod, setSelectedUserPeriod] = useState('1D');
+  const [selectedSubscriptionPeriod, setSelectedSubscriptionPeriod] = useState('1D');
   const [totalSubscription, setTotalSubscription] = useState(1243.22);
   const [selectedPatch, setSelectedPatch] = useState<SecurityPatch | null>(null);
   const [showPatchModal, setShowPatchModal] = useState(false);
@@ -67,11 +67,11 @@ export default function Dashboard() {
     latest: string;
     isOutdated: boolean;
   } | null>(null);
-  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
-  const [hoveredBarPosition, setHoveredBarPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredUsersAreaIndex, setHoveredUsersAreaIndex] = useState<number | null>(null);
+  const [hoveredUsersAreaPosition, setHoveredUsersAreaPosition] = useState<{ x: number; y: number } | null>(null);
   const [hoveredAreaIndex, setHoveredAreaIndex] = useState<number | null>(null);
   const [hoveredAreaPosition, setHoveredAreaPosition] = useState<{ x: number; y: number } | null>(null);
-  
+
   // Custom date range states
   const [activeUsersDateFrom, setActiveUsersDateFrom] = useState<Date | undefined>(undefined);
   const [activeUsersDateTo, setActiveUsersDateTo] = useState<Date | undefined>(undefined);
@@ -81,7 +81,7 @@ export default function Dashboard() {
   const [organizationsDateTo, setOrganizationsDateTo] = useState<Date | undefined>(undefined);
   const [teamsDateFrom, setTeamsDateFrom] = useState<Date | undefined>(undefined);
   const [teamsDateTo, setTeamsDateTo] = useState<Date | undefined>(undefined);
-  
+
   // Analytics data and percentages
   const [totalUsersData, setTotalUsersData] = useState<number[]>([]);
   const [totalUsersLabels, setTotalUsersLabels] = useState<string[]>([]);
@@ -92,7 +92,12 @@ export default function Dashboard() {
   const [activeUsersPercentage, setActiveUsersPercentage] = useState(0);
   const [organizationsPercentage, setOrganizationsPercentage] = useState(0);
   const [teamsPercentage, setTeamsPercentage] = useState(0);
-  
+
+  // Store all users for client-side filtering
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [_newUsersCount, setNewUsersCount] = useState(0);
+  const [newUsersCountPercentage, setNewUsersCountPercentage] = useState(0);
+
   const { counts, loading } = useCounts();
   const navigate = useNavigate();
 
@@ -194,7 +199,7 @@ export default function Dashboard() {
       const params = new URLSearchParams({ type, period });
       if (from) params.append('from', from.toISOString());
       if (to) params.append('to', to.toISOString());
-      
+
       const response = await fetch(`/api/analytics?${params.toString()}`);
       return await response.json();
     } catch (error) {
@@ -202,6 +207,22 @@ export default function Dashboard() {
       return null;
     }
   };
+
+  // Fetch all users once for client-side filtering
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      try {
+        const response = await fetch('/api/users/all');
+        const data = await response.json();
+        if (data && data.success && data.users) {
+          setAllUsers(data.users);
+        }
+      } catch (_error) {
+        setAllUsers([]);
+      }
+    };
+    fetchAllUsers();
+  }, []);
 
   useEffect(() => {
     // Fetch additional stats
@@ -237,9 +258,124 @@ export default function Dashboard() {
     fetchData();
   }, [selectedUserPeriod, activeUsersDateFrom, activeUsersDateTo]);
 
+  // Sync newUsersPeriod with selectedSubscriptionPeriod
+  useEffect(() => {
+    const periodMap: Record<string, string> = {
+      'Daily': '1D',
+      'Weekly': '1W',
+      'Monthly': '1M',
+      'Yearly': '1Y',
+      'Custom': 'Custom'
+    };
+    if (newUsersPeriod && periodMap[newUsersPeriod]) {
+      setSelectedSubscriptionPeriod(periodMap[newUsersPeriod]);
+    }
+  }, [newUsersPeriod]);
+
+  // Calculate new users count and percentage from fetched users
+  useEffect(() => {
+    if (allUsers.length === 0) {
+      setNewUsersCount(0);
+      setNewUsersCountPercentage(0);
+      return;
+    }
+
+    const now = new Date();
+    let currentPeriodStart: Date;
+    let currentPeriodEnd: Date = now;
+    let previousPeriodStart: Date;
+    let previousPeriodEnd: Date;
+
+    // Determine date ranges based on period
+    if (newUsersPeriod === 'Custom') {
+      if (!newUsersDateFrom || !newUsersDateTo) {
+        setNewUsersCount(0);
+        setNewUsersCountPercentage(0);
+        return;
+      }
+      currentPeriodStart = new Date(newUsersDateFrom);
+      currentPeriodEnd = new Date(newUsersDateTo);
+      currentPeriodEnd.setHours(23, 59, 59, 999);
+
+      // Previous period is the same duration before current period
+      const periodDuration = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
+      previousPeriodEnd = new Date(currentPeriodStart.getTime() - 1);
+      previousPeriodStart = new Date(previousPeriodEnd.getTime() - periodDuration);
+    } else {
+      // Calculate current period
+      switch (newUsersPeriod) {
+        case 'Daily':
+          currentPeriodStart = new Date(now);
+          currentPeriodStart.setHours(0, 0, 0, 0);
+          previousPeriodEnd = new Date(currentPeriodStart.getTime() - 1);
+          previousPeriodStart = new Date(previousPeriodEnd.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case 'Weekly':
+          currentPeriodStart = new Date(now);
+          currentPeriodStart.setDate(now.getDate() - now.getDay());
+          currentPeriodStart.setHours(0, 0, 0, 0);
+          previousPeriodEnd = new Date(currentPeriodStart.getTime() - 1);
+          previousPeriodStart = new Date(previousPeriodEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'Monthly':
+          currentPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          currentPeriodStart.setHours(0, 0, 0, 0);
+          previousPeriodEnd = new Date(currentPeriodStart.getTime() - 1);
+          previousPeriodStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          previousPeriodStart.setHours(0, 0, 0, 0);
+          break;
+        case 'Yearly':
+          currentPeriodStart = new Date(now.getFullYear(), 0, 1);
+          currentPeriodStart.setHours(0, 0, 0, 0);
+          previousPeriodEnd = new Date(currentPeriodStart.getTime() - 1);
+          previousPeriodStart = new Date(now.getFullYear() - 1, 0, 1);
+          previousPeriodStart.setHours(0, 0, 0, 0);
+          break;
+        default:
+          setNewUsersCount(0);
+          setNewUsersCountPercentage(0);
+          return;
+      }
+    }
+
+    // Filter users for current period
+    const currentPeriodUsers = allUsers.filter((user: any) => {
+      if (!user.createdAt) return false;
+      const createdAt = new Date(user.createdAt);
+      return createdAt >= currentPeriodStart && createdAt <= currentPeriodEnd;
+    });
+
+    // Filter users for previous period
+    const previousPeriodUsers = allUsers.filter((user: any) => {
+      if (!user.createdAt) return false;
+      const createdAt = new Date(user.createdAt);
+      return createdAt >= previousPeriodStart && createdAt <= previousPeriodEnd;
+    });
+
+    const currentCount = currentPeriodUsers.length;
+    const previousCount = previousPeriodUsers.length;
+
+    // Calculate percentage change
+    let percentageChange = 0;
+    if (previousCount > 0) {
+      percentageChange = ((currentCount - previousCount) / previousCount) * 100;
+    } else if (currentCount > 0) {
+      percentageChange = 100; // 100% increase if no previous data
+    }
+
+    setNewUsersCount(currentCount);
+    setNewUsersCountPercentage(percentageChange);
+  }, [allUsers, newUsersPeriod, newUsersDateFrom, newUsersDateTo]);
+
   // Fetch new users chart analytics
   useEffect(() => {
     const fetchData = async () => {
+      // For Custom period, we need both dates
+      if (selectedSubscriptionPeriod === 'Custom') {
+        if (!newUsersDateFrom || !newUsersDateTo) {
+          return; // Don't fetch if dates are not set
+        }
+      }
       const data = await fetchAnalytics('newUsers', selectedSubscriptionPeriod, newUsersDateFrom, newUsersDateTo);
       if (data) {
         setNewUsersData(data.data || []);
@@ -368,7 +504,7 @@ export default function Dashboard() {
       '1D': 24, '1W': 7, '1M': 30, '3M': 3, '6M': 6, '1Y': 12, 'ALL': 7
     };
     const expectedLength = lengths[period] || 7;
-    
+
     // If we have labels from API, use them (but simplify for x-axis)
     if (labels && labels.length > 0 && labels.length === expectedLength) {
       if (period === '1D') {
@@ -411,7 +547,7 @@ export default function Dashboard() {
         return label;
       });
     }
-    
+
     // Fallback: generate labels dynamically based on current date
     const now = new Date();
     switch (period) {
@@ -460,7 +596,7 @@ export default function Dashboard() {
       '1D': 24, '1W': 7, '1M': 30, '3M': 3, '6M': 6, '1Y': 12, 'ALL': 7
     };
     const expectedLength = lengths[period] || 7;
-    
+
     // If we have labels from API, use them
     if (labels && labels.length > 0 && labels.length === expectedLength) {
       if (period === '1D') {
@@ -485,7 +621,7 @@ export default function Dashboard() {
       }
       return labels;
     }
-    
+
     // Fallback: generate labels dynamically based on current date
     const now = new Date();
     switch (period) {
@@ -540,24 +676,24 @@ export default function Dashboard() {
       '1D': 24, '1W': 7, '1M': 30, '3M': 3, '6M': 6, '1Y': 12, 'ALL': 7
     };
     const expectedLength = lengths[period] || 7;
-    
+
     // If no data yet, return placeholder
     if (!data || data.length === 0) {
       return Array(expectedLength).fill(0);
     }
-    
+
     const paddedData = [...data];
     while (paddedData.length < expectedLength) {
       paddedData.push(0);
     }
     const trimmedData = paddedData.slice(0, expectedLength);
-    
+
     const maxValue = Math.max(...trimmedData, 1);
     return trimmedData.map(val => (val / maxValue) * 100);
   };
 
   const renderOverview = () => (
-    <div className="space-y-6 mt-5">
+    <div className="space-y-6 min-h-screen h-full mt-5 flex-1 overflow-y-hidden overflow-x-hidden px-0">
       {/* <div className="px-6 pt-8">
         <h1 className="text-3xl text-white font-light mb-2">Welcome Back</h1>
         <p className="text-gray-400 text-sm">
@@ -568,8 +704,7 @@ export default function Dashboard() {
           })}
         </p>
       </div> */}
-
-      <div className="px-6">
+      <div className="px-6 overflow-hidden">
         <div className="flex items-center justify-between gap-8 py-4 px-6 bg-white/5 border border-white/10 rounded-none overflow-x-auto relative">
           {/* Top-left corner */}
           <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
@@ -584,11 +719,10 @@ export default function Dashboard() {
           <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
           <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
 
-          {/* Total Users Stat */}
           <div className="flex items-center gap-3 min-w-fit">
             <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
               <Users className="w-5 h-5 text-white" />
-      </div>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm uppercase tracking-wide">Users</span>
               <span className="text-white text-lg font-medium">{loading ? '...' : formatNumber(counts.users)}</span>
@@ -687,7 +821,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="px-6 space-y-6">
+      <div className="px-6 pb-10 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Total Users Card */}
           <div className="bg-white/5 border border-white/10 p-6 relative">
@@ -711,8 +845,8 @@ export default function Dashboard() {
                     key={period}
                     onClick={() => setSelectedUserPeriod(period)}
                     className={`px-2 py-1 text-xs font-light transition-colors whitespace-nowrap ${selectedUserPeriod === period
-                        ? 'bg-white/20 text-white border border-white/30'
-                        : 'text-gray-500 hover:text-white'
+                      ? 'bg-white/20 text-white border border-white/30'
+                      : 'text-gray-500 hover:text-white'
                       }`}
                   >
                     {period}
@@ -734,48 +868,71 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="space-y-2 relative">
-              <div className="h-32 flex items-end justify-between space-x-1 relative">
-                {getChartData(selectedUserPeriod, 'users').map((height, i) => {
-                  // Vary opacity based on position and height for visual interest
-                  const baseOpacity = 15 + (i % 3) * 5; // 15, 20, 25
-                  const hoverOpacity = baseOpacity + 10;
+              <div className="h-32 relative">
+                <svg className="w-full h-full absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="usersBarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: 'rgba(255, 255, 255, 0.3)', stopOpacity: 1 }} />
+                      <stop offset="100%" style={{ stopColor: 'rgba(255, 255, 255, 0.05)', stopOpacity: 1 }} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="h-32 flex items-end justify-between space-x-1 relative z-10">
+                  {getChartData(selectedUserPeriod, 'users').map((height, i) => {
+                    const isHovered = hoveredUsersAreaIndex === i;
 
-                  return (
-                    <div
-                      key={i}
-                      className={`flex-1 transition-colors relative cursor-pointer`}
-                      style={{
-                        height: `${height}%`,
-                        backgroundColor: `rgba(255, 255, 255, ${baseOpacity / 100})`
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = `rgba(255, 255, 255, ${hoverOpacity / 100})`;
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setHoveredBarIndex(i);
-                        setHoveredBarPosition({ x: rect.left + rect.width / 2, y: rect.top });
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = `rgba(255, 255, 255, ${baseOpacity / 100})`;
-                        setHoveredBarIndex(null);
-                        setHoveredBarPosition(null);
-                      }}
-                    />
-                  );
-                })}
+                    return (
+                      <div
+                        key={i}
+                        className="flex-1 transition-all duration-200 ease-out relative cursor-pointer group"
+                        style={{
+                          height: `${height}%`,
+                          background: 'url(#usersBarGradient)',
+                        }}
+                        onMouseEnter={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = rect.left + rect.width / 2;
+                          const y = rect.top;
+                          // Constrain tooltip within viewport
+                          const tooltipWidth = 150; // Approximate tooltip width
+                          const tooltipHeight = 60; // Approximate tooltip height
+                          const constrainedX = Math.max(tooltipWidth / 2, Math.min(window.innerWidth - tooltipWidth / 2, x));
+                          const constrainedY = Math.max(tooltipHeight + 10, Math.min(window.innerHeight - 10, y));
+                          setHoveredUsersAreaIndex(i);
+                          setHoveredUsersAreaPosition({ x: constrainedX, y: constrainedY });
+                        }}
+                        onMouseLeave={() => {
+                          setHoveredUsersAreaIndex(null);
+                          setHoveredUsersAreaPosition(null);
+                        }}
+                      >
+                        <div
+                          className="w-full h-full"
+                          style={{
+                            background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05))',
+                            opacity: isHovered ? 1 : 0.8,
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
 
-                {hoveredBarIndex !== null && hoveredBarPosition && (
+                {/* Tooltip */}
+                {hoveredUsersAreaIndex !== null && hoveredUsersAreaPosition && (
                   <div
                     className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
                     style={{
-                      left: `${hoveredBarPosition.x}px`,
-                      top: `${hoveredBarPosition.y - 10}px`,
+                      left: `${hoveredUsersAreaPosition.x}px`,
+                      top: `${hoveredUsersAreaPosition.y}px`,
                       transform: 'translate(-50%, -100%)',
+                      maxWidth: 'calc(100vw - 20px)',
                     }}
                   >
-                    <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg">
-                      <div className="text-xs text-gray-400 mb-1">{getDetailedLabels(selectedUserPeriod, 'users')[hoveredBarIndex]}</div>
-                      <div className="text-sm text-white font-medium">
-                        {totalUsersData[hoveredBarIndex] !== undefined ? totalUsersData[hoveredBarIndex].toLocaleString() : '0'} users
+                    <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
+                      <div className="text-xs text-gray-400 mb-1 font-mono uppercase">{getDetailedLabels(selectedUserPeriod, 'users')[hoveredUsersAreaIndex]}</div>
+                      <div className="text-sm text-white font-sans font-medium">
+                        {totalUsersData[hoveredUsersAreaIndex] !== undefined ? totalUsersData[hoveredUsersAreaIndex].toLocaleString() : '0'} <span className="font-mono text-xs text-gray-400">users</span>
                       </div>
                     </div>
                   </div>
@@ -814,8 +971,8 @@ export default function Dashboard() {
                     key={period}
                     onClick={() => setSelectedSubscriptionPeriod(period)}
                     className={`px-2 py-1 text-xs font-light transition-colors whitespace-nowrap ${selectedSubscriptionPeriod === period
-                        ? 'bg-white/20 text-white border border-white/30'
-                        : 'text-gray-500 hover:text-white'
+                      ? 'bg-white/20 text-white border border-white/30'
+                      : 'text-gray-500 hover:text-white'
                       }`}
                   >
                     {period}
@@ -904,8 +1061,13 @@ export default function Dashboard() {
                               const rect = svg.getBoundingClientRect();
                               const pointX = rect.left + (x / 100) * rect.width;
                               const pointY = rect.top + (y / 100) * rect.height;
+                              // Constrain tooltip within viewport
+                              const tooltipWidth = 150; // Approximate tooltip width
+                              const tooltipHeight = 60; // Approximate tooltip height
+                              const constrainedX = Math.max(tooltipWidth / 2, Math.min(window.innerWidth - tooltipWidth / 2, pointX));
+                              const constrainedY = Math.max(tooltipHeight + 10, Math.min(window.innerHeight - 10, pointY));
                               setHoveredAreaIndex(i);
-                              setHoveredAreaPosition({ x: pointX, y: pointY });
+                              setHoveredAreaPosition({ x: constrainedX, y: constrainedY });
                             }
                           }}
                           onMouseLeave={() => {
@@ -924,14 +1086,15 @@ export default function Dashboard() {
                     className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
                     style={{
                       left: `${hoveredAreaPosition.x}px`,
-                      top: `${hoveredAreaPosition.y - 10}px`,
+                      top: `${hoveredAreaPosition.y}px`,
                       transform: 'translate(-50%, -100%)',
+                      maxWidth: 'calc(100vw - 20px)',
                     }}
                   >
-                    <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg">
-                      <div className="text-xs text-gray-400 mb-1">{getDetailedLabels(selectedSubscriptionPeriod, 'newUsers')[hoveredAreaIndex]}</div>
-                      <div className="text-sm text-white font-medium">
-                        {newUsersData[hoveredAreaIndex] !== undefined ? newUsersData[hoveredAreaIndex].toLocaleString() : '0'} users
+                    <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
+                      <div className="text-xs text-gray-400 mb-1 font-mono uppercase">{getDetailedLabels(selectedSubscriptionPeriod, 'newUsers')[hoveredAreaIndex]}</div>
+                      <div className="text-sm text-white font-sans font-medium">
+                        {newUsersData[hoveredAreaIndex] !== undefined ? newUsersData[hoveredAreaIndex].toLocaleString() : '0'} <span className="font-mono text-xs text-gray-400">users</span>
                       </div>
                     </div>
                   </div>
@@ -952,7 +1115,7 @@ export default function Dashboard() {
         {/* Bottom Row - Three Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Two Small Cards */}
-          <div className="space-y-4 overflow-x-hidden">
+          <div className="space-y-4">
             {/* Active Users Daily */}
             <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
               {/* Top-left corner */}
@@ -990,21 +1153,21 @@ export default function Dashboard() {
                           {period}
                         </button>
                       ))}
-              </div>
+                    </div>
                   )}
-            </div>
-                
+                </div>
+
                 {activeUsersPeriod === 'Custom' && (
-                  <div className="flex h-0 items-center gap-2">
-                    <Popover>
+                  <div className="h-0 flex items-center gap-2">
+                    <Popover >
                       <PopoverTrigger asChild>
-            <Button 
+                        <Button
                           variant="outline"
                           className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-            >
+                        >
                           <CalendarIcon className="mr-1 h-3 w-3" />
                           {activeUsersDateFrom ? format(activeUsersDateFrom, 'MMM dd yyyy') : 'From'}
-            </Button>
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-black border-white/10">
                         <Calendar
@@ -1016,7 +1179,7 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-                    
+
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1038,9 +1201,9 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-              </div>
+                  </div>
                 )}
-            </div>
+              </div>
               <hr className='mb-2 -mx-10 border-white/10' />
               <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Active Users</h4>
               <p className="text-xs text-gray-400 mb-3">Users with active session in the time frame</p>
@@ -1056,7 +1219,6 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -1099,18 +1261,18 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                
+
                 {newUsersPeriod === 'Custom' && (
                   <div className="h-0 flex items-center gap-2">
                     <Popover>
                       <PopoverTrigger asChild>
-            <Button
-              variant="outline"
+                        <Button
+                          variant="outline"
                           className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-            >
+                        >
                           <CalendarIcon className="mr-1 h-3 w-3" />
                           {newUsersDateFrom ? format(newUsersDateFrom, 'MMM dd yyyy') : 'From'}
-            </Button>
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-black border-white/10">
                         <Calendar
@@ -1122,7 +1284,7 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-                    
+
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1144,23 +1306,23 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-              </div>
+                  </div>
                 )}
-            </div>
+              </div>
               <hr className='mb-2 -mx-10 border-white/10' />
               <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">New Users</h4>
               <p className="text-xs text-gray-400 mb-3">
                 Newly registered Users in the time frame
               </p>
               <div className='flex pt-4 justify-between items-end'>
-                <p className="text-3xl text-white font-light mb-2">{newUsersDaily}</p>
+                <p className="text-3xl text-white font-light mb-2">{_newUsersCount}</p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
-                    <svg className={`w-3 h-3 ${newUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} viewBox="0 0 12 12" fill="currentColor" style={newUsersPercentage < 0 ? { transform: 'rotate(180deg)' } : {}}>
+                    <svg className={`w-3 h-3 ${newUsersCountPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} viewBox="0 0 12 12" fill="currentColor" style={newUsersCountPercentage < 0 ? { transform: 'rotate(180deg)' } : {}}>
                       <path d="M6 0 L12 12 L0 12 Z" />
                     </svg>
-                    <span className={`text-xs font-medium ${newUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {Math.abs(newUsersPercentage).toFixed(1)}%
+                    <span className={`text-xs font-medium ${newUsersCountPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {Math.abs(newUsersCountPercentage).toFixed(1)}%
                     </span>
                   </div>
                 </div>
@@ -1210,18 +1372,18 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                
+
                 {organizationsPeriod === 'Custom' && (
                   <div className="h-0 flex items-center gap-2">
                     <Popover>
                       <PopoverTrigger asChild>
-            <Button
-              variant="outline"
+                        <Button
+                          variant="outline"
                           className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-            >
+                        >
                           <CalendarIcon className="mr-1 h-3 w-3" />
                           {organizationsDateFrom ? format(organizationsDateFrom, 'MMM dd yyyy') : 'From'}
-            </Button>
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-black border-white/10">
                         <Calendar
@@ -1233,7 +1395,7 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-                    
+
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1255,9 +1417,9 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-              </div>
+                  </div>
                 )}
-            </div>
+              </div>
               <hr className='mb-2 -mx-10 border-white/10' />
               <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Organizations</h4>
               <p className="text-xs text-gray-400 mb-3">Total organizations in the time frame</p>
@@ -1316,18 +1478,18 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                
+
                 {teamsPeriod === 'Custom' && (
-                  <div className="flex h-0 items-center gap-2">
+                  <div className="h-0 flex items-center gap-2">
                     <Popover>
                       <PopoverTrigger asChild>
-            <Button
-              variant="outline"
+                        <Button
+                          variant="outline"
                           className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-            >
+                        >
                           <CalendarIcon className="mr-1 h-3 w-3" />
                           {teamsDateFrom ? format(teamsDateFrom, 'MMM dd yyyy') : 'From'}
-            </Button>
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-black border-white/10">
                         <Calendar
@@ -1339,7 +1501,7 @@ export default function Dashboard() {
                         />
                       </PopoverContent>
                     </Popover>
-                    
+
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1446,7 +1608,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="h-screen bg-black text-white overflow-hidden flex flex-col" style={{ overflowX: 'hidden' }}>
       {/* Navigation */}
       {/* <div className="border-b border-dashed border-white/10">
         <div className="px-6 py-4">
@@ -1496,16 +1658,18 @@ export default function Dashboard() {
       </div> */}
 
       {/* Tab Content */}
-      {activeTab === 'overview' ? (
-        renderOverview()
-      ) : activeTab === 'users' ? (
-        <UsersPage />
-      ) : activeTab === 'organizations' ? (
-        <OrganizationsPage />
-      ) : (
-        //  activeTab === 'sessions' ? <SessionsPage /> :
-        renderOverview()
-      )}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === 'overview' ? (
+          renderOverview()
+        ) : activeTab === 'users' ? (
+          <UsersPage />
+        ) : activeTab === 'organizations' ? (
+          <OrganizationsPage />
+        ) : (
+          //  activeTab === 'sessions' ? <SessionsPage /> :
+          renderOverview()
+        )}
+      </div>
 
       {/* Quick Actions Modal */}
       {showQuickActionsModal && (

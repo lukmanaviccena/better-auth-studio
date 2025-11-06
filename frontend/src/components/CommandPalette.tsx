@@ -242,8 +242,8 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
                           disabled={isDisabled}
                           onSelect={() => {
                             if (!isDisabled) {
-                              command.action();
-                              onClose();
+                            command.action();
+                            onClose();
                             }
                           }}
                           className={`flex items-center space-x-3 px-0 py-2 rounded-none transition-colors relative ${

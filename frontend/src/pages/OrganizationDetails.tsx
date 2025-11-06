@@ -758,7 +758,7 @@ export default function OrganizationDetails() {
               Details
               <sup className="text-xs text-gray-500 ml-1">
                 <span className='mr-0.5'>[</span>
-                <span className='text-white/80 font-mono text-xs'>{members.length + invitations.length + teams.length}</span>
+                <span className='text-white/80 font-mono text-xs'>0</span>
                 <span className='ml-0.5'>]</span>
               </sup>
             </span>
@@ -774,13 +774,11 @@ export default function OrganizationDetails() {
             <Users className="w-4 h-4" />
             <span className="inline-flex items-start">
               Members
-              {members.length > 0 && (
-                <sup className="text-xs text-gray-500 ml-1">
-                  <span className='mr-0.5'>[</span>
-                  <span className='text-white/80 font-mono text-xs'>{members.length}</span>
-                  <span className='ml-0.5'>]</span>
-                </sup>
-              )}
+              <sup className="text-xs text-gray-500 ml-1">
+                <span className='mr-0.5'>[</span>
+                <span className='text-white/80 font-mono text-xs'>{members.length}</span>
+                <span className='ml-0.5'>]</span>
+              </sup>
             </span>
           </button>
           <button
@@ -794,13 +792,11 @@ export default function OrganizationDetails() {
             <Mail className="w-4 h-4" />
             <span className="inline-flex items-start">
               Invitations
-              {invitations.length > 0 && (
-                <sup className="text-xs text-gray-500 ml-1">
-                  <span className='mr-0.5'>[</span>
-                  <span className='text-white/80 font-mono text-xs'>{invitations.length}</span>
-                  <span className='ml-0.5'>]</span>
-                </sup>
-              )}
+              <sup className="text-xs text-gray-500 ml-1">
+                <span className='mr-0.5'>[</span>
+                <span className='text-white/80 font-mono text-xs'>{invitations.length}</span>
+                <span className='ml-0.5'>]</span>
+              </sup>
             </span>
           </button>
           <button
@@ -814,13 +810,11 @@ export default function OrganizationDetails() {
             <Users className="w-4 h-4" />
             <span className="inline-flex items-start">
               Teams
-              {teams.length > 0 && (
-                <sup className="text-xs text-gray-500 ml-1">
-                  <span className='mr-0.5'>[</span>
-                  <span className='text-white/80 font-mono text-xs'>{teams.length}</span>
-                  <span className='ml-0.5'>]</span>
-                </sup>
-              )}
+              <sup className="text-xs text-gray-500 ml-1">
+                <span className='mr-0.5'>[</span>
+                <span className='text-white/80 font-mono text-xs'>{teams.length}</span>
+                <span className='ml-0.5'>]</span>
+              </sup>
             </span>
           </button>
         </nav>
