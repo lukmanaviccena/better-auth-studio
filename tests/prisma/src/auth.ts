@@ -5,14 +5,21 @@ import prisma from "./prisma";
 
 export const auth = betterAuth({
   secret: process.env.AUTH_SECRET || "better-auth-secret-123456789",
-  // database: new Database("./better-auth.db"),
-  socialProviders: process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET ? {
+  database: prismaAdapter(prisma, { provider: "sqlite" }),
+  baseURL: "http://localhost:3000",
+  basePath: "/api/auth",
+  socialProviders: {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       redirectURI: "http://localhost:3000/api/auth/callback/github"
+    },
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      redirectURI: "http://localhost:3000/api/auth/callback/google"
     }
-  } : undefined,
+  },
   emailAndPassword: {
     enabled: true,
     disableSignUp: false,
@@ -38,6 +45,11 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+    }
+  },
   rateLimit: {
     enabled: true,
     window: 10,
@@ -46,4 +58,5 @@ export const auth = betterAuth({
   telemetry: {
     enabled: false,
   },
+  trustedOrigins: ["http://localhost:3002", "http://localhost:3000"],
 });

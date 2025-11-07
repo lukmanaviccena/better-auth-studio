@@ -700,7 +700,6 @@ export default function OrganizationDetails() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <span className="mb-4 ml-0 flex justify-start items-start text-left border-none text-white">

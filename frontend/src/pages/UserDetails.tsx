@@ -2,7 +2,6 @@ import {
   Ban,
   Building2,
   Calendar,
-  Clock,
   Database,
   Globe,
   HashIcon,
@@ -550,7 +549,7 @@ export default function UserDetails() {
             <span className='text-white font-mono text-sm'>{user.id}</span>
           </span>
         </span>
-        <div className="mb-8">
+        <div className="mb-8 mt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gray-800 border border-dashed border-white/20 flex items-center justify-center">
@@ -639,7 +638,7 @@ export default function UserDetails() {
                   count: organizations.length,
                 },
                 { id: 'teams', name: 'Teams', icon: Users, count: teams.length },
-                { id: 'sessions', name: 'Sessions', icon: Clock, count: sessions.length },
+                { id: 'sessions', name: 'Sessions', icon: Clock1, count: sessions.length },
               ].map((tab) => (
                 <button
                   key={tab.id}

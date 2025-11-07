@@ -324,6 +324,16 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         let databaseDialect = 'unknown';
         let databaseAdapter = 'unknown';
         let databaseVersion = 'unknown';
+        let adapterConfig = null;
+        try {
+            const adapterResult = await getAuthAdapterWithConfig();
+            if (adapterResult && adapterResult.options?.adapterConfig) {
+                adapterConfig = adapterResult.options.adapterConfig;
+            }
+        }
+        catch (_error) {
+            // Adapter config not available, continue without it
+        }
         try {
             const detectedDb = await detectDatabaseWithDialect();
             if (detectedDb) {
@@ -369,6 +379,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 casing: authConfig.database?.casing || 'camel',
                 debugLogs: authConfig.database?.debugLogs || false,
                 url: authConfig.database?.url,
+                adapterConfig: adapterConfig,
             },
             emailVerification: {
                 sendOnSignUp: authConfig.emailVerification?.sendOnSignUp || false,
@@ -441,6 +452,8 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 max: authConfig.rateLimit?.max || 100,
                 storage: authConfig.rateLimit?.storage || 'memory',
                 modelName: authConfig.rateLimit?.modelName || 'rateLimit',
+                customStorage: authConfig.rateLimit?.customStorage || null,
+                customRules: authConfig.rateLimit?.customRules || [],
             },
             advanced: {
                 ipAddress: {
@@ -659,7 +672,6 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 const salt = hex.encode(crypto.getRandomValues(new Uint8Array(16)));
                 const key = await generateKey(password, salt);
                 hashedPassword = `${salt}:${hex.encode(key)}`;
-                console.log({ password, hashedPassword });
             }
             catch {
                 res.status(500).json({ error: 'Failed to hash password' });
@@ -1177,6 +1189,60 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         }
         catch (_error) {
             res.status(500).json({ error: 'Failed to fetch database info' });
+        }
+    });
+    router.get("/api/database/test", async (_req, res) => {
+        try {
+            const adapter = await getAuthAdapterWithConfig();
+            if (!adapter || !adapter.findMany) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            const result = await adapter.findMany({
+                model: 'user',
+                limit: 1,
+            });
+            return res.json({ success: true, result: result });
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to test database connection',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    });
+    router.post('/api/tools/migrations/run', async (req, res) => {
+        try {
+            const { provider, script } = req.body;
+            if (!provider) {
+                return res.status(400).json({ success: false, error: 'Migration provider is required' });
+            }
+            console.log('');
+            console.log('='.repeat(80));
+            console.log(`🛠  Migration Tool → Provider: ${provider}`);
+            if (script) {
+                console.log('📄 Migration script received:');
+                console.log(script);
+            }
+            else {
+                console.log('ℹ️ No script payload provided.');
+            }
+            console.log('='.repeat(80));
+            console.log('');
+            // This endpoint does not execute arbitrary scripts for safety. It simply
+            // acknowledges receipt so the frontend can present instructions.
+            return res.json({
+                success: true,
+                message: 'Migration script received. Review the server logs for details.',
+            });
+        }
+        catch (error) {
+            console.error('Migration tool error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to process migration request',
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
         }
     });
     // Database Detection endpoint - Auto-detect database from installed packages
@@ -2272,7 +2338,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 'Operations',
                 'Finance',
                 'HR',
-                'Legal',
+                'Legal'
             ];
             const results = [];
             for (let i = 0; i < count; i++) {
@@ -3133,6 +3199,371 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         }
         catch (_error) {
             res.status(500).json({ error: 'Failed to seed organizations' });
+        }
+    });
+    // OAuth Test Endpoints
+    router.get('/api/tools/oauth/providers', async (_req, res) => {
+        const result = await getAuthAdapterWithConfig();
+        try {
+            const providers = authConfig.socialProviders || [];
+            res.json({
+                success: true,
+                providers: providers.map((provider) => ({
+                    id: provider.id || provider.type,
+                    name: provider.name || provider.id || provider.type,
+                    type: provider.type || provider.id,
+                    enabled: provider.enabled !== false,
+                })),
+            });
+        }
+        catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to fetch OAuth providers' });
+        }
+    });
+    router.post('/api/tools/oauth/test', async (req, res) => {
+        try {
+            const { provider } = req.body;
+            if (!provider) {
+                return res.status(400).json({ success: false, error: 'Provider is required' });
+            }
+            // Check if provider exists
+            const providers = authConfig.socialProviders || [];
+            const selectedProvider = providers.find((p) => (p.id || p.type) === provider);
+            if (!selectedProvider) {
+                return res.status(404).json({ success: false, error: 'Provider not found' });
+            }
+            // Generate test session ID
+            const testSessionId = `oauth-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+            // Store the test session
+            oauthTestSessions.set(testSessionId, {
+                provider,
+                startTime: Date.now(),
+                status: 'pending',
+            });
+            const studioBaseUrl = `${req.protocol}://${req.get('host')}`;
+            res.json({
+                success: true,
+                startUrl: `${studioBaseUrl}/api/tools/oauth/start?testSessionId=${encodeURIComponent(testSessionId)}&provider=${encodeURIComponent(provider)}`,
+                testSessionId,
+                provider: selectedProvider.name || selectedProvider.id || selectedProvider.type,
+            });
+        }
+        catch (error) {
+            console.error('OAuth test error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to initiate OAuth test',
+                details: error instanceof Error ? error.message : String(error)
+            });
+        }
+    });
+    // Store OAuth test sessions and results temporarily
+    const oauthTestSessions = new Map();
+    const oauthTestResults = new Map();
+    router.get('/api/tools/oauth/start', async (req, res) => {
+        try {
+            const { testSessionId, provider } = req.query;
+            if (!testSessionId || !provider) {
+                return res.status(400).send('<html><body style="background:#000;color:#fff;font-family:monospace;padding:20px;">Missing test session or provider</body></html>');
+            }
+            const session = oauthTestSessions.get(testSessionId);
+            if (!session || session.provider !== provider) {
+                return res.status(404).send('<html><body style="background:#000;color:#fff;font-family:monospace;padding:20px;">OAuth test session not found</body></html>');
+            }
+            const authBaseUrl = authConfig.baseURL || 'http://localhost:3000';
+            const basePath = authConfig.basePath || '/api/auth';
+            const payload = {
+                provider,
+                additionalData: { testSessionId },
+            };
+            res.setHeader('Content-Type', 'text/html');
+            res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Starting OAuth Test</title>
+            <style>
+              body { background: #0b0b0f; color: #fff; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+              .box { text-align: center; max-width: 480px; }
+              .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 24px auto; }
+              @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+              button { background: #1f1f23; border: 1px solid #3b3b40; color: #fff; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
+              button:hover { background: #2c2c31; }
+            </style>
+          </head>
+          <body>
+            <div class="box">
+              <h1>Preparing OAuth Test…</h1>
+              <p id="status">Contacting Better Auth to generate a secure state.</p>
+              <div class="spinner" id="spinner"></div>
+              <button id="retry" style="display:none;">Retry</button>
+            </div>
+            <script>
+              const payload = ${JSON.stringify(payload)};
+              const endpoint = ${JSON.stringify(`${authBaseUrl}${basePath}/sign-in/social`)};
+              const statusEl = document.getElementById('status');
+              const retryBtn = document.getElementById('retry');
+              const spinner = document.getElementById('spinner');
+
+              const postToParent = (data) => {
+                if (window.opener) {
+                  try {
+                    window.opener.postMessage({
+                      type: 'oauth_test_state',
+                      ...data,
+                    }, window.location.origin);
+                  } catch (err) {
+                    console.error('postMessage failed', err);
+                  }
+                }
+              };
+
+              async function startOAuth() {
+                try {
+                  const response = await fetch(endpoint, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                  });
+
+                  if (response.redirected) {
+                    postToParent({ status: 'redirect', testSessionId: payload.additionalData?.testSessionId });
+                    window.location.href = response.url;
+                    return;
+                  }
+
+                  let data = null;
+                  const contentType = response.headers.get('content-type') || '';
+                  if (contentType.includes('application/json')) {
+                    data = await response.json().catch(() => null);
+                  }
+
+                  const redirectUrl = data?.url || data?.redirect || data?.location;
+                  if (redirectUrl) {
+                    postToParent({ status: 'redirect', testSessionId: payload.additionalData?.testSessionId });
+                    window.location.href = redirectUrl;
+                    return;
+                  }
+
+                  if (response.status >= 400) {
+                    throw new Error(data?.message || 'Better Auth returned an error');
+                  }
+
+                  throw new Error('Unable to determine OAuth redirect URL.');
+                } catch (error) {
+                  console.error('Failed to start OAuth test', error);
+                  statusEl.textContent = 'Failed to start OAuth test: ' + (error?.message || error);
+                  spinner.style.display = 'none';
+                  retryBtn.style.display = 'inline-flex';
+                  postToParent({
+                    status: 'error',
+                    testSessionId: payload.additionalData?.testSessionId,
+                    error: error?.message || String(error),
+                  });
+                }
+              }
+
+              retryBtn.addEventListener('click', () => {
+                spinner.style.display = 'block';
+                retryBtn.style.display = 'none';
+                statusEl.textContent = 'Retrying…';
+                startOAuth();
+              });
+
+              startOAuth();
+            </script>
+          </body>
+        </html>
+      `);
+        }
+        catch (error) {
+            console.error('OAuth start error:', error);
+            res.status(500).send('<html><body style="background:#000;color:#fff;font-family:monospace;padding:20px;">Failed to start OAuth test</body></html>');
+        }
+    });
+    router.get('/api/tools/oauth/callback', async (req, res) => {
+        try {
+            const { testSessionId, error: oauthError } = req.query;
+            if (!testSessionId) {
+                return res.send(`<html><body style="background:#000;color:#fff;text-align:center;">
+          <h1>OAuth Test Failed</h1>
+          <p>Missing test session</p>
+          <script>setTimeout(() => window.close(), 3000);</script>
+        </body></html>`);
+            }
+            const testSession = oauthTestSessions.get(testSessionId);
+            if (!testSession) {
+                return res.send(`<html><body style="background:#000;color:#fff;text-align:center;">
+          <h1>OAuth Test Failed</h1>
+          <p>Test session not found or expired</p>
+          <script>setTimeout(() => window.close(), 3000);</script>
+        </body></html>`);
+            }
+            const result = {
+                testSessionId: testSessionId,
+                provider: testSession.provider,
+                success: !oauthError,
+                error: oauthError,
+                timestamp: new Date().toISOString(),
+            };
+            oauthTestResults.set(testSessionId, result);
+            res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>OAuth Test ${oauthError ? 'Failed' : 'Success'}</title>
+          <style>
+            body { font-family: sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+            .success { color: #4f4; }
+            .error { color: #f44; }
+          </style>
+        </head>
+        <body>
+          <div>
+            <h1 class="${oauthError ? 'error' : 'success'}">
+              ${oauthError ? '❌ OAuth Test Failed' : '✅ OAuth Test Completed'}
+            </h1>
+            <p>${oauthError ? oauthError : 'Waiting for account creation...'}</p>
+          </div>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'oauth_test_result',
+                result: ${JSON.stringify(result)}
+              }, '*');
+              setTimeout(() => window.close(), 1500);
+            }
+          </script>
+        </body>
+        </html>
+      `);
+        }
+        catch (error) {
+            console.error('OAuth callback error:', error);
+            res.send('<html><body style="background:#000;color:#fff;text-align:center;"><h1>OAuth Test Error</h1><p>Callback processing failed</p></body></html>');
+        }
+    });
+    router.get('/api/tools/oauth/status', async (req, res) => {
+        try {
+            const { testSessionId } = req.query;
+            if (!testSessionId) {
+                return res.json({ hasResult: false });
+            }
+            const cached = oauthTestResults.get(testSessionId);
+            if (cached) {
+                oauthTestResults.delete(testSessionId);
+                return res.json({ hasResult: true, result: cached });
+            }
+            const session = oauthTestSessions.get(testSessionId);
+            if (!session) {
+                return res.json({ hasResult: false });
+            }
+            const adapter = await getAuthAdapterWithConfig();
+            if (!adapter || !adapter.findMany) {
+                return res.json({ hasResult: false });
+            }
+            const startTime = session.startTime;
+            const provider = session.provider;
+            const parseDate = (value) => {
+                if (!value)
+                    return 0;
+                const date = value instanceof Date ? value : new Date(value);
+                return date.getTime();
+            };
+            const bufferMs = 5000;
+            const threshold = startTime - bufferMs;
+            let recentAccount = null;
+            let recentSession = null;
+            try {
+                const accounts = await adapter.findMany({
+                    model: 'account',
+                    where: [{ field: 'providerId', value: provider }],
+                    limit: 50,
+                });
+                const accountCandidate = accounts
+                    .map((account) => ({
+                    account,
+                    created: parseDate(account.createdAt || account.created_at || account.updatedAt || account.updated_at),
+                }))
+                    .filter((entry) => entry.created >= threshold)
+                    .sort((a, b) => b.created - a.created)[0];
+                recentAccount = accountCandidate?.account ?? null;
+            }
+            catch (accountError) {
+                console.error('Failed to fetch accounts:', accountError);
+            }
+            try {
+                const sessions = await adapter.findMany({
+                    model: 'session',
+                    limit: 50,
+                });
+                const sessionCandidate = sessions
+                    .map((sessionItem) => ({
+                    session: sessionItem,
+                    created: parseDate(sessionItem.createdAt || sessionItem.created_at || sessionItem.updatedAt || sessionItem.updated_at),
+                }))
+                    .filter((entry) => entry.created >= threshold)
+                    .sort((a, b) => b.created - a.created)[0];
+                recentSession = sessionCandidate?.session ?? null;
+            }
+            catch (sessionError) {
+                console.error('Failed to fetch sessions:', sessionError);
+            }
+            if (recentAccount || recentSession) {
+                let userInfo = null;
+                try {
+                    const userId = recentAccount?.userId || recentSession?.userId;
+                    if (userId) {
+                        const users = await adapter.findMany({
+                            model: 'user',
+                            where: [{ field: 'id', value: userId }],
+                            limit: 1,
+                        });
+                        if (users && users.length > 0) {
+                            const user = users[0];
+                            userInfo = {
+                                id: user.id,
+                                name: user.name,
+                                email: user.email,
+                                image: user.image,
+                            };
+                        }
+                    }
+                }
+                catch (userError) {
+                    console.error('Failed to fetch user info:', userError);
+                }
+                const result = {
+                    testSessionId: testSessionId,
+                    provider,
+                    success: true,
+                    userInfo,
+                    account: recentAccount
+                        ? {
+                            id: recentAccount.id,
+                            userId: recentAccount.userId,
+                        }
+                        : null,
+                    session: recentSession
+                        ? {
+                            id: recentSession.id,
+                            userId: recentSession.userId,
+                        }
+                        : null,
+                    timestamp: new Date().toISOString(),
+                };
+                oauthTestResults.set(testSessionId, result);
+                oauthTestSessions.delete(testSessionId);
+                return res.json({ hasResult: true, result });
+            }
+            res.json({ hasResult: false });
+        }
+        catch (error) {
+            console.error('OAuth status error:', error);
+            res.status(500).json({ hasResult: false, error: 'Failed to check status' });
         }
     });
     return router;

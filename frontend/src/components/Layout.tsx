@@ -1,4 +1,4 @@
-import { Building2, Database, LayoutDashboard, Search, Settings, Users } from 'lucide-react';
+import { Building2, Database, LayoutDashboard, Search, Settings, Users, Wrench } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCounts } from '../contexts/CountsContext';
@@ -63,6 +63,7 @@ export default function Layout({ children }: LayoutProps) {
       badge: loading ? '...' : formatCount(counts.organizations),
     },
     { name: 'Database', href: '/database', icon: Database },
+    { name: 'Tools', href: '/tools', icon: Wrench },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 

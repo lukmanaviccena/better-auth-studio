@@ -11,6 +11,7 @@ import Sessions from './pages/Sessions';
 import Settings from './pages/Settings';
 import TeamDetails from './pages/TeamDetails';
 import Teams from './pages/Teams';
+import Tools from './pages/Tools';
 import UserDetails from './pages/UserDetails';
 import Users from './pages/Users';
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/database" element={<DatabaseVisualizer />} />
             <Route path="/database/demo" element={<DatabaseSchemaNodeDemo />} />
+            <Route path="/tools" element={<Tools />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </Layout>
