@@ -3282,13 +3282,60 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         <html>
           <head>
             <title>Starting OAuth Test</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
             <style>
-              body { background: #0b0b0f; color: #fff; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-              .box { text-align: center; max-width: 480px; }
-              .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 24px auto; }
+              :root { color-scheme: dark; }
+              body {
+                background: #0b0b0f;
+                color: #fff;
+                font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+              }
+              .box {
+                text-align: center;
+                max-width: 520px;
+                font-family: "Geist Mono", monospace;
+              }
+              h1 {
+                font-family: "Geist", sans-serif;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                font-weight: 500;
+              }
+              p {
+                font-family: "Geist Mono", monospace;
+                font-size: 13px;
+                color: #9ca3af;
+              }
+              .spinner {
+                border: 3px solid rgba(255,255,255,0.12);
+                border-top: 3px solid #fff;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 24px auto;
+              }
               @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-              button { background: #1f1f23; border: 1px solid #3b3b40; color: #fff; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
-              button:hover { background: #2c2c31; }
+              button {
+                background: #111118;
+                border: 1px solid #27272a;
+                color: #fff;
+                padding: 10px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-family: "Geist", sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                font-size: 12px;
+              }
+              button:hover { background: #1d1d26; }
             </style>
           </head>
           <body>
@@ -3415,14 +3462,41 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         <html>
         <head>
           <title>OAuth Test ${oauthError ? 'Failed' : 'Success'}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
           <style>
-            body { font-family: sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+            body {
+              font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              background: #000;
+              color: #fff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              text-align: center;
+              margin: 0;
+              padding: 24px;
+            }
+            h1 {
+              font-weight: 500;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+            }
+            p {
+              font-family: "Geist Mono", monospace;
+              font-size: 13px;
+              color: #9ca3af;
+            }
             .success { color: #4f4; }
             .error { color: #f44; }
+            .box {
+              max-width: 520px;
+            }
           </style>
         </head>
         <body>
-          <div>
+          <div class="box">
             <h1 class="${oauthError ? 'error' : 'success'}">
               ${oauthError ? '❌ OAuth Test Failed' : '✅ OAuth Test Completed'}
             </h1>

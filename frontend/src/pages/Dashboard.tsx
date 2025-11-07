@@ -90,6 +90,10 @@ export default function Dashboard() {
   const [activeUsersPercentage, setActiveUsersPercentage] = useState(0);
   const [organizationsPercentage, setOrganizationsPercentage] = useState(0);
   const [teamsPercentage, setTeamsPercentage] = useState(0);
+  const [organizationsCount, setOrganizationsCount] = useState(0);
+  const [teamsCount, setTeamsCount] = useState(0);
+  const [organizationsLoading, setOrganizationsLoading] = useState(false);
+  const [teamsLoading, setTeamsLoading] = useState(false);
   
   // Daily percentages for stats bar
   const [usersDailyPercentage, setUsersDailyPercentage] = useState(0);
@@ -106,6 +110,13 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const periodOptions = ['Daily', 'Weekly', 'Monthly', 'Yearly', 'Custom'];
+  const analyticsPeriodMap: Record<string, string> = {
+    Daily: '1D',
+    Weekly: '1W',
+    Monthly: '1M',
+    Yearly: '1Y',
+    Custom: 'Custom',
+  };
 
   // Security insights data - better-auth specific
   const getSecurityPatches = (): SecurityPatch[] => {
@@ -399,23 +410,76 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  // Fetch organizations analytics
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchAnalytics('organizations', '1D');
-      if (data) setOrganizationsPercentage(data.percentageChange || 0);
-    };
-    fetchData();
-  }, []);
+    if (!loading) {
+      setOrganizationsCount(counts.organizations || 0);
+      setTeamsCount(counts.teams || 0);
+    }
+  }, [counts.organizations, counts.teams, loading]);
 
-  // Fetch teams analytics
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchAnalytics('teams', '1D');
-      if (data) setTeamsPercentage(data.percentageChange || 0);
+    const fetchOrganizationMetrics = async () => {
+      const mappedPeriod = analyticsPeriodMap[organizationsPeriod] || '1D';
+      const isCustom = mappedPeriod === 'Custom';
+      if (isCustom && (!organizationsDateFrom || !organizationsDateTo)) {
+        return;
+      }
+
+      setOrganizationsLoading(true);
+      try {
+        const data = await fetchAnalytics(
+          'organizations',
+          mappedPeriod,
+          isCustom ? organizationsDateFrom : undefined,
+          isCustom ? organizationsDateTo : undefined
+        );
+
+        if (data) {
+          setOrganizationsCount(data.total || 0);
+          setOrganizationsPercentage(data.percentageChange || 0);
+        }
+      } catch {
+        setOrganizationsCount(0);
+        setOrganizationsPercentage(0);
+      } finally {
+        setOrganizationsLoading(false);
+      }
     };
-    fetchData();
-  }, []);
+
+    fetchOrganizationMetrics();
+  }, [organizationsPeriod, organizationsDateFrom, organizationsDateTo]);
+
+  useEffect(() => {
+    const fetchTeamMetrics = async () => {
+      const mappedPeriod = analyticsPeriodMap[teamsPeriod] || '1D';
+      const isCustom = mappedPeriod === 'Custom';
+      if (isCustom && (!teamsDateFrom || !teamsDateTo)) {
+        return;
+      }
+
+      setTeamsLoading(true);
+      try {
+        const data = await fetchAnalytics(
+          'teams',
+          mappedPeriod,
+          isCustom ? teamsDateFrom : undefined,
+          isCustom ? teamsDateTo : undefined
+        );
+
+        if (data) {
+          setTeamsCount(data.total || 0);
+          setTeamsPercentage(data.percentageChange || 0);
+        }
+      } catch {
+        setTeamsCount(0);
+        setTeamsPercentage(0);
+      } finally {
+        setTeamsLoading(false);
+      }
+    };
+
+    fetchTeamMetrics();
+  }, [teamsPeriod, teamsDateFrom, teamsDateTo]);
 
   // Fetch daily percentages for stats bar
   useEffect(() => {
@@ -1450,7 +1514,9 @@ export default function Dashboard() {
               <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Organizations</h4>
               <p className="text-xs text-gray-400 mb-3">Total organizations in the time frame</p>
               <div className='flex pt-4 justify-between items-end'>
-                <p className="text-3xl text-white font-light mb-2">{loading ? '...' : counts.organizations.toLocaleString()}</p>
+                <p className="text-3xl text-white font-light mb-2">
+                  {organizationsLoading ? '...' : organizationsCount.toLocaleString()}
+                </p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
                     <svg className={`w-3 h-3 ${organizationsPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} viewBox="0 0 12 12" fill="currentColor">
@@ -1556,7 +1622,9 @@ export default function Dashboard() {
               <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Teams</h4>
               <p className="text-xs text-gray-400 mb-3">Total teams in the time frame</p>
               <div className='flex pt-4 justify-between items-end'>
-                <p className="text-3xl text-white font-light mb-2">{loading ? '...' : (counts.teams ?? 0).toLocaleString()}</p>
+                <p className="text-3xl text-white font-light mb-2">
+                  {teamsLoading ? '...' : teamsCount.toLocaleString()}
+                </p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
                     <svg className={`w-3 h-3 ${teamsPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} viewBox="0 0 12 12" fill="currentColor">

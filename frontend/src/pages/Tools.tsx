@@ -8,7 +8,7 @@ import {
     ChevronRight,
     Copy,
 } from '../components/PixelIcons';
-import { Wrench, RefreshCw, TestTube, Code, Key, Globe, Github } from 'lucide-react';
+import { Wrench, TestTube, Code, Key, Globe, Github } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -36,7 +36,7 @@ interface MigrationProvider {
     name: string;
     description: string;
     docs?: string;
-    logo?: string;
+    logo?: any;
     highlights?: string[];
     script?: string;
     custom?: boolean;
@@ -69,9 +69,26 @@ const MIGRATION_PROVIDERS: MigrationProvider[] = [
     {
         id: 'clerk',
         name: 'Clerk',
-        description: 'Import Clerk users, passwords, identities, and two-factor data.',
+        description: 'Clerk Migration guide',
         docs: 'https://better-auth.com/docs/migrations/clerk',
-        logo: 'https://better-auth.com/images/integrations/clerk.svg',
+        logo: 
+       <svg
+						width="1em"
+						height="1em"
+						role="img"
+						stroke="currentColor"
+						fill="currentColor"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+						id="Clerk--Streamline-Simple-Icons"
+					>
+						<path
+							d="m21.47 20.829 -2.881 -2.881a0.572 0.572 0 0 0 -0.7 -0.084 6.854 6.854 0 0 1 -7.081 0 0.576 0.576 0 0 0 -0.7 0.084l-2.881 2.881a0.576 0.576 0 0 0 -0.103 0.69 0.57 0.57 0 0 0 0.166 0.186 12 12 0 0 0 14.113 0 0.58 0.58 0 0 0 0.239 -0.423 0.576 0.576 0 0 0 -0.172 -0.453Zm0.002 -17.668 -2.88 2.88a0.569 0.569 0 0 1 -0.701 0.084A6.857 6.857 0 0 0 8.724 8.08a6.862 6.862 0 0 0 -1.222 3.692 6.86 6.86 0 0 0 0.978 3.764 0.573 0.573 0 0 1 -0.083 0.699l-2.881 2.88a0.567 0.567 0 0 1 -0.864 -0.063A11.993 11.993 0 0 1 6.771 2.7a11.99 11.99 0 0 1 14.637 -0.405 0.566 0.566 0 0 1 0.232 0.418 0.57 0.57 0 0 1 -0.168 0.448Zm-7.118 12.261a3.427 3.427 0 1 0 0 -6.854 3.427 3.427 0 0 0 0 6.854Z"
+							fill="#000000"
+							stroke-width="1"
+						></path>
+					</svg> 
+        ,
         highlights: [
             'Downloads Clerk CSV export and REST API data.',
             'Migrates passwords, totp secrets, and external accounts.',
@@ -263,9 +280,9 @@ migrateFromClerk()
     {
         id: 'supabase',
         name: 'Supabase',
-        description: 'Convert Supabase Auth tables into Better Auth records.',
+        description: 'Supabase Migration guide',
         docs: 'https://better-auth.com/docs/migrations/supabase',
-        logo: 'https://better-auth.com/images/integrations/supabase.svg',
+        logo: ``,
         highlights: [
             'Exports Supabase auth.users and auth.identities.',
             'Preserves password hashes and metadata fields.',
@@ -276,9 +293,9 @@ migrateFromClerk()
     {
         id: 'auth0',
         name: 'Auth0',
-        description: 'Move Auth0 users, passwords, and app metadata.',
+        description: 'Auth0 Migration guide',
         docs: 'https://better-auth.com/docs/migrations/auth0',
-        logo: 'https://better-auth.com/images/integrations/auth0.svg',
+        logo: ``,
         highlights: [
             'Uses Auth0 Management API bulk exports.',
             'Keeps password hashes compatible with Better Auth adapters.',
@@ -289,9 +306,9 @@ migrateFromClerk()
     {
         id: 'nextauth',
         name: 'NextAuth.js',
-        description: 'Translate NextAuth tables (accounts, sessions, users).',
+        description: 'NextAuth.js Migration guide',
         docs: 'https://better-auth.com/docs/migrations/nextauth',
-        logo: 'https://better-auth.com/images/integrations/nextauth.svg',
+        logo: ``,
         highlights: [
             'Reads users/accounts from your existing NextAuth database.',
             'Moves refresh tokens and OAuth profiles into Better Auth.',
@@ -302,7 +319,7 @@ migrateFromClerk()
     {
         id: 'custom',
         name: 'Custom Script',
-        description: 'Write your own migration logic with the Better Auth SDK.',
+        description: 'Custom Migration guide',
         docs: 'https://better-auth.com/docs/migrations/custom',
         highlights: [
             'Use Better Auth SDK helpers to insert users safely.',
@@ -509,9 +526,15 @@ export default function Tools() {
 
             if (result.userInfo) {
                 handledSessions.current.add(sessionId);
-                const userLine = [result.userInfo.name, result.userInfo.email].filter(Boolean).join(' • ');
-                const successMessage = userLine
-                    ? `✅ ${result.provider} OAuth succeeded — ${userLine}`
+                const userDetails = [
+                    result.userInfo.name ? `👤 ${result.userInfo.name}` : null,
+                    result.userInfo.email ? `✉️ ${result.userInfo.email}` : null,
+                ]
+                    .filter(Boolean)
+                    .join('   |   ');
+
+                const successMessage = userDetails
+                    ? `✅ ${result.provider} OAuth succeeded — ${userDetails}`
                     : `✅ ${result.provider} OAuth succeeded!`;
                 logSessionMessage(sessionId, 'success', 'completed', successMessage, 'completed');
                 logSessionMessage(
@@ -836,30 +859,6 @@ export default function Tools() {
             setRunningTool(null);
         }
     };
-
-    const handleClearCache = async () => {
-        setRunningTool('clear-cache');
-        setShowLogs(true);
-        setToolLogs([]);
-
-        addLog('info', 'Clearing application cache...', 'running');
-
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 800));
-            addLog('progress', 'Clearing session cache...', 'running');
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            addLog('progress', 'Clearing user cache...', 'running');
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            addLog('success', '✅ Cache cleared successfully!', 'completed');
-            toast.success('Cache cleared successfully');
-        } catch (error) {
-            addLog('error', `❌ Failed to clear cache: ${error}`, 'failed');
-            toast.error('Failed to clear cache');
-        } finally {
-            setRunningTool(null);
-        }
-    };
-
     const handleValidateConfig = async () => {
         setRunningTool('validate-config');
         setShowLogs(true);
@@ -947,30 +946,28 @@ export default function Tools() {
             setRunningTool(null);
         }
     };
+    // const handleExportData = async () => {
+    //     setRunningTool('export-data');
+    //     setShowLogs(true);
+    //     setToolLogs([]);
 
-    const handleExportData = async () => {
-        setRunningTool('export-data');
-        setShowLogs(true);
-        setToolLogs([]);
+    //     addLog('info', 'Preparing data export...', 'running');
 
-        addLog('info', 'Preparing data export...', 'running');
-
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            addLog('progress', 'Exporting users data...', 'running');
-            await new Promise((resolve) => setTimeout(resolve, 800));
-            addLog('progress', 'Exporting organizations data...', 'running');
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            addLog('success', '✅ Data export completed!', 'completed');
-            toast.success('Data export completed');
-        } catch (error) {
-            addLog('error', `❌ Export failed: ${error}`, 'failed');
-            toast.error('Data export failed');
-        } finally {
-            setRunningTool(null);
-        }
-    };
-
+    //     try {
+    //         await new Promise((resolve) => setTimeout(resolve, 1000));
+    //         addLog('progress', 'Exporting users data...', 'running');
+    //         await new Promise((resolve) => setTimeout(resolve, 800));
+    //         addLog('progress', 'Exporting organizations data...', 'running');
+    //         await new Promise((resolve) => setTimeout(resolve, 600));
+    //         addLog('success', '✅ Data export completed!', 'completed');
+    //         toast.success('Data export completed');
+    //     } catch (error) {
+    //         addLog('error', `❌ Export failed: ${error}`, 'failed');
+    //         toast.error('Data export failed');
+    //     } finally {
+    //         setRunningTool(null);
+    //     }
+    // };
     const handleHealthCheck = async () => {
         setRunningTool('health-check');
         setShowLogs(true);
@@ -1030,27 +1027,11 @@ export default function Tools() {
             category: 'utilities',
         },
         {
-            id: 'clear-cache',
-            name: 'Clear Cache',
-            description: 'Clear application cache',
-            icon: RefreshCw,
-            action: handleClearCache,
-            category: 'utilities',
-        },
-        {
             id: 'generate-api-key',
             name: 'Generate API Key',
             description: 'Generate a new API key',
             icon: Key,
             action: handleGenerateApiKey,
-            category: 'utilities',
-        },
-        {
-            id: 'export-data',
-            name: 'Export Data',
-            description: 'Export application data',
-            icon: Code,
-            action: handleExportData,
             category: 'utilities',
         },
         {
@@ -1204,8 +1185,8 @@ export default function Tools() {
                                                         }, 100);
                                                     }}
                                                     className={`w-full flex items-center space-x-4 p-4 border rounded-none transition-all text-left group ${selectedProvider === provider.id
-                                                            ? 'border-white/50 bg-white/10'
-                                                            : 'border-dashed border-white/20 hover:bg-white/5 hover:border-white/30'
+                                                        ? 'border-white/50 bg-white/10'
+                                                        : 'border-dashed border-white/20 hover:bg-white/5 hover:border-white/30'
                                                         }`}
                                                 >
                                                     <div className="flex-shrink-0">
@@ -1217,8 +1198,8 @@ export default function Tools() {
                                                         </p>
                                                     </div>
                                                     <ArrowRight className={`w-5 h-5 transition-colors flex-shrink-0 ${selectedProvider === provider.id
-                                                            ? 'text-white'
-                                                            : 'text-gray-400 group-hover:text-white'
+                                                        ? 'text-white'
+                                                        : 'text-gray-400 group-hover:text-white'
                                                         }`} />
                                                 </button>
                                             ))}
@@ -1254,7 +1235,7 @@ export default function Tools() {
                             <div className="flex items-center space-x-2">
                                 <Database className="w-6 h-6 text-white" />
                                 <h3 className="text-xl text-white font-light uppercase tracking-wider">
-                                    Select Migration 
+                                    Select Migration
                                 </h3>
                             </div>
                             <Button
@@ -1275,24 +1256,16 @@ export default function Tools() {
                                             key={provider.id}
                                             onClick={() => handleSelectMigration(provider.id)}
                                             disabled={provider.disabled}
-                                            className={`w-full flex items-center space-x-3 p-4 border transition-colors rounded-none text-left ${
-                                                provider.disabled
+                                            className={`w-full flex items-center space-x-3 p-4 border transition-colors rounded-none text-left ${provider.disabled
                                                     ? 'border-dashed border-white/10 bg-black/30 cursor-not-allowed opacity-60'
                                                     : isActive
-                                                    ? 'border-white/60 bg-white/10'
-                                                    : 'border-dashed border-white/20 hover:bg-white/5 hover:border-white/40'
-                                            }`}
+                                                        ? 'border-white/60 bg-white/10'
+                                                        : 'border-dashed border-white/20 hover:bg-white/5 hover:border-white/40'
+                                                }`}
                                         >
                                             <div className="flex-shrink-0 w-10 h-10 bg-white/10 flex items-center justify-center">
                                                 {provider.logo ? (
-                                                    <img
-                                                        src={provider.logo}
-                                                        alt={`${provider.name} logo`}
-                                                        className="w-8 h-8 object-contain"
-                                                        onError={(event) => {
-                                                            (event.currentTarget.style.display = 'none');
-                                                        }}
-                                                    />
+                                                    provider.logo
                                                 ) : (
                                                     <Code className="w-6 h-6 text-white" />
                                                 )}
@@ -1301,7 +1274,7 @@ export default function Tools() {
                                                 <p className="text-white uppercase font-mono text-sm">
                                                     {provider.name}
                                                 </p>
-                                                <p className="text-xs text-gray-400 font-mono mt-1 truncate">
+                                                <p className="text-xs uppercase text-gray-400 font-mono mt-1 truncate">
                                                     {provider.description}
                                                 </p>
                                             </div>
@@ -1318,28 +1291,21 @@ export default function Tools() {
                                 <div className="flex items-start space-x-3">
                                     <div className="w-12 h-12 bg-white/10 flex items-center justify-center">
                                         {selectedMigrationProvider.logo ? (
-                                            <img
-                                                src={selectedMigrationProvider.logo}
-                                                alt={`${selectedMigrationProvider.name} logo`}
-                                                className="w-10 h-10 object-contain"
-                                                onError={(event) => {
-                                                    (event.currentTarget.style.display = 'none');
-                                                }}
-                                            />
+                                            selectedMigrationProvider.logo
                                         ) : (
                                             <Code className="w-8 h-8 text-white" />
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <h4 className="text-white text-lg font-light">
+                                        <h4 className="text-white -mb-2 text-lg font-light uppercase tracking-wider">
                                             {selectedMigrationProvider.name}
                                         </h4>
-                                        <p className="text-sm text-gray-400 font-mono leading-relaxed">
+                                        <p className="text-sm mt-0 text-gray-400 uppercase font-mono leading-relaxed">
                                             {selectedMigrationProvider.description}
                                         </p>
                                         <div className="flex items-center space-x-2">
                                             {selectedMigrationProvider.docs && (
-                                                <Button variant="ghost" size="sm" asChild className="rounded-none">
+                                                <Button variant="ghost" size="sm" asChild className="rounded-none border border-dashed">
                                                     <a
                                                         href={selectedMigrationProvider.docs}
                                                         target="_blank"
@@ -1430,9 +1396,9 @@ export default function Tools() {
                                                         Copy Script
                                                     </Button>
                                                 </div>
-                                            <pre className="bg-black/70 border border-white/10 text-[11px] text-green-200 font-mono p-4 overflow-auto leading-relaxed h-64">
-                                                <code>{selectedMigrationProvider.script}</code>
-                                            </pre>
+                                                <pre className="bg-black/70 border border-white/10 text-[11px] text-green-200 font-mono p-4 overflow-auto leading-relaxed h-64">
+                                                    <code>{selectedMigrationProvider.script}</code>
+                                                </pre>
                                             </>
                                         )}
                                         <div className="flex items-center justify-end space-x-2">
