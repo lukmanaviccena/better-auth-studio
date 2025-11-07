@@ -930,7 +930,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm text-white uppercase font-light">TOTAL USER</h3>
               <div className="flex items-center space-x-1 overflow-x-auto">
-                {['1D', '1W', '1M', '3M', '6M', '1Y',].map((period) => (
+                {['1D', '1W', '6M', '1Y',].map((period) => (
                   <button
                     key={period}
                     onClick={() => setSelectedUserPeriod(period)}
@@ -1056,7 +1056,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm text-white uppercase font-light">TOTAL SUBSCRIPTION</h3>
               <div className="flex items-center space-x-1 overflow-x-auto">
-                {['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'].map((period) => (
+                {['1D', '1W', '6M', '1Y', 'ALL'].map((period) => (
                   <button
                     key={period}
                     onClick={() => setSelectedSubscriptionPeriod(period)}
