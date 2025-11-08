@@ -200,7 +200,7 @@ const TERMINAL_SCRIPT: TerminalLine[] = [
 const toneClassName = (tone: TerminalTone) => {
   switch (tone) {
     case "command":
-      return "text-white";
+      return "text-white/90";
     case "info":
       return "text-white/70";
     case "success":
