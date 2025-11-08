@@ -184,7 +184,7 @@ const TERMINAL_SCRIPT: TerminalLine[] = [
   { text: "$ Seeding 10 mock users...", tone: "command" },
   { text: "⌁ inserting mock records with hashed credentials", tone: "info" },
   { text: "✔ seeding completed in 43ms", tone: "success" },
-  { text: "$ running migration --provider clerk", tone: "command" },
+  { text: "$ running migration for clerk", tone: "command" },
   { text: "✔ migrated 182 entries in 213ms", tone: "success" },
   { text: "$ testing github oauth...", tone: "command" },
   { text: "⌁ redirecting to https://github.com/login/oauth", tone: "info" },
