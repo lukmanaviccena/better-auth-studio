@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from "react";
 import { Mesh } from "three";
 import { KernelSize } from "postprocessing";
 import { LineShadowText } from "../LineShadow";
-
 function Shape() {
   const meshRef = useRef<Mesh>(null);
   const innerSphereRef = useRef<Mesh>(null);
@@ -197,21 +196,6 @@ const TERMINAL_SCRIPT: TerminalLine[] = [
   { text: "✔ health check passed! all systems operational", tone: "success" },
 ];
 
-const toneClassName = (tone: TerminalTone) => {
-  switch (tone) {
-    case "command":
-      return "text-white/90";
-    case "info":
-      return "text-white/70";
-    case "success":
-      return "text-emerald-400";
-    case "muted":
-      return "text-white/40";
-    default:
-      return "text-white/70";
-  }
-};
-
 interface HeroProps {
   title: string;
   description: string;
@@ -221,175 +205,240 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ title, description, links, version }) => {
   const [copied, setCopied] = useState(false);
-  const [visibleTerminalLines, setVisibleTerminalLines] = useState<TerminalLine[]>([]);
+  const [typedTerminalCommand, setTypedTerminalCommand] = useState("");
+  const [terminalLogs, setTerminalLogs] = useState<TerminalLine[]>([]);
+  const [terminalHeight, setTerminalHeight] = useState<number>(110);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const terminalLogsRef = useRef<TerminalLine[]>([]);
 
   useEffect(() => {
-    let index = 0;
-    setVisibleTerminalLines([]);
+    terminalLogsRef.current = terminalLogs;
+    updateTerminalHeight(terminalLogs, typedTerminalCommand);
+  }, [terminalLogs, typedTerminalCommand]);
 
-    const timeouts: NodeJS.Timeout[] = [];
-
-    TERMINAL_SCRIPT.forEach((line, lineIndex) => {
-      const timeout = setTimeout(() => {
-        setVisibleTerminalLines((prev) => [...prev, line]);
-        const container = containerRef.current;
-        if (container) {
-          requestAnimationFrame(() => {
-            container.scrollTo({
-              top: container.scrollHeight,
-              behavior: "smooth",
-            });
-          });
-        }
-      }, lineIndex * 1400);
-      timeouts.push(timeout);
-    });
-
-    return () => {
-      timeouts.forEach(clearTimeout);
-    };
+  useEffect(() => {
+    animateSequence();
+    return () => cleanup();
   }, []);
+
+  const scrollToBottom = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+  };
+
+  const cleanup = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  };
+
+  const animateSequence = () => {
+    cleanup();
+    setTypedTerminalCommand("");
+    setTerminalLogs([]);
+    setTerminalHeight(110);
+
+    const firstLine = TERMINAL_SCRIPT[0];
+    typeString(firstLine.text, setTypedTerminalCommand, 60, () => {
+      setTypedTerminalCommand("");
+      setTerminalLogs([firstLine]);
+      scrollToBottom();
+
+      TERMINAL_SCRIPT.slice(1).forEach((line, index) => {
+        const timeout = setTimeout(() => {
+          setTerminalLogs((prev) => [...prev, line]);
+          updateTerminalHeight([...terminalLogsRef.current, line], "");
+          scrollToBottom();
+        }, index * 900); // Staggered appearance
+        timeoutsRef.current.push(timeout);
+      });
+    });
+  };
+
+  const typeString = (
+    content: string,
+    setter: (value: string) => void,
+    delay: number,
+    onComplete?: () => void
+  ) => {
+    let index = 0;
+    const interval = setInterval(() => {
+      index += 1;
+      setter(content.slice(0, index));
+      if (setter === setTypedTerminalCommand) {
+        updateTerminalHeight(terminalLogsRef.current, content.slice(0, index));
+      }
+      if (index >= content.length) {
+        clearInterval(interval);
+        const pause = setTimeout(() => {
+          onComplete?.();
+        }, 400);
+        timeoutsRef.current.push(pause as unknown as NodeJS.Timeout);
+      }
+    }, delay);
+    timeoutsRef.current.push(interval as unknown as NodeJS.Timeout);
+  };
+
+  const updateTerminalHeight = (logs: TerminalLine[], typing: string) => {
+    const effectiveLineCount = logs.length + (typing ? 1 : 0);
+    const targetHeight = Math.max(120, Math.min(260, 90 + effectiveLineCount * 20));
+    setTerminalHeight((prev) => {
+      if (Math.abs(prev - targetHeight) < 2) {
+        return prev;
+      }
+      return prev < targetHeight ? targetHeight : Math.max(targetHeight, prev - 20);
+    });
+  };
 
   return (
     <>
-    <div className="h-svh w-screen relative bg-[#0A0A0A]">
-      <Navbar links={links} />
-      <div className="absolute inset-0">
-        <Scene />
-      </div>
-      <div className="absolute bottom-4 left-4 md:bottom-10 md:left-10 z-20 max-w-md">
+      <div className="h-svh w-screen relative bg-[#0A0A0A]">
+        <Navbar links={links} />
+        <div className="absolute inset-0">
+          <Scene />
+        </div>
+        <div className="absolute bottom-4 left-4 md:bottom-10 md:left-10 z-20 max-w-md">
 
-        <h1 className="text-2xl flex uppercase font-mono md:text-3xl font-light tracking-tight mb-3 text-white">
-          {title.split("Studio")[0]}{" "}
-          <LineShadowText className="font-normal ml-2" shadowColor="white">
-            Studio
-          </LineShadowText>
-          {version && (
-            <div className="inline-flex group gap-x-1 text-[13px] ml-2 font-mono">
-              <span className="text-white/50 group-hover:text-white transition-colors">[</span>
-              <span className="text-white/70 text-[14px] lowercase">v {version}</span>
-              <span className="text-white/50 group-hover:text-white transition-colors">]</span>
+          <h1 className="text-2xl flex uppercase font-mono md:text-3xl font-light tracking-tight mb-3 text-white">
+            {title.split("Studio")[0]}{" "}
+            <LineShadowText className="font-normal ml-2" shadowColor="white">
+              Studio
+            </LineShadowText>
+            {version && (
+              <div className="inline-flex group gap-x-1 text-[13px] ml-2 font-mono">
+                <span className="text-white/50 group-hover:text-white transition-colors">[</span>
+                <span className="text-white/70 text-[14px] lowercase">v {version}</span>
+                <span className="text-white/50 group-hover:text-white transition-colors">]</span>
+              </div>
+            )}
+          </h1>
+          <p className="font-mono uppercase text-[12.5px] text-white/50 mb-6">
+            {description}
+          </p>
+          <div className="bg-black/20 backdrop-blur-sm border border-white/20 border-dashed rounded-none p-4 font-mono text-xs">
+            <div className="text-white/70 flex items-center text-[10px] uppercase font-mono mb-2">
+              <svg
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="w-3 rotate-180 h-3 inline-flex mr-1 text-white/50 hover:text-white transition-colors"
+              >
+                <path
+                  d="M16 5v2h-2V5h2zm-4 4V7h2v2h-2zm-2 2V9h2v2h-2zm0 2H8v-2h2v2zm2 2v-2h-2v2h2zm0 0h2v2h-2v-2zm4 4v-2h-2v2h2z"
+                  fill="currentColor"
+                />
+              </svg>
+              Install Better Auth Studio</div>
+            <div className="flex items-center gap-2">
+              <span className="text-white/80">$</span>
+              <code className="text-white text-xs">npx better-auth-studio@latest</code>
+              <button
+                onClick={() => {
+                  setCopied(true)
+                  navigator.clipboard.writeText('npx better-auth-studio@latest')
+                  setTimeout(() => {
+                    setCopied(false)
+                  }, 3000)
+                }}
+                className="ml-2 text-white/50 hover:text-white transition-colors"
+                title="Copy to clipboard"
+              >
+                {
+                  copied ? (
+
+                    <svg
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 text-white/50 hover:text-white transition-colors"
+                    >
+                      <path
+                        d="M18 6h2v2h-2V6zm-2 4V8h2v2h-2zm-2 2V9h2v2h-2zm-2 2h2v-2h-2v2zm-2 2h2v-2h-2v2zm-2 0v2h2v-2H8zm-2-2h2v2H6v-2zm0 0H4v-2h2v2z"
+                        fill="currentColor"
+                      />
+                    </svg>
+
+                  ) : (
+                    <svg
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 text-white/50 hover:text-white transition-colors"
+                    >
+                      <path d="M4 2h12v2H4v12H2V2h2zm4 4h12v16H8V6zm2 2v12h8V8h-8z" fill="currentColor" />
+                    </svg>
+                  )
+                }
+
+              </button>
             </div>
-          )}
-        </h1>
-        <p className="font-mono uppercase text-[12.5px] text-white/50 mb-6">
-          {description}
-        </p>
-        <div className="bg-black/20 backdrop-blur-sm border border-white/20 border-dashed rounded-none p-4 font-mono text-xs">
-          <div className="text-white/70 flex items-center text-[10px] uppercase font-mono mb-2">
-            <svg
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="w-3 rotate-180 h-3 inline-flex mr-1 text-white/50 hover:text-white transition-colors"
-            >
-              <path
-                d="M16 5v2h-2V5h2zm-4 4V7h2v2h-2zm-2 2V9h2v2h-2zm0 2H8v-2h2v2zm2 2v-2h-2v2h2zm0 0h2v2h-2v-2zm4 4v-2h-2v2h2z"
-                fill="currentColor"
-              />
-            </svg>
-            Install Better Auth Studio</div>
-          <div className="flex items-center gap-2">
-            <span className="text-white/80">$</span>
-            <code className="text-white text-xs">npx better-auth-studio@latest</code>
-            <button
-              onClick={() => {
-                setCopied(true)
-                navigator.clipboard.writeText('npx better-auth-studio@latest')
-                setTimeout(() => {
-                  setCopied(false)
-                }, 3000)
-              }}
-              className="ml-2 text-white/50 hover:text-white transition-colors"
-              title="Copy to clipboard"
-            >
-              {
-                copied ? (
-
-                  <svg
-                    fill="none"
-                    className="w-4 h-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M18 6h2v2h-2V6zm-2 4V8h2v2h-2zm-2 2v-2h2v2h-2zm-2 2h2v-2h-2v2zm-2 2h2v-2h-2v2zm-2 0v2h2v-2H8zm-2-2h2v2H6v-2zm0 0H4v-2h2v2z"
-                      fill="currentColor"
-                    />
-
-                  </svg>
-
-                ) : (
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-4 h-4 text-white/50 hover:text-white transition-colors"
-                  >
-                    <path
-                      d="M18 6h2v2h-2V6zm-2 4V8h2v2h-2zm-2 2v-2h2v2h-2zm-2 2h2v-2h-2v2zm-2 2h2v-2h-2v2zm-2 0v2h2v-2H8zm-2-2h2v2H6v-2zm0 0H4v-2h2v2z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                )
-              }
-
-            </button>
           </div>
         </div>
-      </div>
 
-      <div className="hidden md:block absolute top-6 right-6 lg:right-10 w-[420px] lg:w-[520px]">
-        <div className="relative overflow-hidden border border-white/20 border-dashed rounded-none bg-transparent backdrop-blur-2xl animate-[terminal-pop_0.6s_ease-out]">
-          <div className="absolute inset-0 bg-linear-to-br from-transparent/20 via-transparent/5 to-transparent opacity-70 blur-3xl" />
-          <div className="relative px-6 pt-4 pb-0 font-mono text-[12px] text-white">
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-white/60 mb-3">
-              <span className="text-white/40 text-[10px]">
-             <span>[</span> 
-              <span className="text-white/70 uppercase tracking-[0.25em] mx-1">Better Auth Studio</span>
-              <span>]</span>
-              </span>
-            </div>
-            <div ref={containerRef} className="space-y-1.5 min-h-[350px] max-h-[350px] overflow-y-auto pr-1 custom-scroll">
-              {visibleTerminalLines.map((line, idx) => (
-                <div
-                  key={`${line.text}-${idx}`}
-                  className={`flex items-start gap-2 whitespace-pre-wrap leading-relaxed ${toneClassName(line.tone)} opacity-0`}
-                  style={{
-                    animation: `line-enter 0.45s ease-out forwards`,
-                    animationDelay: `${idx * 0.04}s`,
-                  }}
-                >
-                  <span>{line.text}</span>
-                </div>
-              ))}
-              {/* <div
-                className={`flex items-start gap-2 whitespace-pre-wrap leading-relaxed text-white/50 ${
-                  visibleTerminalLines.length === TERMINAL_SCRIPT.length ? "opacity-100" : "opacity-0"
-                } transition-opacity duration-300`}
+        <div className="hidden md:block absolute bottom-6 right-6 lg:right-10 w-[420px] lg:w-[520px]">
+          <div className="relative overflow-hidden border border-white/20 border-dashed rounded-none bg-transparent backdrop-blur-2xl animate-[terminal-pop_0.6s_ease-out]">
+            <div className="absolute inset-0 bg-linear-to-br from-transparent/20 via-transparent/5 to-transparent opacity-70 blur-3xl" />
+            <div className="relative px-6 pt-4 pb-0 font-mono text-[12px] text-white">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-white/60 mb-3">
+                <span className="text-white/40 text-[10px]">
+                  <span>[</span>
+                  <span className="text-white/70 uppercase tracking-[0.25em] mx-1">Better Auth Studio</span>
+                  <span>]</span>
+                </span>
+              </div>
+              <div
+                ref={containerRef}
+                className="flex flex-col gap-1 overflow-y-auto pr-1 custom-scroll transition-all duration-500"
+                style={{ height: terminalHeight }}
               >
-                <span className="inline-flex w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse mt-1" />
-                <span className="uppercase tracking-[0.25em]">end of replay</span>
-              </div> */}
-            </div>
-            <div className="mx-auto mt-4 py-1  border-t border-dashed border-white/10 backdrop-blur-sm">
-              <div className="flex items-center justify-between text-[9px] text-white/60 uppercase tracking-[0.22em]">
-                <div className="flex items-center space-x-3">
-                  <span>Status: {visibleTerminalLines.length === 0 ? "Idle" : "Live"}</span>
-                  <span>Lines: {visibleTerminalLines.length}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-1.5 h-1.5 mr-1 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-white/70 font-mono text-[9px] uppercase tracking-[0.25em]">better auth studio</span>
+                {typedTerminalCommand && (
+                  <div className="flex items-start gap-2 whitespace-pre-wrap leading-relaxed text-white/80">
+                    <span>{typedTerminalCommand}</span>
+                    <span className="ml-1 inline-block h-4 w-[2px] bg-white/80 animate-cursor" />
+                  </div>
+                )}
+                {terminalLogs.map((line, idx) => (
+                  <div
+                    key={`${line.text}-${idx}`}
+                    className={`flex items-start gap-2 whitespace-pre-wrap leading-relaxed ${
+                      line.tone === "command"
+                        ? "text-white/90"
+                        : line.tone === "success"
+                          ? "text-emerald-400"
+                          : line.tone === "muted"
+                            ? "text-white/40"
+                            : "text-white/70"
+                      }`}
+                  >
+                    <span>{line.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mx-auto mt-4 py-1 border-t border-dashed border-white/10 backdrop-blur-sm">
+                <div className="flex items-center justify-between text-[9px] text-white/60 uppercase tracking-[0.22em]">
+                  <div className="flex items-center space-x-3">
+                    <span>Status: {terminalLogs.length === 0 ? "Idle" : "Live"}</span>
+                    <span>Lines: {terminalLogs.length}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 mr-1 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-white/70 font-mono text-[9px] uppercase tracking-[0.25em]">
+                      better-auth studio</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <style jsx global>{`
+      <style jsx global>{`
       @keyframes terminal-pop {
         0% {
           transform: translateY(40px) scale(0.98);
@@ -400,15 +449,8 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
           opacity: 1;
         }
       }
-      @keyframes line-enter {
-        0% {
-          transform: translateY(8px);
-          opacity: 0;
-        }
-        100% {
-          transform: translateY(0);
-          opacity: 1;
-        }
+      .animate-cursor {
+        animation: cursor-blink 0.8s steps(1) infinite;
       }
     `}</style>
     </>
