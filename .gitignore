@@ -1,5 +1,6 @@
 node_modules
 .env
+env.prod
 .env.local
 .env.development.local
 .env.test.local
