@@ -26,7 +26,7 @@ export async function getAuthData(_authConfig, type = 'stats', options, configPa
         }
     }
     catch (_error) {
-        return getMockData(type, options);
+        throw new Error(`Failed to get auth data: ${_error}`);
     }
 }
 async function getRealStats(adapter) {
@@ -85,7 +85,7 @@ async function getRealStats(adapter) {
         };
     }
     catch (_error) {
-        return getMockData('stats');
+        throw new Error(`Failed to get auth data: ${_error}`);
     }
 }
 async function getRealUsers(adapter, options) {
@@ -109,10 +109,16 @@ async function getRealUsers(adapter, options) {
                 totalPages: Math.ceil(filteredUsers.length / limit),
             };
         }
-        return getMockData('users', options);
+        return {
+            data: [],
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+        };
     }
     catch (_error) {
-        return getMockData('users', options);
+        throw new Error(`Failed to get auth data: ${_error}`);
     }
 }
 async function getRealSessions(adapter, options) {
@@ -131,10 +137,16 @@ async function getRealSessions(adapter, options) {
                 totalPages: Math.ceil(allSessions.length / limit),
             };
         }
-        return getMockData('sessions', options);
+        return {
+            data: [],
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+        };
     }
     catch (_error) {
-        return getMockData('sessions', options);
+        throw new Error(`Failed to get auth data: ${_error}`);
     }
 }
 async function getRealProviderStats(_adapter) {
@@ -145,7 +157,7 @@ async function getRealProviderStats(_adapter) {
         ];
     }
     catch (_error) {
-        return getMockData('providers');
+        throw new Error(`Failed to get auth data: ${_error}`);
     }
 }
 async function deleteRealUser(adapter, userId) {
@@ -326,7 +338,6 @@ async function getRealAnalytics(adapter, options) {
                     // For Custom, use from date if provided, otherwise default to 30 days
                     startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                     break;
-                case 'ALL':
                 default: {
                     // Get the earliest creation date from users
                     const earliestUser = users.reduce((earliest, user) => {
@@ -517,7 +528,7 @@ async function getRealAnalytics(adapter, options) {
             type,
         };
     }
-    catch (error) {
+    catch (_error) {
         // Return empty data on error
         return {
             data: [],

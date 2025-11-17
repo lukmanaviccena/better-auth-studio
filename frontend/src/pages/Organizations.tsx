@@ -18,6 +18,7 @@ import type { DateRange } from 'react-day-picker';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Terminal } from '../components/Terminal';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { Button } from '../components/ui/button';
 import { Calendar } from '../components/ui/calendar';
 import { Input } from '../components/ui/input';
@@ -569,10 +570,14 @@ export default function Organizations() {
         <div>
           <h1 className="text-2xl relative text-white font-light inline-flex items-start">
             Organizations
-            <sup className="text-xs text-gray-500 ml-1 mt-0">
-              <span className="mr-1">[</span>
-              <span className="text-white font-mono text-sm">{counts.organizations}</span>
-              <span className="ml-1">]</span>
+            <sup className="text-xs text-gray-500 ml-1 mt-0 inline-flex items-baseline">
+              <AnimatedNumber
+                value={counts.organizations ?? 0}
+                className="text-white font-mono text-sm"
+                prefix={<span className="mr-1 text-gray-500">[</span>}
+                suffix={<span className="ml-1 text-gray-500">]</span>}
+                format={{ notation: 'standard', maximumFractionDigits: 0 }}
+              />
             </sup>
           </h1>
           <p className="text-gray-400 font-light text-sm mt-1 uppercase font-mono">

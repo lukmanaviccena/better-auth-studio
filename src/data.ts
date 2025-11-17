@@ -80,7 +80,7 @@ export async function getAuthData(
         throw new Error(`Unknown data type: ${type}`);
     }
   } catch (_error) {
-    return getMockData(type, options);
+    throw new Error(`Failed to get auth data: ${_error}`);
   }
 }
 async function getRealStats(adapter: any): Promise<AuthStats> {
@@ -143,7 +143,7 @@ async function getRealStats(adapter: any): Promise<AuthStats> {
       recentLogins,
     };
   } catch (_error) {
-    return getMockData('stats');
+    throw new Error(`Failed to get auth data: ${_error}`);
   }
 }
 
@@ -178,10 +178,15 @@ async function getRealUsers(
         totalPages: Math.ceil(filteredUsers.length / limit),
       };
     }
-
-    return getMockData('users', options);
+    return {
+      data: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    };
   } catch (_error) {
-    return getMockData('users', options);
+    throw new Error(`Failed to get auth data: ${_error}`);
   }
 }
 
@@ -208,9 +213,15 @@ async function getRealSessions(
       };
     }
 
-    return getMockData('sessions', options);
+    return {
+      data: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    };
   } catch (_error) {
-    return getMockData('sessions', options);
+    throw new Error(`Failed to get auth data: ${_error}`);
   }
 }
 
@@ -221,7 +232,7 @@ async function getRealProviderStats(_adapter: any) {
       { type: 'github', users: 0, active: 0 },
     ];
   } catch (_error) {
-    return getMockData('providers');
+    throw new Error(`Failed to get auth data: ${_error}`);
   }
 }
 

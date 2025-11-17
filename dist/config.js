@@ -128,6 +128,7 @@ const jitiOptions = (cwd) => {
         alias,
     };
 };
+const warnedMissingProviders = new Set();
 const isDefaultExport = (object) => {
     return (typeof object === 'object' &&
         object !== null &&
@@ -244,14 +245,22 @@ export async function findAuthConfig(configPath) {
                     ...betterAuthConfig.emailAndPassword,
                 },
                 socialProviders: betterAuthConfig.socialProviders
-                    ? Object.keys(betterAuthConfig.socialProviders).map((provider) => ({
-                        id: provider,
-                        name: provider,
-                        clientId: betterAuthConfig.socialProviders[provider].clientId,
-                        clientSecret: betterAuthConfig.socialProviders[provider].clientSecret,
-                        redirectURI: betterAuthConfig.socialProviders[provider].redirectURI,
-                        enabled: true,
-                    }))
+                    ? Object.keys(betterAuthConfig.socialProviders).map((provider) => {
+                        const providerConfig = betterAuthConfig.socialProviders?.[provider];
+                        const hasCredentials = Boolean(providerConfig?.clientId && providerConfig?.clientSecret);
+                        if (!hasCredentials && !warnedMissingProviders.has(provider)) {
+                            logger.warn(`[#better-auth]: Social provider ${provider} is missing a clientId or clientSecret.`);
+                            warnedMissingProviders.add(provider);
+                        }
+                        return {
+                            id: provider,
+                            name: provider,
+                            clientId: providerConfig?.clientId,
+                            clientSecret: providerConfig?.clientSecret,
+                            redirectURI: providerConfig?.redirectURI,
+                            enabled: Boolean(hasCredentials && providerConfig?.redirectURI),
+                        };
+                    })
                     : [],
                 trustedOrigins: Array.isArray(betterAuthConfig.trustedOrigins)
                     ? betterAuthConfig.trustedOrigins

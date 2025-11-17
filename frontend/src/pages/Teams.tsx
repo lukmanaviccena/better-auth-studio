@@ -2,6 +2,7 @@ import { Building2, Loader, Plus, Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -226,14 +227,25 @@ export default function Teams() {
         <div>
           <h1 className="text-2xl relative text-white font-light inline-flex items-start">
             Teams
-            <sup className="text-xs text-gray-500 ml-1 mt-0">
-              <span className="mr-1">[</span>
-              <span className="text-white font-mono text-sm">{filteredTeams.length}</span>
-              <span className="ml-1">]</span>
+            <sup className="text-xs text-gray-500 ml-1 mt-0 inline-flex items-baseline">
+              <AnimatedNumber
+                value={filteredTeams.length}
+                className="text-white font-mono text-sm"
+                prefix={<span className="mr-1 text-gray-500">[</span>}
+                suffix={<span className="ml-1 text-gray-500">]</span>}
+                format={{ notation: 'standard', maximumFractionDigits: 0 }}
+              />
             </sup>
           </h1>
-          <p className="text-gray-400 mt-1 uppercase font-mono text-sm font-light">
-            {filteredTeams.length} team{filteredTeams.length !== 1 ? 's' : ''} found
+          <p className="text-gray-400 mt-1 uppercase font-mono text-sm font-light flex items-baseline gap-1">
+            <AnimatedNumber
+              value={filteredTeams.length}
+              className="text-white font-mono text-sm"
+              format={{ notation: 'standard', maximumFractionDigits: 0 }}
+            />
+            <span>
+              team{filteredTeams.length !== 1 ? 's' : ''} found
+            </span>
           </p>
         </div>
         <div className="flex items-center space-x-3">

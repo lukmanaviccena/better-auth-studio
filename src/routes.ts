@@ -698,7 +698,6 @@ export function createRoutes(
       if (!adapter || !adapter.findMany) {
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
-
       const users = await adapter.findMany({
         model: 'user',
         where: [{ field: 'id', value: userId }],
@@ -708,7 +707,6 @@ export function createRoutes(
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
-
       res.json({ user });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch user' });
@@ -1576,9 +1574,6 @@ export function createRoutes(
         enabled: !!adminPlugin,
         configPath: authConfigPath,
         adminPlugin: adminPlugin || null,
-        message: adminPlugin
-          ? 'Admin plugin is enabled. Use Better Auth admin endpoints directly for ban/unban functionality.'
-          : 'Admin plugin is not enabled. Please enable the admin plugin in your Better Auth configuration.',
       });
     } catch (error) {
       res.status(500).json({

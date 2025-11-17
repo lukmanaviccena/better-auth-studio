@@ -42,6 +42,7 @@
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
     "@better-auth/utils": "^0.3.0",
+    "@number-flow/react": "^0.5.10",
     "@noble/hashes": "^2.0.1",
     "@types/chokidar": "^2.1.7",
     "better-auth": "1.3.34",

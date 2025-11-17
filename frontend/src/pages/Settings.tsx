@@ -412,7 +412,7 @@ export default function Settings() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-mono font-medium text-white">
                   {config?.baseURL || 'http://localhost:3000'}
                 </p>
               </div>
@@ -591,138 +591,6 @@ export default function Settings() {
                 </Badge>
               </div>
             )}
-
-            {/* Adapter Configuration */}
-            {config?.database?.adapterConfig && (
-              <>
-                <div className="flex items-center justify-between p-3 px-5 border-b border-white/15">
-                  <div className="flex items-center space-x-3">
-                    <Puzzle className="w-5 h-5 text-white" />
-                    <div>
-                      <p className="text-sm font-light uppercase text-white">Adapter ID</p>
-                      <p className="text-[10px] font-light uppercase font-mono text-gray-400">
-                        Adapter identifier
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-white font-mono">
-                      {config.database.adapterConfig.adapterId || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-
-                {config.database.adapterConfig.adapterName && (
-                  <div className="flex items-center justify-between p-3 px-5 border-b border-white/15">
-                    <div className="flex items-center space-x-3">
-                      <Puzzle className="w-5 h-5 text-white" />
-                      <div>
-                        <p className="text-sm font-light uppercase text-white">Adapter Name</p>
-                        <p className="text-[10px] font-light uppercase font-mono text-gray-400">
-                          Adapter display name
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-white">
-                        {config.database.adapterConfig.adapterName}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between p-3 px-5 border-b border-white/15">
-                  <div className="flex items-center space-x-3">
-                    <Zap className="w-5 h-5 text-white" />
-                    <div>
-                      <p className="text-sm font-light uppercase text-white">Adapter Features</p>
-                      <p className="text-[10px] font-light uppercase font-mono text-gray-400">
-                        Supported capabilities
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    {config.database.adapterConfig.supportsBooleans && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-green-900/20 border border-green-500/30 text-green-400 rounded-none border-dashed"
-                      >
-                        Booleans
-                      </Badge>
-                    )}
-                    {config.database.adapterConfig.supportsDates && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-green-900/20 border border-green-500/30 text-green-400 rounded-none border-dashed"
-                      >
-                        Dates
-                      </Badge>
-                    )}
-                    {config.database.adapterConfig.supportsJSON && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-green-900/20 border border-green-500/30 text-green-400 rounded-none border-dashed"
-                      >
-                        JSON
-                      </Badge>
-                    )}
-                    {config.database.adapterConfig.supportsNumericIds && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-green-900/20 border border-green-500/30 text-green-400 rounded-none border-dashed"
-                      >
-                        Numeric IDs
-                      </Badge>
-                    )}
-                    {!config.database.adapterConfig.supportsBooleans &&
-                      !config.database.adapterConfig.supportsDates &&
-                      !config.database.adapterConfig.supportsJSON &&
-                      !config.database.adapterConfig.supportsNumericIds && (
-                        <span className="text-xs text-gray-400">No special features</span>
-                      )}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 px-5 border-b border-white/15">
-                  <div className="flex items-center space-x-3">
-                    <SettingsIcon className="w-5 h-5 text-white" />
-                    <div>
-                      <p className="text-sm font-light uppercase text-white">Adapter Settings</p>
-                      <p className="text-[10px] font-light uppercase font-mono text-gray-400">
-                        Configuration options
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    {config.database.adapterConfig.usePlural !== undefined && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-blue-900/20 border border-blue-500/30 text-blue-400 rounded-none border-dashed"
-                      >
-                        {config.database.adapterConfig.usePlural ? 'Plural' : 'Singular'}
-                      </Badge>
-                    )}
-                    {config.database.adapterConfig.disableTransformInput && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-yellow-900/20 border border-yellow-500/30 text-yellow-400 rounded-none border-dashed"
-                      >
-                        No Input Transform
-                      </Badge>
-                    )}
-                    {config.database.adapterConfig.disableTransformOutput && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-yellow-900/20 border border-yellow-500/30 text-yellow-400 rounded-none border-dashed"
-                      >
-                        No Output Transform
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
             {/* No Database Detected */}
             {!databaseInfo?.success && !config?.database && (
               <div className="flex items-center justify-between p-3 px-5">

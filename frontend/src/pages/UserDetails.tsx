@@ -1,5 +1,5 @@
 import { Clock1, Edit } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -18,6 +18,7 @@ import {
   Users,
   X,
 } from '../components/PixelIcons';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { Terminal } from '../components/Terminal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -121,6 +122,7 @@ export default function UserDetails() {
   >([]);
   const [isSeeding, setIsSeeding] = useState(false);
   const [sessionLocations, setSessionLocations] = useState<Record<string, LocationData>>({});
+  const sessionLocationsRef = useRef<Record<string, LocationData>>({});
 
   const checkAdminPlugin = useCallback(async () => {
     try {
@@ -132,7 +134,7 @@ export default function UserDetails() {
     }
   }, []);
 
-  const resolveIPLocation = async (ipAddress: string): Promise<LocationData | null> => {
+  const resolveIPLocation = useCallback(async (ipAddress: string): Promise<LocationData | null> => {
     try {
       const response = await fetch('/api/geo/resolve', {
         method: 'POST',
@@ -152,32 +154,39 @@ export default function UserDetails() {
     } catch (_error) {
       return null;
     }
-  };
+  }, []);
 
-  const resolveSessionLocations = async (sessions: Session[]) => {
-    const locationPromises = sessions.map(async (session) => {
-      if (!sessionLocations[session.id]) {
-        const location = await resolveIPLocation(session.ipAddress);
-        if (location) {
-          return { sessionId: session.id, location };
+  const resolveSessionLocations = useCallback(
+    async (sessions: Session[]) => {
+      const pendingSessions = sessions.filter((session) => !sessionLocationsRef.current[session.id]);
+      if (pendingSessions.length === 0) {
+        return;
+      }
+
+      const results = await Promise.all(
+        pendingSessions.map(async (session) => {
+          const location = await resolveIPLocation(session.ipAddress);
+          if (location) {
+            return { sessionId: session.id, location };
+          }
+          return null;
+        })
+      );
+
+      const updates: Record<string, LocationData> = {};
+      results.forEach((result) => {
+        if (result) {
+          updates[result.sessionId] = result.location;
         }
+      });
+
+      if (Object.keys(updates).length > 0) {
+        sessionLocationsRef.current = { ...sessionLocationsRef.current, ...updates };
+        setSessionLocations(sessionLocationsRef.current);
       }
-      return null;
-    });
-
-    const results = await Promise.all(locationPromises);
-    const newLocations: Record<string, LocationData> = {};
-
-    results.forEach((result) => {
-      if (result) {
-        newLocations[result.sessionId] = result.location;
-      }
-    });
-
-    if (Object.keys(newLocations).length > 0) {
-      setSessionLocations((prev) => ({ ...prev, ...newLocations }));
-    }
-  };
+    },
+    [resolveIPLocation]
+  );
 
   const getCountryFlag = (countryCode: string): string => {
     if (!countryCode) return '🌍';
@@ -659,10 +668,14 @@ export default function UserDetails() {
                   <span className="inline-flex items-start">
                     <span className="">{tab.name}</span>
                     {tab.count !== undefined && (
-                      <sup className="text-xs text-gray-500 ml-1">
-                        <span className="mr-0.5">[</span>
-                        <span className="text-white/80 font-mono text-xs">{tab.count}</span>
-                        <span className="ml-0.5">]</span>
+                      <sup className="text-xs text-gray-500 ml-1 inline-flex items-baseline">
+                        <AnimatedNumber
+                          value={tab.count}
+                          className="text-white/80 font-mono text-xs"
+                          prefix={<span className="mr-0.5 text-gray-500">[</span>}
+                          suffix={<span className="ml-0.5 text-gray-500">]</span>}
+                          format={{ notation: 'standard', maximumFractionDigits: 0 }}
+                        />
                       </sup>
                     )}
                   </span>

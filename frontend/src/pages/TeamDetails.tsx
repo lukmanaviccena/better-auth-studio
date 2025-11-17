@@ -12,6 +12,7 @@ import {
   Users,
   X,
 } from '../components/PixelIcons';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -350,10 +351,14 @@ export default function TeamDetails() {
             <Users className="w-4 h-4" />
             <span className="inline-flex items-start">
               Members
-              <sup className="text-xs text-gray-500 ml-1">
-                <span className="mr-0.5">[</span>
-                <span className="text-white/80 font-mono text-xs">{members.length}</span>
-                <span className="ml-0.5">]</span>
+              <sup className="text-xs text-gray-500 ml-1 inline-flex items-baseline">
+                <AnimatedNumber
+                  value={members.length}
+                  className="text-white/80 font-mono text-xs"
+                  prefix={<span className="mr-0.5 text-gray-500">[</span>}
+                  suffix={<span className="ml-0.5 text-gray-500">]</span>}
+                  format={{ notation: 'standard', maximumFractionDigits: 0 }}
+                />
               </sup>
             </span>
           </button>

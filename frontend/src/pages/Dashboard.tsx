@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ArrowUpRight, DollarSign, Shield } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -119,6 +119,29 @@ export default function Dashboard() {
     Custom: 'Custom',
   };
 
+  const compactNumberFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+      }),
+    []
+  );
+
+  const formatCompactNumber = (value: number | null | undefined) => {
+    if (value === null || value === undefined) {
+      return '...';
+    }
+    return compactNumberFormatter.format(Number(value));
+  };
+
+  const formatFullNumber = (value: number | null | undefined) => {
+    if (value === null || value === undefined) {
+      return '...';
+    }
+    return Number(value).toLocaleString();
+  };
+
   // Security insights data - better-auth specific
   const getSecurityPatches = (): SecurityPatch[] => {
     const patches: SecurityPatch[] = [];
@@ -210,7 +233,7 @@ export default function Dashboard() {
 
   const securityPatches = getSecurityPatches();
 
-  const fetchAnalytics = async (type: string, period: string, from?: Date, to?: Date) => {
+  const fetchAnalytics = useCallback(async (type: string, period: string, from?: Date, to?: Date) => {
     try {
       const params = new URLSearchParams({ type, period });
       if (from) params.append('from', from.toISOString());
@@ -221,7 +244,7 @@ export default function Dashboard() {
     } catch (_error) {
       return null;
     }
-  };
+  }, []);
 
   // Fetch all users once for client-side filtering
   useEffect(() => {
@@ -421,10 +444,10 @@ export default function Dashboard() {
   }, [fetchAnalytics]);
 
   useEffect(() => {
-    if (!loading) {
-      setOrganizationsCount(counts.organizations || 0);
-      setTeamsCount(counts.teams || 0);
-    }
+    // if (!loading) {
+    //   setOrganizationsCount(counts.organizations || 0);
+    //   setTeamsCount(counts.teams || 0);
+    // }
   }, [counts.organizations, counts.teams, loading]);
 
   useEffect(() => {
@@ -551,13 +574,6 @@ export default function Dashboard() {
     };
     checkBetterAuthVersion();
   }, []);
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}k`;
-    }
-    return num.toString();
-  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -872,7 +888,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm uppercase tracking-wide">Users</span>
               <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatNumber(counts.users)}
+                {loading ? '...' : formatCompactNumber(counts.users)}
               </span>
               <div
                 className={`flex items-center gap-1 ${usersDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
@@ -902,7 +918,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm uppercase tracking-wide">Organizations</span>
               <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatNumber(counts.organizations)}
+                {loading ? '...' : formatCompactNumber(counts.organizations)}
               </span>
               <div
                 className={`flex items-center gap-1 ${organizationsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
@@ -930,7 +946,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm uppercase tracking-wide">Sessions</span>
               <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatNumber(counts.sessions)}
+                {loading ? '...' : formatCompactNumber(counts.sessions)}
               </span>
               <div
                 className={`flex items-center gap-1 ${sessionsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
@@ -960,7 +976,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm uppercase tracking-wide">Revenue</span>
               <span className="text-white text-lg font-medium">
-                ${totalSubscription !== null ? formatNumber(totalSubscription) : '1.2k'}
+                {loading ? '...' : `$${formatCompactNumber(totalSubscription ?? 0)}`}
               </span>
               <div
                 className={`flex items-center gap-1 ${revenueDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
@@ -990,7 +1006,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <span className="text-gray-400 text-sm uppercase tracking-wide">New Users</span>
               <span className="text-white text-lg font-medium">
-                {loading ? '...' : newUsersDaily !== null ? formatNumber(newUsersDaily) : '89'}
+                {loading ? '...' : formatCompactNumber(newUsersDaily ?? 0)}
               </span>
               <div className="flex items-center gap-1 text-green-500">
                 <svg className="w-3 h-3" viewBox="0 0 12 12" fill="currentColor">
@@ -1039,7 +1055,7 @@ export default function Dashboard() {
             </div>
             <div className="flex justify-between items-end mb-6">
               <p className="text-4xl text-white font-light">
-                {loading ? '...' : formatNumber(counts.users)}
+                {loading ? '...' : formatCompactNumber(counts.users)}
               </p>
               <div className="flex items-center gap-1 px-2 py-1">
                 <svg
@@ -1465,8 +1481,8 @@ export default function Dashboard() {
                 Users with active session in the time frame
               </p>
               <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light mb-2">
-                  {activeUsersDaily.toLocaleString()}
+                <p className="text-3xl text-white font-light">
+                  {formatFullNumber(activeUsersDaily)}
                 </p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 border-white/5 rounded-none">
@@ -1580,7 +1596,9 @@ export default function Dashboard() {
               </h4>
               <p className="text-xs text-gray-400 mb-3">Newly registered Users in the time frame</p>
               <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light mb-2">{_newUsersCount}</p>
+                <p className="text-3xl text-white font-light">
+                  {formatFullNumber(_newUsersCount)}
+                </p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
                     <svg
@@ -1702,8 +1720,8 @@ export default function Dashboard() {
               </h4>
               <p className="text-xs text-gray-400 mb-3">Total organizations in the time frame</p>
               <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light mb-2">
-                  {organizationsLoading ? '...' : organizationsCount.toLocaleString()}
+                <p className="text-3xl text-white font-light">
+                  {organizationsLoading ? '...' : formatFullNumber(organizationsCount)}
                 </p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
@@ -1816,8 +1834,8 @@ export default function Dashboard() {
               <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Teams</h4>
               <p className="text-xs text-gray-400 mb-3">Total teams in the time frame</p>
               <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light mb-2">
-                  {teamsLoading ? '...' : teamsCount.toLocaleString()}
+                <p className="text-3xl text-white font-light">
+                  {teamsLoading ? '...' : formatFullNumber(teamsCount)}
                 </p>
                 <div className="mt-2 mb-1 flex items-center gap-2">
                   <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
