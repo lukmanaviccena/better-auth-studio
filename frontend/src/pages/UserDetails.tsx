@@ -643,7 +643,7 @@ export default function UserDetails() {
           </div>
         </div>
 
-        <div className="border border-dashed border-white/10 rounded-none">
+        <div className="border border-dashed border-white/20 rounded-none">
           <div className="border-b border-dashed border-white/10">
             <nav className="flex space-x-8 px-6">
               {[

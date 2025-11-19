@@ -152,6 +152,7 @@ export default function Dashboard() {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [_newUsersCount, setNewUsersCount] = useState(0);
   const [newUsersCountPercentage, setNewUsersCountPercentage] = useState(0);
+  const [newUsersDailyPercentage, setNewUsersDailyPercentage] = useState(0);
 
   const { counts, loading } = useCounts();
   const navigate = useNavigate();
@@ -339,12 +340,10 @@ export default function Dashboard() {
         const data = await response.json();
         if (data) {
           setActiveUsersDaily(data.activeUsers || 0);
-          setNewUsersDaily(data.totalUsers || 0);
         }
       } catch (_error) {
         // Set to 0 if API fails
         setActiveUsersDaily(0);
-        setNewUsersDaily(0);
       }
     };
     fetchStats();
@@ -610,6 +609,14 @@ export default function Dashboard() {
         fetchAnalytics('teams', '1D'),
         fetchAnalytics('sessions', '1D'),
       ]);
+
+      if (signupsData) {
+        setNewUsersDaily(signupsData.total || 0);
+        setNewUsersDailyPercentage(signupsData.percentageChange || 0);
+      } else {
+        setNewUsersDaily(0);
+        setNewUsersDailyPercentage(0);
+      }
 
       const dailyTotals = [
         signupsData?.total || 0,
@@ -1126,11 +1133,19 @@ export default function Dashboard() {
               <span className="text-white text-lg font-medium">
                 {loading ? '...' : formatCompactNumber(newUsersDaily ?? 0)}
               </span>
-              <div className="flex items-center gap-1 text-green-500">
-                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="currentColor">
+              <div
+                className={`flex items-center gap-1 ${newUsersDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+              >
+                <svg
+                  className={`w-3 h-3 ${newUsersDailyPercentage < 0 ? 'rotate-180' : ''}`}
+                  viewBox="0 0 12 12"
+                  fill="currentColor"
+                >
                   <path d="M6 0 L12 12 L0 12 Z" />
                 </svg>
-                <span className="text-sm font-medium">18%</span>
+                <span className="text-sm font-medium">
+                  {Math.abs(newUsersDailyPercentage).toFixed(1)}%
+                </span>
               </div>
             </div>
           </div>
