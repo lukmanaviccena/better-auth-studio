@@ -10,12 +10,12 @@ export interface AuthAdapter {
     delete?: (...args: any[]) => Promise<any>;
     getUsers?: () => Promise<any[]>;
     getSessions?: () => Promise<any[]>;
-    findMany?: (options: {
+    findMany<T = any>(options: {
         model: string;
         where?: any;
         limit?: number;
         offset?: number;
-    }) => Promise<any[]>;
+    }): Promise<T[]>;
 }
 export declare function getAuthAdapter(configPath?: string): Promise<AuthAdapter | null>;
 export declare function createMockUser(adapter: AuthAdapter, index: number): Promise<any>;

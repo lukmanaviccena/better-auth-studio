@@ -14,20 +14,19 @@ export interface AuthAdapter {
   delete?: (...args: any[]) => Promise<any>;
   getUsers?: () => Promise<any[]>;
   getSessions?: () => Promise<any[]>;
-  findMany?: (options: {
+  findMany<T = any>(options: {
     model: string;
     where?: any;
     limit?: number;
     offset?: number;
-  }) => Promise<any[]>;
+  }): Promise<T[]>;
 }
 
 const _authInstance: any = null;
 let authAdapter: AuthAdapter | null = null;
-
 export async function getAuthAdapter(configPath?: string): Promise<AuthAdapter | null> {
   try {
-    const authConfigPath = await findAuthConfigPath();
+    const authConfigPath = configPath ? configPath : await findAuthConfigPath();
     if (!authConfigPath) {
       return null;
     }
@@ -97,7 +96,7 @@ export async function getAuthAdapter(configPath?: string): Promise<AuthAdapter |
                 updatedAt: new Date(),
               },
             });
-          } catch (_accountError) {}
+          } catch (_accountError) { }
         }
 
         return user;
@@ -172,7 +171,7 @@ export async function getAuthAdapter(configPath?: string): Promise<AuthAdapter |
           return [];
         }
       },
-      findMany: async (options: {
+      findMany: async(options: {
         model: string;
         where?: any;
         limit?: number;
@@ -199,6 +198,12 @@ async function findAuthConfigPath(): Promise<string | null> {
   const possibleConfigFiles = [
     'auth.ts',
     'auth.js',
+    'app/auth.ts',
+    'app/auth.js',
+    'apps/auth.ts',
+    'apps/auth.js',
+    'server/auth.ts',
+    'server/auth.js',
     'src/auth.ts',
     'src/auth.js',
     'lib/auth.ts',

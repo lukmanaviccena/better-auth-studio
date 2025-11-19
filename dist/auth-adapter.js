@@ -5,7 +5,7 @@ const _authInstance = null;
 let authAdapter = null;
 export async function getAuthAdapter(configPath) {
     try {
-        const authConfigPath = await findAuthConfigPath();
+        const authConfigPath = configPath ? configPath : await findAuthConfigPath();
         if (!authConfigPath) {
             return null;
         }
@@ -169,6 +169,12 @@ async function findAuthConfigPath() {
     const possibleConfigFiles = [
         'auth.ts',
         'auth.js',
+        'app/auth.ts',
+        'app/auth.js',
+        'apps/auth.ts',
+        'apps/auth.js',
+        'server/auth.ts',
+        'server/auth.js',
         'src/auth.ts',
         'src/auth.js',
         'lib/auth.ts',

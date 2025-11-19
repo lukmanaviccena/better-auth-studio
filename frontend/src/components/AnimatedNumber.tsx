@@ -59,7 +59,7 @@ export function AnimatedNumber({
   const resolvedTrend = typeof trend === 'boolean' ? (trend ? 1 : 0) : trend;
 
   return (
-    <span className={clsx('inline-flex items-baseline', className)}>
+    <span className={clsx('inline-flex', className)}>
       {prefix}
       <NumberFlowComponent
         value={numericValue}

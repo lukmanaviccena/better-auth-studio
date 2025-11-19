@@ -1,3 +1,4 @@
+import { LucideLoader } from 'lucide-react';
 import type React from 'react';
 
 interface IconProps {
@@ -448,20 +449,8 @@ export const Ban: React.FC<IconProps> = ({ className = '', size = 24 }) => (
   </svg>
 );
 
-export const Loader: React.FC<IconProps> = ({ className = '', size = 24 }) => (
-  <svg
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    className={className}
-    width={size}
-    height={size}
-  >
-    <path
-      d="M12 2v4h2V2h-2zm0 16v4h2v-4h-2zm8-8h4v2h-4v-2zM2 10h4v2H2v-2zm15.07-5.07l2.83 2.83-1.41 1.41-2.83-2.83 1.41-1.41zm-8.28 8.28l2.83 2.83-1.41 1.41-2.83-2.83 1.41-1.41zm8.28 8.28l1.41 1.41-2.83 2.83-1.41-1.41 2.83-2.83zm-8.28-8.28l1.41 1.41-2.83 2.83-1.41-1.41 2.83-2.83z"
-      fill="currentColor"
-    />
-  </svg>
+export const Loader: React.FC<IconProps> = (props) => (
+ <LucideLoader {...props} className='w-4 h-4 animate-spin' /> 
 );
 
 export const Phone: React.FC<IconProps> = ({ className = '', size = 24 }) => (

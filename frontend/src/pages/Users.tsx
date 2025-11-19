@@ -937,7 +937,7 @@ export default function Users() {
                               }}
                             >
                               <Eye className="w-4 h-4" />
-                              <span>View Details</span>
+                              <span>View</span>
                             </button>
                             <button
                               className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center space-x-2"
