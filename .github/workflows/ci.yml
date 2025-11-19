@@ -53,14 +53,7 @@ jobs:
           ${{ runner.os }}-pnpm-store-
           
     - name: Install dependencies
-      run: |
-        if [ -f "pnpm-lock.yaml" ]; then
-          echo "✅ pnpm-lock.yaml found, installing with frozen lockfile"
-          pnpm install --frozen-lockfile
-        else
-          echo "⚠️ pnpm-lock.yaml not found, installing without frozen lockfile"
-          pnpm install
-        fi
+      run: pnpm install
         
     - name: Lint packages
       run: pnpm run lint || echo "Linting completed with warnings"
@@ -69,7 +62,7 @@ jobs:
       run: pnpm run type-check
       
     - name: Build packages
-      run: pnpm run build
+      run: pnpm build
       
     - name: Test build artifacts
       run: |
