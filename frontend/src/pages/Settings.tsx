@@ -514,7 +514,7 @@ export default function Settings() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-white">
-                      {databaseInfo?.dialect || config?.database?.dialect}
+                      {config?.database?.dialect || databaseInfo?.dialect}
                     </p>
                   </div>
                 </div>

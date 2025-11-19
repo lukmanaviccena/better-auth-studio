@@ -46,7 +46,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
         const response = await fetch('/api/plugins');
         const data = await response.json();
         setPlugins(data);
-      } catch (_error) { }
+      } catch (_error) {}
     };
     fetchPlugins();
   }, []);
@@ -245,47 +245,47 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
               </div>
             ) : (
               Object.entries(groupedCommands).map(([category, categoryCommands]) => (
-                <div key={category} className="mb-4">
-                  <Command.Group
-                    heading={category}
-                    className="text-xs text-gray-400 font-medium mb-2 px-2"
-                  >
-                    {categoryCommands.map((command) => {
-                      const Icon = command.icon;
-                      const isDisabled = command.disabled;
+                <Command.Group
+                  key={category}
+                  heading={category}
+                  className="text-xs text-gray-400 font-medium mb-4 px-2"
+                >
+                  {categoryCommands.map((command) => {
+                    const Icon = command.icon;
+                    const isDisabled = command.disabled;
 
-                      return (
-                        <Command.Item
-                          key={command.id}
-                          value={command.id}
-                          disabled={isDisabled}
-                          onSelect={() => {
-                            if (!isDisabled) {
-                              command.action();
-                              onClose();
-                            }
-                          }}
-                          className={`flex items-center space-x-3 px-0 py-2 rounded-none transition-colors relative ${isDisabled
-                              ? 'opacity-40 cursor-not-allowed blur-[0.5px]'
-                              : 'hover:bg-white/5 cursor-pointer'
-                            }`}
-                        >
-                          <Icon className="w-4 h-4 text-white" />
-                          <div className="flex-1">
-                            <div className="text-white text-[13px] font-light flex items-center gap-2">
-                              {command.title}
-                              {isDisabled && <Lock className="w-3 h-3 text-yellow-500" />}
-                            </div>
-                            <div className="text-[10px] font-light uppercase font-mono text-gray-400">
-                              {isDisabled ? command.disabledMessage : command.description}
-                            </div>
+                    return (
+                      <Command.Item
+                        key={command.id}
+                        value={command.id}
+                        disabled={isDisabled}
+                        onSelect={() => {
+                          if (!isDisabled) {
+                            command.action();
+                            onClose();
+                          }
+                        }}
+                        className={`flex items-center space-x-3 px-0 py-2 rounded-none transition-colors relative ${
+                          isDisabled
+                            ? 'opacity-40 cursor-not-allowed blur-[0.5px]'
+                            : 'hover:bg-white/5 cursor-pointer'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-white" />
+                        <div className="flex-1">
+                          <div className="text-white text-[13px] font-light flex items-center gap-2">
+                            {command.title}
+                            {isDisabled && <Lock className="w-3 h-3 text-yellow-500" />}
                           </div>
-                          {!isDisabled && <ArrowRight className="w-4 h-4 text-gray-400" />}
-                        </Command.Item>
-                      );
-                    })}
-                  </Command.Group>
-                </div>
+                          <div className="text-[10px] font-light uppercase font-mono text-gray-400">
+                            {isDisabled ? command.disabledMessage : command.description}
+                          </div>
+                        </div>
+                        {!isDisabled && <ArrowRight className="w-4 h-4 text-gray-400" />}
+                      </Command.Item>
+                    );
+                  })}
+                </Command.Group>
               ))
             )}
           </Command.List>

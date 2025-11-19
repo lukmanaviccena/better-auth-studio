@@ -450,7 +450,7 @@ export const Ban: React.FC<IconProps> = ({ className = '', size = 24 }) => (
 );
 
 export const Loader: React.FC<IconProps> = (props) => (
- <LucideLoader {...props} className='w-4 h-4 animate-spin' /> 
+  <LucideLoader {...props} className="w-4 h-4 animate-spin" />
 );
 
 export const Phone: React.FC<IconProps> = ({ className = '', size = 24 }) => (

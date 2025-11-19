@@ -319,10 +319,12 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
         let databaseAdapter = 'unknown';
         let databaseVersion = 'unknown';
         let adapterConfig = null;
+        let adapterProvider = null;
         try {
             const adapterResult = await getAuthAdapterWithConfig();
             if (adapterResult && adapterResult.options?.adapterConfig) {
                 adapterConfig = adapterResult.options.adapterConfig;
+                adapterProvider = adapterResult.options.provider;
             }
         }
         catch (_error) { }
@@ -365,13 +367,13 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             secret: authConfig.secret ? 'Configured' : 'Not set',
             database: {
                 type: databaseType,
-                dialect: authConfig.database?.dialect || authConfig.database?.provider || databaseDialect,
                 adapter: authConfig.database?.adapter || databaseAdapter,
                 version: databaseVersion,
                 casing: authConfig.database?.casing || 'camel',
                 debugLogs: authConfig.database?.debugLogs || false,
                 url: authConfig.database?.url,
                 adapterConfig: adapterConfig,
+                dialect: adapterProvider
             },
             emailVerification: {
                 sendOnSignUp: authConfig.emailVerification?.sendOnSignUp || false,

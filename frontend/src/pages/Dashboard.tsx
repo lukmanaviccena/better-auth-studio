@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ArrowUpRight, Shield } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -240,17 +240,17 @@ export default function Dashboard() {
 
     // Add other security recommendations
     patches.push(
-    //   {
-    //   id: '1',
-    //   title: 'Session Token Rotation',
-    //   severity: 'high',
-    //   date: '2024-01-15',
-    //   description:
-    //     'Ensure session tokens are rotated regularly to prevent session fixation attacks. Better-auth supports automatic token rotation on security-sensitive operations.',
-    //   affectedComponents: ['Session Management', 'Auth Core'],
-    //   status: 'applied',
-    //   cve: '',
-    // }
+      //   {
+      //   id: '1',
+      //   title: 'Session Token Rotation',
+      //   severity: 'high',
+      //   date: '2024-01-15',
+      //   description:
+      //     'Ensure session tokens are rotated regularly to prevent session fixation attacks. Better-auth supports automatic token rotation on security-sensitive operations.',
+      //   affectedComponents: ['Session Management', 'Auth Core'],
+      //   status: 'applied',
+      //   cve: '',
+      // }
     );
 
     // patches.push({
@@ -303,18 +303,21 @@ export default function Dashboard() {
 
   const securityPatches = getSecurityPatches();
 
-  const fetchAnalytics = useCallback(async (type: string, period: string, from?: Date, to?: Date) => {
-    try {
-      const params = new URLSearchParams({ type, period });
-      if (from) params.append('from', from.toISOString());
-      if (to) params.append('to', to.toISOString());
+  const fetchAnalytics = useCallback(
+    async (type: string, period: string, from?: Date, to?: Date) => {
+      try {
+        const params = new URLSearchParams({ type, period });
+        if (from) params.append('from', from.toISOString());
+        if (to) params.append('to', to.toISOString());
 
-      const response = await fetch(`/api/analytics?${params.toString()}`);
-      return await response.json();
-    } catch (_error) {
-      return null;
-    }
-  }, []);
+        const response = await fetch(`/api/analytics?${params.toString()}`);
+        return await response.json();
+      } catch (_error) {
+        return null;
+      }
+    },
+    []
+  );
 
   // Fetch all users once for client-side filtering
   useEffect(() => {
@@ -602,13 +605,14 @@ export default function Dashboard() {
       if (sessionsData) setSessionsDailyPercentage(sessionsData.percentageChange || 0);
 
       // Fetch Activity Hits daily percentage and total (sum of all activity types)
-      const [signupsData, loginsData, orgsDataForActivity, teamsData, sessionsMetricsData] = await Promise.all([
-        fetchAnalytics('newUsers', '1D'),
-        fetchAnalytics('activeUsers', '1D'),
-        fetchAnalytics('organizations', '1D'),
-        fetchAnalytics('teams', '1D'),
-        fetchAnalytics('sessions', '1D'),
-      ]);
+      const [signupsData, loginsData, orgsDataForActivity, teamsData, sessionsMetricsData] =
+        await Promise.all([
+          fetchAnalytics('newUsers', '1D'),
+          fetchAnalytics('activeUsers', '1D'),
+          fetchAnalytics('organizations', '1D'),
+          fetchAnalytics('teams', '1D'),
+          fetchAnalytics('sessions', '1D'),
+        ]);
 
       if (signupsData) {
         setNewUsersDaily(signupsData.total || 0);
@@ -972,16 +976,13 @@ export default function Dashboard() {
     const resolvedActivityLabels =
       activityLabels.length > 0 ? activityLabels : getChartLabels(activityPeriod, 'users');
     const activityBuckets = resolvedActivityLabels.map((_, index) =>
-      ACTIVITY_STREAMS.reduce(
-        (sum, stream) => sum + (activitySeries[stream.id]?.[index] ?? 0),
-        0
-      )
+      ACTIVITY_STREAMS.reduce((sum, stream) => sum + (activitySeries[stream.id]?.[index] ?? 0), 0)
     );
     const maxActivityValue = Math.max(...activityBuckets, 1);
 
     return (
       <div className="space-y-6 min-h-screen h-full mt-5 flex-1 overflow-y-hidden overflow-x-hidden px-0">
-      {/* <div className="px-6 pt-8">
+        {/* <div className="px-6 pt-8">
         <h1 className="text-3xl text-white font-light mb-2">Welcome Back</h1>
         <p className="text-gray-400 text-sm">
           {new Date().toLocaleDateString('en-US', {
@@ -991,171 +992,8 @@ export default function Dashboard() {
           })}
         </p>
       </div> */}
-      <div className="px-6 overflow-hidden">
-        <div className="flex items-center justify-between gap-8 py-4 px-6 bg-white/5 border border-white/10 rounded-none overflow-x-auto relative">
-          {/* Top-left corner */}
-          <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-          <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-          {/* Top-right corner */}
-          <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-          <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-          {/* Bottom-left corner */}
-          <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-          <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-          {/* Bottom-right corner */}
-          <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-          <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-
-          <div className="flex items-center gap-3 min-w-fit">
-            <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm uppercase tracking-wide">Users</span>
-              <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatCompactNumber(counts.users)}
-              </span>
-              <div
-                className={`flex items-center gap-1 ${usersDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-              >
-                <svg
-                  className={`w-3 h-3 ${usersDailyPercentage < 0 ? 'rotate-180' : ''}`}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <path d="M6 0 L12 12 L0 12 Z" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {Math.abs(usersDailyPercentage).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-8 w-[1px] bg-white/10" />
-
-          {/* Total Organizations Stat */}
-          <div className="flex items-center gap-3 min-w-fit">
-            <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm uppercase tracking-wide">Organizations</span>
-              <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatCompactNumber(counts.organizations)}
-              </span>
-              <div
-                className={`flex items-center gap-1 ${organizationsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-              >
-                <svg
-                  className={`w-3 h-3 ${organizationsDailyPercentage < 0 ? 'rotate-180' : ''}`}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <path d="M6 0 L12 12 L0 12 Z" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {Math.abs(organizationsDailyPercentage).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-8 w-[1px] bg-white/10" />
-
-          <div className="flex items-center gap-3 min-w-fit">
-            <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm uppercase tracking-wide">Sessions</span>
-              <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatCompactNumber(counts.sessions)}
-              </span>
-              <div
-                className={`flex items-center gap-1 ${sessionsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-              >
-                <svg
-                  className={`w-3 h-3 ${sessionsDailyPercentage < 0 ? 'rotate-180' : ''}`}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <path d="M6 0 L12 12 L0 12 Z" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {Math.abs(sessionsDailyPercentage).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-8 w-[1px] bg-white/10" />
-
-          {/* Activity Hits Stat */}
-          <div className="flex items-center gap-3 min-w-fit">
-            <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm uppercase tracking-wide">Activity Hits</span>
-              <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatCompactNumber(activityHitsDailyTotal ?? 0)}
-              </span>
-              <div
-                className={`flex items-center gap-1 ${activityHitsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-              >
-                <svg
-                  className={`w-3 h-3 ${activityHitsDailyPercentage < 0 ? 'rotate-180' : ''}`}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <path d="M6 0 L12 12 L0 12 Z" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {Math.abs(activityHitsDailyPercentage).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-8 w-[1px] bg-white/10" />
-
-          {/* New Users Daily */}
-          <div className="flex items-center gap-3 min-w-fit">
-            <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm uppercase tracking-wide">New Users</span>
-              <span className="text-white text-lg font-medium">
-                {loading ? '...' : formatCompactNumber(newUsersDaily ?? 0)}
-              </span>
-              <div
-                className={`flex items-center gap-1 ${newUsersDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-              >
-                <svg
-                  className={`w-3 h-3 ${newUsersDailyPercentage < 0 ? 'rotate-180' : ''}`}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <path d="M6 0 L12 12 L0 12 Z" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {Math.abs(newUsersDailyPercentage).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-6 pb-10 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Total Users Card */}
-          <div className="bg-white/5 border border-white/10 p-6 relative">
+        <div className="px-6 overflow-hidden">
+          <div className="flex items-center justify-between gap-8 py-4 px-6 bg-white/5 border border-white/10 rounded-none overflow-x-auto relative">
             {/* Top-left corner */}
             <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
             <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
@@ -1168,816 +1006,996 @@ export default function Dashboard() {
             {/* Bottom-right corner */}
             <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
             <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm text-white uppercase font-light">TOTAL USER</h3>
-              <div className="flex items-center space-x-1 overflow-x-auto">
-                {['1D', '1W', '6M', '1Y'].map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setSelectedUserPeriod(period)}
-                    className={`px-2 py-1 text-xs font-light transition-colors whitespace-nowrap ${selectedUserPeriod === period
-                        ? 'bg-white/20 text-white border border-white/30'
-                        : 'text-gray-500 hover:text-white'
-                      }`}
-                  >
-                    {period}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-between items-end mb-6">
-              <p className="text-4xl text-white font-light">
-                {loading ? '...' : formatCompactNumber(counts.users)}
-              </p>
-              <div className="flex items-center gap-1 px-2 py-1">
-                <svg
-                  className={`w-3 h-3 ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <path d="M6 0 L12 12 L0 12 Z" />
-                </svg>
-                <span
-                  className={`text-xs font-medium ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                >
-                  {Math.abs(totalUsersPercentage).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-            <div className="space-y-2 relative">
-              <div className="h-32 relative">
-                <svg
-                  className="w-full h-full absolute inset-0"
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                >
-                  <defs>
-                    <linearGradient id="usersBarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop
-                        offset="0%"
-                        style={{ stopColor: 'rgba(255, 255, 255, 0.3)', stopOpacity: 1 }}
-                      />
-                      <stop
-                        offset="100%"
-                        style={{ stopColor: 'rgba(255, 255, 255, 0.05)', stopOpacity: 1 }}
-                      />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="h-32 flex items-end justify-between space-x-1 relative z-10">
-                  {getChartData(selectedUserPeriod, 'users').map((height, i) => {
-                    const isHovered = hoveredUsersAreaIndex === i;
 
+            <div className="flex items-center gap-3 min-w-fit">
+              <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-sm uppercase tracking-wide">Users</span>
+                <span className="text-white text-lg font-medium">
+                  {loading ? '...' : formatCompactNumber(counts.users)}
+                </span>
+                <div
+                  className={`flex items-center gap-1 ${usersDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                >
+                  <svg
+                    className={`w-3 h-3 ${usersDailyPercentage < 0 ? 'rotate-180' : ''}`}
+                    viewBox="0 0 12 12"
+                    fill="currentColor"
+                  >
+                    <path d="M6 0 L12 12 L0 12 Z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {Math.abs(usersDailyPercentage).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-8 w-[1px] bg-white/10" />
+
+            {/* Total Organizations Stat */}
+            <div className="flex items-center gap-3 min-w-fit">
+              <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-sm uppercase tracking-wide">Organizations</span>
+                <span className="text-white text-lg font-medium">
+                  {loading ? '...' : formatCompactNumber(counts.organizations)}
+                </span>
+                <div
+                  className={`flex items-center gap-1 ${organizationsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                >
+                  <svg
+                    className={`w-3 h-3 ${organizationsDailyPercentage < 0 ? 'rotate-180' : ''}`}
+                    viewBox="0 0 12 12"
+                    fill="currentColor"
+                  >
+                    <path d="M6 0 L12 12 L0 12 Z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {Math.abs(organizationsDailyPercentage).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-8 w-[1px] bg-white/10" />
+
+            <div className="flex items-center gap-3 min-w-fit">
+              <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-sm uppercase tracking-wide">Sessions</span>
+                <span className="text-white text-lg font-medium">
+                  {loading ? '...' : formatCompactNumber(counts.sessions)}
+                </span>
+                <div
+                  className={`flex items-center gap-1 ${sessionsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                >
+                  <svg
+                    className={`w-3 h-3 ${sessionsDailyPercentage < 0 ? 'rotate-180' : ''}`}
+                    viewBox="0 0 12 12"
+                    fill="currentColor"
+                  >
+                    <path d="M6 0 L12 12 L0 12 Z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {Math.abs(sessionsDailyPercentage).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-8 w-[1px] bg-white/10" />
+
+            {/* Activity Hits Stat */}
+            <div className="flex items-center gap-3 min-w-fit">
+              <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-sm uppercase tracking-wide">Activity Hits</span>
+                <span className="text-white text-lg font-medium">
+                  {loading ? '...' : formatCompactNumber(activityHitsDailyTotal ?? 0)}
+                </span>
+                <div
+                  className={`flex items-center gap-1 ${activityHitsDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                >
+                  <svg
+                    className={`w-3 h-3 ${activityHitsDailyPercentage < 0 ? 'rotate-180' : ''}`}
+                    viewBox="0 0 12 12"
+                    fill="currentColor"
+                  >
+                    <path d="M6 0 L12 12 L0 12 Z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {Math.abs(activityHitsDailyPercentage).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-8 w-[1px] bg-white/10" />
+
+            {/* New Users Daily */}
+            <div className="flex items-center gap-3 min-w-fit">
+              <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-sm uppercase tracking-wide">New Users</span>
+                <span className="text-white text-lg font-medium">
+                  {loading ? '...' : formatCompactNumber(newUsersDaily ?? 0)}
+                </span>
+                <div
+                  className={`flex items-center gap-1 ${newUsersDailyPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                >
+                  <svg
+                    className={`w-3 h-3 ${newUsersDailyPercentage < 0 ? 'rotate-180' : ''}`}
+                    viewBox="0 0 12 12"
+                    fill="currentColor"
+                  >
+                    <path d="M6 0 L12 12 L0 12 Z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {Math.abs(newUsersDailyPercentage).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 pb-10 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Total Users Card */}
+            <div className="bg-white/5 border border-white/10 p-6 relative">
+              {/* Top-left corner */}
+              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              {/* Top-right corner */}
+              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              {/* Bottom-left corner */}
+              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              {/* Bottom-right corner */}
+              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm text-white uppercase font-light">TOTAL USER</h3>
+                <div className="flex items-center space-x-1 overflow-x-auto">
+                  {['1D', '1W', '6M', '1Y'].map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => setSelectedUserPeriod(period)}
+                      className={`px-2 py-1 text-xs font-light transition-colors whitespace-nowrap ${
+                        selectedUserPeriod === period
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'text-gray-500 hover:text-white'
+                      }`}
+                    >
+                      {period}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-between items-end mb-6">
+                <p className="text-4xl text-white font-light">
+                  {loading ? '...' : formatCompactNumber(counts.users)}
+                </p>
+                <div className="flex items-center gap-1 px-2 py-1">
+                  <svg
+                    className={`w-3 h-3 ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
+                    viewBox="0 0 12 12"
+                    fill="currentColor"
+                  >
+                    <path d="M6 0 L12 12 L0 12 Z" />
+                  </svg>
+                  <span
+                    className={`text-xs font-medium ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                  >
+                    {Math.abs(totalUsersPercentage).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2 relative">
+                <div className="h-32 relative">
+                  <svg
+                    className="w-full h-full absolute inset-0"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="usersBarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop
+                          offset="0%"
+                          style={{ stopColor: 'rgba(255, 255, 255, 0.3)', stopOpacity: 1 }}
+                        />
+                        <stop
+                          offset="100%"
+                          style={{ stopColor: 'rgba(255, 255, 255, 0.05)', stopOpacity: 1 }}
+                        />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="h-32 flex items-end justify-between space-x-1 relative z-10">
+                    {getChartData(selectedUserPeriod, 'users').map((height, i) => {
+                      const isHovered = hoveredUsersAreaIndex === i;
+
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 transition-all duration-200 ease-out relative cursor-pointer group"
+                          style={{
+                            height: `${height}%`,
+                            background: 'url(#usersBarGradient)',
+                          }}
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = rect.left + rect.width / 2;
+                            const y = rect.top;
+                            // Constrain tooltip within viewport
+                            const tooltipWidth = 150; // Approximate tooltip width
+                            const tooltipHeight = 60; // Approximate tooltip height
+                            const constrainedX = Math.max(
+                              tooltipWidth / 2,
+                              Math.min(window.innerWidth - tooltipWidth / 2, x)
+                            );
+                            const constrainedY = Math.max(
+                              tooltipHeight + 10,
+                              Math.min(window.innerHeight - 10, y)
+                            );
+                            setHoveredUsersAreaIndex(i);
+                            setHoveredUsersAreaPosition({ x: constrainedX, y: constrainedY });
+                          }}
+                          onMouseLeave={() => {
+                            setHoveredUsersAreaIndex(null);
+                            setHoveredUsersAreaPosition(null);
+                          }}
+                        >
+                          <div
+                            className="w-full h-full"
+                            style={{
+                              background:
+                                'linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05))',
+                              opacity: isHovered ? 1 : 0.8,
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Tooltip */}
+                  {hoveredUsersAreaIndex !== null && hoveredUsersAreaPosition && (
+                    <div
+                      className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
+                      style={{
+                        left: `${hoveredUsersAreaPosition.x}px`,
+                        top: `${hoveredUsersAreaPosition.y}px`,
+                        transform: 'translate(-50%, -100%)',
+                        maxWidth: 'calc(100vw - 20px)',
+                      }}
+                    >
+                      <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
+                        <div className="text-xs text-gray-400 mb-1 font-mono uppercase">
+                          {getDetailedLabels(selectedUserPeriod, 'users')[hoveredUsersAreaIndex]}
+                        </div>
+                        <div className="text-sm text-white font-sans font-medium">
+                          {totalUsersData[hoveredUsersAreaIndex] !== undefined
+                            ? totalUsersData[hoveredUsersAreaIndex].toLocaleString()
+                            : '0'}{' '}
+                          <span className="font-mono text-xs text-gray-400">users</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* X-axis labels */}
+                <div
+                  className={`flex justify-between ${selectedUserPeriod === '1M' ? 'text-[10px]' : 'text-xs'} text-gray-500 font-mono`}
+                >
+                  {getChartLabels(selectedUserPeriod, 'users').map((label, i) => (
+                    <span key={i} className="flex-1 text-center truncate">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Activity Hit Card */}
+            <div className="bg-white/5 border border-white/10 p-6 relative">
+              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm text-white uppercase font-light">Activity Hits</h3>
+                  <p className="text-4xl text-white font-light mt-1">
+                    {activityLoading ? '...' : formatFullNumber(activityGrandTotal)}
+                  </p>
+                  <p className="text-xs text-gray-400">Tracked events in selected period</p>
+                </div>
+                <div className="flex items-center space-x-1 overflow-x-auto">
+                  {['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'].map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => setActivityPeriod(period)}
+                      className={`px-2 py-1 text-xs font-light transition-colors whitespace-nowrap ${
+                        activityPeriod === period
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'text-gray-500 hover:text-white'
+                      }`}
+                    >
+                      {period}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2 relative">
+                <div className="h-40 flex items-end gap-1">
+                  {resolvedActivityLabels.map((label, index) => {
+                    const bucketTotal = activityBuckets[index] || 0;
                     return (
                       <div
-                        key={i}
-                        className="flex-1 transition-all duration-200 ease-out relative cursor-pointer group"
-                        style={{
-                          height: `${height}%`,
-                          background: 'url(#usersBarGradient)',
-                        }}
-                        onMouseEnter={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = rect.left + rect.width / 2;
-                          const y = rect.top;
-                          // Constrain tooltip within viewport
-                          const tooltipWidth = 150; // Approximate tooltip width
-                          const tooltipHeight = 60; // Approximate tooltip height
-                          const constrainedX = Math.max(
-                            tooltipWidth / 2,
-                            Math.min(window.innerWidth - tooltipWidth / 2, x)
-                          );
-                          const constrainedY = Math.max(
-                            tooltipHeight + 10,
-                            Math.min(window.innerHeight - 10, y)
-                          );
-                          setHoveredUsersAreaIndex(i);
-                          setHoveredUsersAreaPosition({ x: constrainedX, y: constrainedY });
-                        }}
+                        key={`${label}-${index}`}
+                        className="flex-1 flex flex-col justify-end gap-[1px] h-full cursor-pointer"
+                        onMouseEnter={(event) => handleActivityHover(event, index)}
                         onMouseLeave={() => {
-                          setHoveredUsersAreaIndex(null);
-                          setHoveredUsersAreaPosition(null);
+                          setHoveredAreaIndex(null);
+                          setHoveredAreaPosition(null);
                         }}
                       >
-                        <div
-                          className="w-full h-full"
-                          style={{
-                            background:
-                              'linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05))',
-                            opacity: isHovered ? 1 : 0.8,
-                          }}
-                        />
+                        {ACTIVITY_STREAMS.map((stream) => {
+                          const value = activitySeries[stream.id]?.[index] ?? 0;
+                          const heightPercent =
+                            bucketTotal === 0 || maxActivityValue === 0
+                              ? 0
+                              : Math.max((value / maxActivityValue) * 100, value > 0 ? 4 : 0);
+                          return (
+                            <div
+                              key={`${stream.id}-${index}`}
+                              className={`w-full ${stream.barClass}`}
+                              style={{ height: `${heightPercent}%` }}
+                            />
+                          );
+                        })}
                       </div>
                     );
                   })}
                 </div>
-
-                {/* Tooltip */}
-                {hoveredUsersAreaIndex !== null && hoveredUsersAreaPosition && (
+                {activityLoading && (
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center text-xs uppercase text-gray-400 pointer-events-none">
+                    Loading activity...
+                  </div>
+                )}
+                {hoveredAreaIndex !== null && hoveredAreaPosition && (
                   <div
                     className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
                     style={{
-                      left: `${hoveredUsersAreaPosition.x}px`,
-                      top: `${hoveredUsersAreaPosition.y}px`,
+                      left: `${hoveredAreaPosition.x}px`,
+                      top: `${hoveredAreaPosition.y}px`,
                       transform: 'translate(-50%, -100%)',
                       maxWidth: 'calc(100vw - 20px)',
                     }}
                   >
-                    <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
-                      <div className="text-xs text-gray-400 mb-1 font-mono uppercase">
-                        {getDetailedLabels(selectedUserPeriod, 'users')[hoveredUsersAreaIndex]}
+                    <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg min-w-[180px]">
+                      <div className="text-xs text-gray-400 mb-2 font-mono uppercase">
+                        {resolvedActivityLabels[hoveredAreaIndex] ||
+                          `Bucket ${hoveredAreaIndex + 1}`}
                       </div>
-                      <div className="text-sm text-white font-sans font-medium">
-                        {totalUsersData[hoveredUsersAreaIndex] !== undefined
-                          ? totalUsersData[hoveredUsersAreaIndex].toLocaleString()
-                          : '0'}{' '}
-                        <span className="font-mono text-xs text-gray-400">users</span>
+                      <div className="space-y-1">
+                        {ACTIVITY_STREAMS.map((stream) => (
+                          <div
+                            key={stream.id}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <div className="flex items-center gap-2 text-gray-300">
+                              <span className={`w-2 h-2 rounded-sm ${stream.dotClass}`} />
+                              {stream.label}
+                            </div>
+                            <span className="text-white font-medium">
+                              {activitySeries[stream.id]?.[hoveredAreaIndex] ?? 0}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
-              {/* X-axis labels */}
-              <div
-                className={`flex justify-between ${selectedUserPeriod === '1M' ? 'text-[10px]' : 'text-xs'} text-gray-500 font-mono`}
-              >
-                {getChartLabels(selectedUserPeriod, 'users').map((label, i) => (
-                  <span key={i} className="flex-1 text-center truncate">
-                    {label}
-                  </span>
-                ))}
+                <div
+                  className={`flex justify-between ${activityPeriod === '1M' ? 'text-[10px]' : 'text-xs'} text-gray-500 font-mono`}
+                >
+                  {resolvedActivityLabels.map((label, i) => (
+                    <span key={i} className="flex-1 text-center truncate">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4 pt-4 border-t border-white/10">
+                  {ACTIVITY_STREAMS.map((stream) => (
+                    <div
+                      key={stream.id}
+                      className="flex items-center justify-between text-xs text-gray-400"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-sm ${stream.dotClass}`} />
+                        {stream.label}
+                      </div>
+                      <span className="text-white font-medium">
+                        {activityLoading ? '...' : formatFullNumber(activityTotals[stream.id] || 0)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Activity Hit Card */}
-          <div className="bg-white/5 border border-white/10 p-6 relative">
-            <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-            <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-            <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-            <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm text-white uppercase font-light">Activity Hits</h3>
-                <p className="text-4xl text-white font-light mt-1">
-                  {activityLoading ? '...' : formatFullNumber(activityGrandTotal)}
+          {/* Bottom Row - Three Columns */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Two Small Cards */}
+            <div className="space-y-4 overflow-x-hidden">
+              {/* Active Users Daily */}
+              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+                {/* Top-left corner */}
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Top-right corner */}
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-left corner */}
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-right corner */}
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowActiveUsersDropdown(!showActiveUsersDropdown)}
+                      className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                      <span>{activeUsersPeriod}</span>
+                    </button>
+                    {showActiveUsersDropdown && (
+                      <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
+                        {periodOptions.map((period) => (
+                          <button
+                            key={period}
+                            onClick={() => {
+                              setActiveUsersPeriod(period);
+                              setShowActiveUsersDropdown(false);
+                            }}
+                            className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+                          >
+                            {period}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {activeUsersPeriod === 'Custom' && (
+                    <div className="h-0 flex items-center gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {activeUsersDateFrom
+                              ? format(activeUsersDateFrom, 'MMM dd yyyy')
+                              : 'From'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={activeUsersDateFrom}
+                            onSelect={setActiveUsersDateFrom}
+                            initialFocus
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {activeUsersDateTo ? format(activeUsersDateTo, 'MMM dd yyyy') : 'To'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={activeUsersDateTo}
+                            onSelect={setActiveUsersDateTo}
+                            initialFocus
+                            disabled={(date) =>
+                              activeUsersDateFrom ? date < activeUsersDateFrom : false
+                            }
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+                </div>
+                <hr className="mb-2 -mx-10 border-white/10" />
+                <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">
+                  Active Users
+                </h4>
+                <p className="text-xs text-gray-400 mb-3">
+                  Users with active session in the time frame
                 </p>
-                <p className="text-xs text-gray-400">Tracked events in selected period</p>
+                <div className="flex pt-4 justify-between items-end">
+                  <p className="text-3xl text-white font-light">
+                    {formatFullNumber(activeUsersDaily)}
+                  </p>
+                  <div className="mt-2 mb-1 flex items-center gap-2">
+                    <div className="flex items-center -mr-5 gap-1 px-2 py-1 border-white/5 rounded-none">
+                      <svg
+                        className={`w-3 h-3 ${activeUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                      >
+                        <path d="M6 0 L12 12 L0 12 Z" />
+                      </svg>
+                      <span
+                        className={`text-xs font-medium ${activeUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                      >
+                        {Math.abs(activeUsersPercentage).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center space-x-1 overflow-x-auto">
-                {['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'].map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setActivityPeriod(period)}
-                    className={`px-2 py-1 text-xs font-light transition-colors whitespace-nowrap ${activityPeriod === period ? 'bg-white/20 text-white border border-white/30' : 'text-gray-500 hover:text-white'
-                      }`}
-                  >
-                    {period}
-                  </button>
-                ))}
+
+              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+                {/* Top-left corner */}
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Top-right corner */}
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-left corner */}
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-right corner */}
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowNewUsersDropdown(!showNewUsersDropdown)}
+                      className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                      <span>{newUsersPeriod}</span>
+                    </button>
+                    {showNewUsersDropdown && (
+                      <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
+                        {periodOptions.map((period) => (
+                          <button
+                            key={period}
+                            onClick={() => {
+                              setNewUsersPeriod(period);
+                              setShowNewUsersDropdown(false);
+                            }}
+                            className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+                          >
+                            {period}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {newUsersPeriod === 'Custom' && (
+                    <div className="h-0 flex items-center gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {newUsersDateFrom ? format(newUsersDateFrom, 'MMM dd yyyy') : 'From'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={newUsersDateFrom}
+                            onSelect={setNewUsersDateFrom}
+                            initialFocus
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {newUsersDateTo ? format(newUsersDateTo, 'MMM dd yyyy') : 'To'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={newUsersDateTo}
+                            onSelect={setNewUsersDateTo}
+                            initialFocus
+                            disabled={(date) =>
+                              newUsersDateFrom ? date < newUsersDateFrom : false
+                            }
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+                </div>
+                <hr className="mb-2 -mx-10 border-white/10" />
+                <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">
+                  New Users
+                </h4>
+                <p className="text-xs text-gray-400 mb-3">
+                  Newly registered Users in the time frame
+                </p>
+                <div className="flex pt-4 justify-between items-end">
+                  <p className="text-3xl text-white font-light">
+                    {formatFullNumber(_newUsersCount)}
+                  </p>
+                  <div className="mt-2 mb-1 flex items-center gap-2">
+                    <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
+                      <svg
+                        className={`w-3 h-3 ${newUsersCountPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                        style={newUsersCountPercentage < 0 ? { transform: 'rotate(180deg)' } : {}}
+                      >
+                        <path d="M6 0 L12 12 L0 12 Z" />
+                      </svg>
+                      <span
+                        className={`text-xs font-medium ${newUsersCountPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                      >
+                        {Math.abs(newUsersCountPercentage).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="space-y-2 relative">
-              <div className="h-40 flex items-end gap-1">
-                {resolvedActivityLabels.map((label, index) => {
-                  const bucketTotal = activityBuckets[index] || 0;
-                  return (
-                    <div
-                      key={`${label}-${index}`}
-                      className="flex-1 flex flex-col justify-end gap-[1px] h-full cursor-pointer"
-                      onMouseEnter={(event) => handleActivityHover(event, index)}
-                      onMouseLeave={() => {
-                        setHoveredAreaIndex(null);
-                        setHoveredAreaPosition(null);
-                      }}
+
+            {/* Middle Column - Organizations and Teams */}
+            <div className="space-y-4 overflow-x-hidden">
+              {/* Organizations */}
+              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+                {/* Top-left corner */}
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Top-right corner */}
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-left corner */}
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-right corner */}
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowOrganizationsDropdown(!showOrganizationsDropdown)}
+                      className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
                     >
-                      {ACTIVITY_STREAMS.map((stream) => {
-                        const value = activitySeries[stream.id]?.[index] ?? 0;
-                        const heightPercent =
-                          bucketTotal === 0 || maxActivityValue === 0
-                            ? 0
-                            : Math.max((value / maxActivityValue) * 100, value > 0 ? 4 : 0);
-                        return (
-                          <div
-                            key={`${stream.id}-${index}`}
-                            className={`w-full ${stream.barClass}`}
-                            style={{ height: `${heightPercent}%` }}
+                      <ChevronDown className="w-3 h-3" />
+                      <span>{organizationsPeriod}</span>
+                    </button>
+                    {showOrganizationsDropdown && (
+                      <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
+                        {periodOptions.map((period) => (
+                          <button
+                            key={period}
+                            onClick={() => {
+                              setOrganizationsPeriod(period);
+                              setShowOrganizationsDropdown(false);
+                            }}
+                            className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+                          >
+                            {period}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {organizationsPeriod === 'Custom' && (
+                    <div className="h-0 flex items-center gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {organizationsDateFrom
+                              ? format(organizationsDateFrom, 'MMM dd yyyy')
+                              : 'From'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={organizationsDateFrom}
+                            onSelect={setOrganizationsDateFrom}
+                            initialFocus
+                            className="rounded-none"
                           />
-                        );
-                      })}
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {organizationsDateTo
+                              ? format(organizationsDateTo, 'MMM dd yyyy')
+                              : 'To'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={organizationsDateTo}
+                            onSelect={setOrganizationsDateTo}
+                            initialFocus
+                            disabled={(date) =>
+                              organizationsDateFrom ? date < organizationsDateFrom : false
+                            }
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
-                  );
-                })}
-              </div>
-              {activityLoading && (
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center text-xs uppercase text-gray-400 pointer-events-none">
-                  Loading activity...
+                  )}
                 </div>
-              )}
-              {hoveredAreaIndex !== null && hoveredAreaPosition && (
-                <div
-                  className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
-                  style={{
-                    left: `${hoveredAreaPosition.x}px`,
-                    top: `${hoveredAreaPosition.y}px`,
-                    transform: 'translate(-50%, -100%)',
-                    maxWidth: 'calc(100vw - 20px)',
-                  }}
-                >
-                  <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg min-w-[180px]">
-                    <div className="text-xs text-gray-400 mb-2 font-mono uppercase">
-                      {resolvedActivityLabels[hoveredAreaIndex] || `Bucket ${hoveredAreaIndex + 1}`}
+                <hr className="mb-2 -mx-10 border-white/10" />
+                <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">
+                  Organizations
+                </h4>
+                <p className="text-xs text-gray-400 mb-3">Total organizations in the time frame</p>
+                <div className="flex pt-4 justify-between items-end">
+                  <p className="text-3xl text-white font-light">
+                    {organizationsLoading ? '...' : formatFullNumber(organizationsCount)}
+                  </p>
+                  <div className="mt-2 mb-1 flex items-center gap-2">
+                    <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
+                      <svg
+                        className={`w-3 h-3 ${organizationsPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                      >
+                        <path d="M6 0 L12 12 L0 12 Z" />
+                      </svg>
+                      <span
+                        className={`text-xs font-medium ${organizationsPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                      >
+                        {Math.abs(organizationsPercentage).toFixed(1)}%
+                      </span>
                     </div>
-                    <div className="space-y-1">
-                      {ACTIVITY_STREAMS.map((stream) => (
-                        <div key={stream.id} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <span className={`w-2 h-2 rounded-sm ${stream.dotClass}`} />
-                            {stream.label}
-                          </div>
-                          <span className="text-white font-medium">
-                            {activitySeries[stream.id]?.[hoveredAreaIndex] ?? 0}
+                  </div>
+                </div>
+              </div>
+
+              {/* Teams */}
+              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+                {/* Top-left corner */}
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Top-right corner */}
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-left corner */}
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                {/* Bottom-right corner */}
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowTeamsDropdown(!showTeamsDropdown)}
+                      className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                      <span>{teamsPeriod}</span>
+                    </button>
+                    {showTeamsDropdown && (
+                      <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
+                        {periodOptions.map((period) => (
+                          <button
+                            key={period}
+                            onClick={() => {
+                              setTeamsPeriod(period);
+                              setShowTeamsDropdown(false);
+                            }}
+                            className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+                          >
+                            {period}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {teamsPeriod === 'Custom' && (
+                    <div className="h-0 flex items-center gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {teamsDateFrom ? format(teamsDateFrom, 'MMM dd yyyy') : 'From'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={teamsDateFrom}
+                            onSelect={setTeamsDateFrom}
+                            initialFocus
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {teamsDateTo ? format(teamsDateTo, 'MMM dd yyyy') : 'To'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-black border-white/10">
+                          <Calendar
+                            mode="single"
+                            selected={teamsDateTo}
+                            onSelect={setTeamsDateTo}
+                            initialFocus
+                            disabled={(date) => (teamsDateFrom ? date < teamsDateFrom : false)}
+                            className="rounded-none"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+                </div>
+                <hr className="mb-2 -mx-10 border-white/10" />
+                <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Teams</h4>
+                <p className="text-xs text-gray-400 mb-3">Total teams in the time frame</p>
+                <div className="flex pt-4 justify-between items-end">
+                  <p className="text-3xl text-white font-light">
+                    {teamsLoading ? '...' : formatFullNumber(teamsCount)}
+                  </p>
+                  <div className="mt-2 mb-1 flex items-center gap-2">
+                    <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
+                      <svg
+                        className={`w-3 h-3 ${teamsPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                      >
+                        <path d="M6 0 L12 12 L0 12 Z" />
+                      </svg>
+                      <span
+                        className={`text-xs font-medium ${teamsPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                      >
+                        {Math.abs(teamsPercentage).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Security Insights */}
+            <div className="bg-white/5 border border-white/10 p-6 pt-4 overflow-hidden relative rounded-none flex flex-col">
+              {/* Top-left corner */}
+              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              {/* Top-right corner */}
+              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              {/* Bottom-left corner */}
+              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              {/* Bottom-right corner */}
+              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
+              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-white/60" />
+                  <h4 className="text-xs text-gray-400 uppercase font-mono font-light">
+                    Security Insights
+                  </h4>
+                </div>
+              </div>
+              <hr className="-mx-10 -mt-1 border-white/10" />
+              <div className="space-y-3 overflow-y-auto custom-scrollbar max-h-[400px]">
+                {securityPatches.map((patch, index) => (
+                  <div
+                    key={patch.id}
+                    onClick={() => handlePatchClick(patch)}
+                    className="group py-2 border-b border-white/5 cursor-pointer transition-all duration-200 hover:border-white/20"
+                    style={{
+                      animation: `slideIn 0.3s ease-out ${index * 0.1}s both`,
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-sm text-white/90 font-light truncate group-hover:text-white transition-colors">
+                            {patch.title}
                           </span>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 border rounded-sm uppercase font-mono ${getSeverityColor(
+                              patch.severity
+                            )}`}
+                          >
+                            {patch.severity}
+                          </span>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 border rounded-sm capitalize font-mono ${getStatusColor(patch.status)}`}
+                          >
+                            {patch.status}
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-white transition-all flex-shrink-0 mt-0.5" />
                     </div>
-                  </div>
-                </div>
-              )}
-              <div
-                className={`flex justify-between ${activityPeriod === '1M' ? 'text-[10px]' : 'text-xs'} text-gray-500 font-mono`}
-              >
-                {resolvedActivityLabels.map((label, i) => (
-                  <span key={i} className="flex-1 text-center truncate">
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4 pt-4 border-t border-white/10">
-                {ACTIVITY_STREAMS.map((stream) => (
-                  <div key={stream.id} className="flex items-center justify-between text-xs text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-sm ${stream.dotClass}`} />
-                      {stream.label}
-                    </div>
-                    <span className="text-white font-medium">
-                      {activityLoading ? '...' : formatFullNumber(activityTotals[stream.id] || 0)}
-                    </span>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Row - Three Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Two Small Cards */}
-          <div className="space-y-4 overflow-x-hidden">
-            {/* Active Users Daily */}
-            <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
-              {/* Top-left corner */}
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Top-right corner */}
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-left corner */}
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-right corner */}
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowActiveUsersDropdown(!showActiveUsersDropdown)}
-                    className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
-                  >
-                    <ChevronDown className="w-3 h-3" />
-                    <span>{activeUsersPeriod}</span>
-                  </button>
-                  {showActiveUsersDropdown && (
-                    <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
-                      {periodOptions.map((period) => (
-                        <button
-                          key={period}
-                          onClick={() => {
-                            setActiveUsersPeriod(period);
-                            setShowActiveUsersDropdown(false);
-                          }}
-                          className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
-                        >
-                          {period}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {activeUsersPeriod === 'Custom' && (
-                  <div className="h-0 flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {activeUsersDateFrom
-                            ? format(activeUsersDateFrom, 'MMM dd yyyy')
-                            : 'From'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={activeUsersDateFrom}
-                          onSelect={setActiveUsersDateFrom}
-                          initialFocus
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {activeUsersDateTo ? format(activeUsersDateTo, 'MMM dd yyyy') : 'To'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={activeUsersDateTo}
-                          onSelect={setActiveUsersDateTo}
-                          initialFocus
-                          disabled={(date) =>
-                            activeUsersDateFrom ? date < activeUsersDateFrom : false
-                          }
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
-              </div>
-              <hr className="mb-2 -mx-10 border-white/10" />
-              <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">
-                Active Users
-              </h4>
-              <p className="text-xs text-gray-400 mb-3">
-                Users with active session in the time frame
-              </p>
-              <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light">
-                  {formatFullNumber(activeUsersDaily)}
-                </p>
-                <div className="mt-2 mb-1 flex items-center gap-2">
-                  <div className="flex items-center -mr-5 gap-1 px-2 py-1 border-white/5 rounded-none">
-                    <svg
-                      className={`w-3 h-3 ${activeUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                    >
-                      <path d="M6 0 L12 12 L0 12 Z" />
-                    </svg>
-                    <span
-                      className={`text-xs font-medium ${activeUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                    >
-                      {Math.abs(activeUsersPercentage).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
-              {/* Top-left corner */}
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Top-right corner */}
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-left corner */}
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-right corner */}
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowNewUsersDropdown(!showNewUsersDropdown)}
-                    className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
-                  >
-                    <ChevronDown className="w-3 h-3" />
-                    <span>{newUsersPeriod}</span>
-                  </button>
-                  {showNewUsersDropdown && (
-                    <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
-                      {periodOptions.map((period) => (
-                        <button
-                          key={period}
-                          onClick={() => {
-                            setNewUsersPeriod(period);
-                            setShowNewUsersDropdown(false);
-                          }}
-                          className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
-                        >
-                          {period}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {newUsersPeriod === 'Custom' && (
-                  <div className="h-0 flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {newUsersDateFrom ? format(newUsersDateFrom, 'MMM dd yyyy') : 'From'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={newUsersDateFrom}
-                          onSelect={setNewUsersDateFrom}
-                          initialFocus
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {newUsersDateTo ? format(newUsersDateTo, 'MMM dd yyyy') : 'To'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={newUsersDateTo}
-                          onSelect={setNewUsersDateTo}
-                          initialFocus
-                          disabled={(date) => (newUsersDateFrom ? date < newUsersDateFrom : false)}
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
-              </div>
-              <hr className="mb-2 -mx-10 border-white/10" />
-              <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">
-                New Users
-              </h4>
-              <p className="text-xs text-gray-400 mb-3">Newly registered Users in the time frame</p>
-              <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light">
-                  {formatFullNumber(_newUsersCount)}
-                </p>
-                <div className="mt-2 mb-1 flex items-center gap-2">
-                  <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
-                    <svg
-                      className={`w-3 h-3 ${newUsersCountPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                      style={newUsersCountPercentage < 0 ? { transform: 'rotate(180deg)' } : {}}
-                    >
-                      <path d="M6 0 L12 12 L0 12 Z" />
-                    </svg>
-                    <span
-                      className={`text-xs font-medium ${newUsersCountPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                    >
-                      {Math.abs(newUsersCountPercentage).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Middle Column - Organizations and Teams */}
-          <div className="space-y-4 overflow-x-hidden">
-            {/* Organizations */}
-            <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
-              {/* Top-left corner */}
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Top-right corner */}
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-left corner */}
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-right corner */}
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowOrganizationsDropdown(!showOrganizationsDropdown)}
-                    className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
-                  >
-                    <ChevronDown className="w-3 h-3" />
-                    <span>{organizationsPeriod}</span>
-                  </button>
-                  {showOrganizationsDropdown && (
-                    <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
-                      {periodOptions.map((period) => (
-                        <button
-                          key={period}
-                          onClick={() => {
-                            setOrganizationsPeriod(period);
-                            setShowOrganizationsDropdown(false);
-                          }}
-                          className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
-                        >
-                          {period}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {organizationsPeriod === 'Custom' && (
-                  <div className="h-0 flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {organizationsDateFrom
-                            ? format(organizationsDateFrom, 'MMM dd yyyy')
-                            : 'From'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={organizationsDateFrom}
-                          onSelect={setOrganizationsDateFrom}
-                          initialFocus
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {organizationsDateTo ? format(organizationsDateTo, 'MMM dd yyyy') : 'To'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={organizationsDateTo}
-                          onSelect={setOrganizationsDateTo}
-                          initialFocus
-                          disabled={(date) =>
-                            organizationsDateFrom ? date < organizationsDateFrom : false
-                          }
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
-              </div>
-              <hr className="mb-2 -mx-10 border-white/10" />
-              <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">
-                Organizations
-              </h4>
-              <p className="text-xs text-gray-400 mb-3">Total organizations in the time frame</p>
-              <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light">
-                  {organizationsLoading ? '...' : formatFullNumber(organizationsCount)}
-                </p>
-                <div className="mt-2 mb-1 flex items-center gap-2">
-                  <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
-                    <svg
-                      className={`w-3 h-3 ${organizationsPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                    >
-                      <path d="M6 0 L12 12 L0 12 Z" />
-                    </svg>
-                    <span
-                      className={`text-xs font-medium ${organizationsPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                    >
-                      {Math.abs(organizationsPercentage).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Teams */}
-            <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
-              {/* Top-left corner */}
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Top-right corner */}
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-left corner */}
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              {/* Bottom-right corner */}
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowTeamsDropdown(!showTeamsDropdown)}
-                    className="text-xs h-full font-mono uppercase text-gray-400 flex items-center space-x-1 hover:text-white transition-colors"
-                  >
-                    <ChevronDown className="w-3 h-3" />
-                    <span>{teamsPeriod}</span>
-                  </button>
-                  {showTeamsDropdown && (
-                    <div className="absolute top-6 left-0 w-[150px]  z-10 bg-black border border-white/10 rounded-none shadow-lg">
-                      {periodOptions.map((period) => (
-                        <button
-                          key={period}
-                          onClick={() => {
-                            setTeamsPeriod(period);
-                            setShowTeamsDropdown(false);
-                          }}
-                          className="block border-b border-dashed border-white/5 w-full text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors whitespace-nowrap"
-                        >
-                          {period}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {teamsPeriod === 'Custom' && (
-                  <div className="h-0 flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {teamsDateFrom ? format(teamsDateFrom, 'MMM dd yyyy') : 'From'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={teamsDateFrom}
-                          onSelect={setTeamsDateFrom}
-                          initialFocus
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-6 px-2 text-xs font-mono uppercase text-gray-400 hover:text-white bg-transparent border-white/10 hover:bg-white/5"
-                        >
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {teamsDateTo ? format(teamsDateTo, 'MMM dd yyyy') : 'To'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-black border-white/10">
-                        <Calendar
-                          mode="single"
-                          selected={teamsDateTo}
-                          onSelect={setTeamsDateTo}
-                          initialFocus
-                          disabled={(date) => (teamsDateFrom ? date < teamsDateFrom : false)}
-                          className="rounded-none"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
-              </div>
-              <hr className="mb-2 -mx-10 border-white/10" />
-              <h4 className="text-md text-white/80 uppercase font-mono font-light mb-1">Teams</h4>
-              <p className="text-xs text-gray-400 mb-3">Total teams in the time frame</p>
-              <div className="flex pt-4 justify-between items-end">
-                <p className="text-3xl text-white font-light">
-                  {teamsLoading ? '...' : formatFullNumber(teamsCount)}
-                </p>
-                <div className="mt-2 mb-1 flex items-center gap-2">
-                  <div className="flex items-center -mr-5 gap-1 px-2 py-1 rounded-none">
-                    <svg
-                      className={`w-3 h-3 ${teamsPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                    >
-                      <path d="M6 0 L12 12 L0 12 Z" />
-                    </svg>
-                    <span
-                      className={`text-xs font-medium ${teamsPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                    >
-                      {Math.abs(teamsPercentage).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Security Insights */}
-          <div className="bg-white/5 border border-white/10 p-6 pt-4 overflow-hidden relative rounded-none flex flex-col">
-            {/* Top-left corner */}
-            <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-            {/* Top-right corner */}
-            <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-            {/* Bottom-left corner */}
-            <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-            {/* Bottom-right corner */}
-            <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-white/60" />
-                <h4 className="text-xs text-gray-400 uppercase font-mono font-light">
-                  Security Insights
-                </h4>
-              </div>
-            </div>
-            <hr className="-mx-10 -mt-1 border-white/10" />
-            <div className="space-y-3 overflow-y-auto custom-scrollbar max-h-[400px]">
-              {securityPatches.map((patch, index) => (
-                <div
-                  key={patch.id}
-                  onClick={() => handlePatchClick(patch)}
-                  className="group py-2 border-b border-white/5 cursor-pointer transition-all duration-200 hover:border-white/20"
-                  style={{
-                    animation: `slideIn 0.3s ease-out ${index * 0.1}s both`,
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-sm text-white/90 font-light truncate group-hover:text-white transition-colors">
-                          {patch.title}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`text-[9px] px-1.5 py-0.5 border rounded-sm uppercase font-mono ${getSeverityColor(
-                            patch.severity
-                          )}`}
-                        >
-                          {patch.severity}
-                        </span>
-                        <span
-                          className={`text-[9px] px-1.5 py-0.5 border rounded-sm capitalize font-mono ${getStatusColor(patch.status)}`}
-                        >
-                          {patch.status}
-                        </span>
-                      </div>
-                    </div>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-white transition-all flex-shrink-0 mt-0.5" />
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
       </div>
-    </div>
     );
   };
 

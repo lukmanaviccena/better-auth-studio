@@ -96,7 +96,7 @@ export async function getAuthAdapter(configPath?: string): Promise<AuthAdapter |
                 updatedAt: new Date(),
               },
             });
-          } catch (_accountError) { }
+          } catch (_accountError) {}
         }
 
         return user;
@@ -171,7 +171,7 @@ export async function getAuthAdapter(configPath?: string): Promise<AuthAdapter |
           return [];
         }
       },
-      findMany: async(options: {
+      findMany: async (options: {
         model: string;
         where?: any;
         limit?: number;
