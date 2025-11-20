@@ -1,4 +1,5 @@
 import { Command } from 'cmdk';
+import type { LucideIcon } from 'lucide-react';
 import {
   ArrowRight,
   BarChart3,
@@ -20,7 +21,7 @@ interface CommandItem {
   id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   action: () => void;
   category: string;
   keywords?: string[];

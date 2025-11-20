@@ -24,9 +24,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types"]
   },
-  "types": ["react", "react-dom"],
-  "include": ["src", "../docs/src/components/LineShadow.tsx"],
+  "types": ["react", "react-dom", "node"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

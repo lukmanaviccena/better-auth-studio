@@ -252,9 +252,7 @@ export default function DatabaseVisualizer() {
             labelBgStyle: {
               fill: 'rgba(0, 0, 0, 0.9)',
               fillOpacity: 1,
-              // @ts-expect-error
-              rx: 4,
-              ry: 4,
+            borderRadius: 4,
             },
             markerEnd: {
               type: 'arrowclosed',
