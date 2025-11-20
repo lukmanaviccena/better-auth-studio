@@ -248,10 +248,6 @@ export async function findAuthConfig(configPath) {
                     ? Object.keys(betterAuthConfig.socialProviders).map((provider) => {
                         const providerConfig = betterAuthConfig.socialProviders?.[provider];
                         const hasCredentials = Boolean(providerConfig?.clientId && providerConfig?.clientSecret);
-                        if (!hasCredentials && !warnedMissingProviders.has(provider)) {
-                            logger.warn(`[#better-auth]: Social provider ${provider} is missing a clientId or clientSecret.`);
-                            warnedMissingProviders.add(provider);
-                        }
                         return {
                             id: provider,
                             name: provider,
