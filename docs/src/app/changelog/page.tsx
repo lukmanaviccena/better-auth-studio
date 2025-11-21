@@ -38,10 +38,6 @@ export default function Changelog() {
                   <span className="text-white/50 mr-3">•</span>
                   <strong className="pr-2">Database Smoke Tests</strong> leveraging adapter introspection to preview sample records and confirm connectivity
                 </li>
-                <li className="flex items-start">
-                  <span className="text-white/50 mr-3">•</span>
-                  <strong className="pr-2">Geist Typography</strong> applied to OAuth bootstraps and modals for a cohesive type system across browser surfaces
-                </li>
               </ul>
             </div>
           </PixelCard>
