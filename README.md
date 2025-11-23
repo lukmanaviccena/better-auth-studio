@@ -7,7 +7,8 @@
 
 A web-based studio interface for managing Better Auth applications. Better Auth Studio provides a comprehensive dashboard for managing users, organizations, teams, and more.
 
-## 📸 Preview
+## Preview
+A sneak peek of the studio dashboard and management interface.
 
 <div align="center">
   <img src="https://gk6bju9ndq.ufs.sh/f/M5pOhOFFvHQJoDfkJ9wMTlHmhCfKGn1VSWOkq0g8sLJirp6A" alt="Better Auth Studio Preview 0" width="100%" /> 
