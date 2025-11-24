@@ -220,10 +220,6 @@ pnpm run dev
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
 ## 🤝 Support
 
 If you encounter any issues or have questions:
