@@ -977,7 +977,6 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         paginatedUsers = filteredUsers.slice(startIndex, endIndex);
                     }
                     else {
-                        // Return all users if limit is high
                         paginatedUsers = filteredUsers;
                     }
                     const transformedUsers = paginatedUsers.map((user) => ({

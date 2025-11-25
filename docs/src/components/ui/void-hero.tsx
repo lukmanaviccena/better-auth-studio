@@ -256,7 +256,7 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
           setTerminalLogs((prev) => [...prev, line]);
           updateTerminalHeight([...terminalLogsRef.current, line], "");
           scrollToBottom();
-        }, index * 900); // Staggered appearance
+        }, index * 900); 
         timeoutsRef.current.push(timeout);
       });
     });
