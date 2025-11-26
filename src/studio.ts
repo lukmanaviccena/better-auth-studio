@@ -75,18 +75,20 @@ export async function startStudio(options: StudioOptions) {
 
   server.listen(port, host, () => {
     const url = `http://${host}:${port}`;
-     
       process.stdout.write('\n');
       process.stdout.write(chalk.green('✔ Better Auth Studio is running!\n'));
       process.stdout.write("\n");
       process.stdout.write(chalk.white(`🌐 Open your browser and navigate to: `));
-      process.stdout.write(chalk.green(`${url}\n`));
+      process.stdout.write(chalk.green(chalk.underline(`${url}`)));
+      process.stdout.write("\n");
       process.stdout.write(chalk.white(`📊 Dashboard available at: `));
-      process.stdout.write(chalk.green(`${url}\n`));
+      process.stdout.write(chalk.green(chalk.underline(`${url}`)));
+      process.stdout.write("\n");
       process.stdout.write(chalk.white(`🔧 API endpoints available at: `));
-      process.stdout.write(chalk.green(`${url}/api\n`));
+      process.stdout.write(chalk.green(chalk.underline(`${url}/api\n`)));
       if (watchMode) {
         process.stdout.write(chalk.white('👀 Watch mode enabled - config changes will reload automatically\n'));
+        process.stdout.write("\n");
       }
       process.stdout.write("\n")
       process.stdout.write(chalk.gray('Press Ctrl+C to stop the studio\n'));
