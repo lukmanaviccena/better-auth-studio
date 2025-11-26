@@ -40,7 +40,13 @@ A sneak peek of the studio dashboard and management interface.
 
 📖 **[Documentation](https://better-auth-studio.vercel.app)**
 
-Install Better Auth Studio globally using pnpm:
+**Recommended: Install as a dev dependency** (for project-specific versions):
+
+```bash
+pnpm add -D better-auth-studio
+```
+
+Or install globally using pnpm:
 
 ```bash
 pnpm add -g better-auth-studio
@@ -60,6 +66,13 @@ pnpx better-auth-studio [cmd]
    ```
 
 2. **Start the studio**
+   
+   If installed as dev dependency:
+   ```bash
+   pnpm better-auth-studio start
+   ```
+   
+   Or with pnpx:
    ```bash
    pnpx better-auth-studio start
    ```
@@ -177,14 +190,17 @@ pnpx better-auth-studio start [options]
 
 **Examples:**
 ```bash
-# Start on custom port
+# Start on custom port (if installed as dev dependency)
+pnpm better-auth-studio start --port 3001
+
+# Or with pnpx
 pnpx better-auth-studio start --port 3001
 
 # Start without opening browser
-pnpx better-auth-studio start --no-open
+pnpm better-auth-studio start --no-open
 
 # Use custom config file
-pnpx better-auth-studio start --config ./custom-auth.ts
+pnpm better-auth-studio start --config ./custom-auth.ts
 ```
 
 ### Other Commands

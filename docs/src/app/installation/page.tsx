@@ -33,11 +33,25 @@ export default function Installation() {
                 <p className="text-sm font-light tracking-tight text-white/70 mb-3">
                   Experience the latest features, patches, and improvements by installing the beta version. The beta includes recent bug fixes, performance enhancements, and new functionality that may not be available in the stable release yet.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <CodeBlock 
-                    code="pnpm add -g better-auth-studio@beta"
-                    className="flex-1 min-w-0"
-                  />
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs font-light tracking-tight text-white/60 mb-1">
+                      As dev dependency (recommended):
+                    </p>
+                    <CodeBlock 
+                      code="pnpm add -D better-auth-studio@beta"
+                      className="flex-1 min-w-0"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-light tracking-tight text-white/60 mb-1">
+                      Or globally:
+                    </p>
+                    <CodeBlock 
+                      code="pnpm add -g better-auth-studio@beta"
+                      className="flex-1 min-w-0"
+                    />
+                  </div>
                 </div>
                 <p className="text-xs font-light tracking-tight text-white/60 mt-2">
                   <strong>Note:</strong> The beta version may include experimental features. 
@@ -55,14 +69,24 @@ export default function Installation() {
             
             <div className="mb-4">
               <p className="text-sm font-light tracking-tight text-white/70 mb-2">
-                <strong>Stable version:</strong>
+                <strong>Recommended: Install as dev dependency</strong> (for project-specific versions):
+              </p>
+              <CodeBlock code="pnpm add -D better-auth-studio" />
+              <p className="text-xs font-light tracking-tight text-white/60 mt-2">
+                This keeps the studio version consistent across your team and project.
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm font-light tracking-tight text-white/70 mb-2">
+                <strong>Stable version (global):</strong>
               </p>
               <CodeBlock code="pnpm add -g better-auth-studio" />
             </div>
 
             <div className="mb-4">
               <p className="text-sm font-light tracking-tight text-white/70 mb-2">
-                <strong>Beta version (recommended):</strong>
+                <strong>Beta version (recommended, global):</strong>
               </p>
               <CodeBlock code="pnpm add -g better-auth-studio@beta" />
             </div>
@@ -86,6 +110,13 @@ export default function Installation() {
               <div>
                 <p className="text-sm font-light tracking-tight text-white/70 mb-2">
                   <strong>2. Start the studio</strong>
+                </p>
+                <p className="text-xs font-light tracking-tight text-white/60 mb-2">
+                  If installed as dev dependency:
+                </p>
+                <CodeBlock code="pnpm better-auth-studio start" />
+                <p className="text-xs font-light tracking-tight text-white/60 mt-2 mb-2">
+                  Or with pnpx:
                 </p>
                 <CodeBlock code="pnpx better-auth-studio start" />
               </div>
@@ -332,6 +363,13 @@ export const auth = betterAuth({
           <h2 className="text-2xl font-light tracking-tight mb-6 text-white">COMMAND LINE OPTIONS</h2>
           <PixelCard className="mb-6">
             <h3 className="text-lg font-light tracking-tight mb-4 text-white">Start Studio</h3>
+            <p className="text-sm font-light tracking-tight text-white/70 mb-2">
+              If installed as dev dependency:
+            </p>
+            <CodeBlock code="pnpm better-auth-studio start [options]" className="mb-4" />
+            <p className="text-sm font-light tracking-tight text-white/70 mb-2 mt-4">
+              Or with pnpx:
+            </p>
             <CodeBlock code="pnpx better-auth-studio start [options]" className="mb-4" />
             
             <h4 className="font-light tracking-tight mb-3 text-white">Options:</h4>
@@ -360,21 +398,24 @@ export const auth = betterAuth({
                 <p className="text-sm font-light tracking-tight text-white/70 mb-2">
                   Start on custom port:
                 </p>
-                <CodeBlock code="pnpx better-auth-studio start --port 3001" />
+                <CodeBlock code="pnpm better-auth-studio start --port 3001" />
+                <p className="text-xs font-light tracking-tight text-white/60 mt-1">
+                  Or: <code className="bg-white/10 px-1 text-white/90">pnpx better-auth-studio start --port 3001</code>
+                </p>
               </div>
               
               <div>
                 <p className="text-sm font-light tracking-tight text-white/70 mb-2">
                   Start without opening browser:
                 </p>
-                <CodeBlock code="pnpx better-auth-studio start --no-open" />
+                <CodeBlock code="pnpm better-auth-studio start --no-open" />
               </div>
               
               <div>
                 <p className="text-sm font-light tracking-tight text-white/70 mb-2">
                   Use custom config file:
                 </p>
-                <CodeBlock code="pnpx better-auth-studio start --config ./custom-auth.ts" />
+                <CodeBlock code="pnpm better-auth-studio start --config ./custom-auth.ts" />
               </div>
             </div>
           </PixelCard>
