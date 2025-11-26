@@ -947,15 +947,11 @@ export function createRoutes(
         .map((account: any) => ({
           id: account.id,
           providerId: account.providerId || account.provider || 'unknown',
-          providerUserId: account.providerUserId || account.provider_user_id || null,
-          providerAccountId: account.providerAccountId || account.provider_account_id || null,
-          type: account.type || account.accountType || null,
           createdAt: account.createdAt || account.created_at || null,
           updatedAt: account.updatedAt || account.updated_at || null,
           email: account.email || account.login?.email || null,
           image: account.image || account.profileImage || null,
           userId: account.userId,
-          metadata: account.metadata || account.rawProfile || null,
         }));
 
       res.json({ accounts: userAccounts });

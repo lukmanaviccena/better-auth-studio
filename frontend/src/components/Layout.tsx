@@ -394,10 +394,8 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-0">{children}</div>
 
-      {/* Command Palette */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}

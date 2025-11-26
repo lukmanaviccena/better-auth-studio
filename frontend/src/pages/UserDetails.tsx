@@ -97,12 +97,10 @@ interface LocationData {
 interface UserAccount {
   id: string;
   providerId: string;
-  providerUserId?: string | null;
-  providerAccountId?: string | null;
   email?: string | null;
+  image?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
-  type?: string | null;
 }
 
 export default function UserDetails() {
@@ -1018,7 +1016,7 @@ export default function UserDetails() {
                     <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-white mb-2">No Linked Accounts</h3>
                     <p className="text-gray-400">
-                      This user has not connected any external authentication providers yet.
+                      This user has not connected any accounts yet.
                     </p>
                   </div>
                 ) : (
@@ -1045,10 +1043,7 @@ export default function UserDetails() {
                                 </sup>
                               </h3>
                               <p className="text-gray-400 text-sm font-sans mt-1">
-                                {account.email ||
-                                  account.providerUserId ||
-                                  account.providerAccountId ||
-                                  'No identifier available'}
+                                {account.email || `Account ID: ${account.id}`}
                               </p>
                             </div>
                           </div>
@@ -1059,11 +1054,6 @@ export default function UserDetails() {
                                 {formatDateTime(account.createdAt || account.updatedAt)}
                               </span>
                             </div>
-                            {account.type && (
-                              <span className="px-2 py-0.5 text-[11px] uppercase font-mono border border-white/10 rounded-none text-white/80">
-                                {account.type}
-                              </span>
-                            )}
                           </div>
                         </div>
                         <div className="flex items-center justify-end">
