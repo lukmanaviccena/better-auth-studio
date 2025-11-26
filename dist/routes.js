@@ -830,6 +830,61 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             res.status(500).json({ error: 'Failed to ban user' });
         }
     });
+    router.get('/api/users/:userId/accounts', async (req, res) => {
+        try {
+            const { userId } = req.params;
+            const adapter = await getAuthAdapterWithConfig();
+            if (!adapter || !adapter.findMany) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            const accounts = await adapter.findMany({
+                model: 'account',
+                limit: 10000,
+            });
+            const userAccounts = accounts
+                .filter((account) => account.userId === userId)
+                .map((account) => ({
+                id: account.id,
+                providerId: account.providerId || account.provider || 'unknown',
+                providerUserId: account.providerUserId || account.provider_user_id || null,
+                providerAccountId: account.providerAccountId || account.provider_account_id || null,
+                type: account.type || account.accountType || null,
+                createdAt: account.createdAt || account.created_at || null,
+                updatedAt: account.updatedAt || account.updated_at || null,
+                email: account.email || account.login?.email || null,
+                image: account.image || account.profileImage || null,
+                userId: account.userId,
+                metadata: account.metadata || account.rawProfile || null,
+            }));
+            res.json({ accounts: userAccounts });
+        }
+        catch (_error) {
+            res.status(500).json({ error: 'Failed to fetch user accounts' });
+        }
+    });
+    router.delete('/api/users/:userId/accounts/:accountId', async (req, res) => {
+        try {
+            const { userId, accountId } = req.params;
+            const adapter = await getAuthAdapterWithConfig();
+            if (!adapter || !adapter.findMany || !adapter.delete) {
+                return res.status(500).json({ error: 'Auth adapter not available' });
+            }
+            const existingAccounts = await adapter.findMany({
+                model: 'account',
+                where: [{ field: 'id', value: accountId }],
+                limit: 1,
+            });
+            const account = existingAccounts?.[0];
+            if (!account || account.userId !== userId) {
+                return res.status(404).json({ error: 'Account not found for this user' });
+            }
+            await adapter.delete({ model: 'account', id: accountId });
+            res.json({ success: true });
+        }
+        catch (_error) {
+            res.status(500).json({ error: 'Failed to unlink account' });
+        }
+    });
     router.get('/api/users/:userId/sessions', async (req, res) => {
         try {
             const { userId } = req.params;

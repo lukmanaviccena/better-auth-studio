@@ -1,4 +1,4 @@
-import { Clock1, Edit } from 'lucide-react';
+import { Clock1, Edit, Link2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -94,6 +94,17 @@ interface LocationData {
   region: string;
 }
 
+interface UserAccount {
+  id: string;
+  providerId: string;
+  providerUserId?: string | null;
+  providerAccountId?: string | null;
+  email?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  type?: string | null;
+}
+
 export default function UserDetails() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -101,10 +112,11 @@ export default function UserDetails() {
   const [organizations, setOrganizations] = useState<OrganizationMembership[]>([]);
   const [teams, setTeams] = useState<TeamMembership[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [accounts, setAccounts] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'details' | 'organizations' | 'teams' | 'sessions'>(
-    'details'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'details' | 'organizations' | 'teams' | 'sessions' | 'accounts'
+  >('details');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showBanModal, setShowBanModal] = useState(false);
   const [showUnbanModal, setShowUnbanModal] = useState(false);
@@ -202,6 +214,26 @@ export default function UserDetails() {
     return String.fromCodePoint(...codePoints);
   };
 
+  const formatProviderName = (providerId?: string) => {
+    if (!providerId) return 'Unknown Provider';
+    return providerId
+      .replace(/[_-]/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return 'Unknown';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown';
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const fetchUserDetails = useCallback(async () => {
     try {
       const response = await fetch(`/api/users/${userId}`);
@@ -250,6 +282,16 @@ export default function UserDetails() {
     userId, // Resolve locations for sessions
     resolveSessionLocations,
   ]);
+
+  const fetchUserAccounts = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/users/${userId}/accounts`);
+      if (response.ok) {
+        const data = await response.json();
+        setAccounts(data.accounts || []);
+      }
+    } catch (_error) {}
+  }, [userId]);
 
   const handleEditUser = async () => {
     if (!user) return;
@@ -442,13 +484,33 @@ export default function UserDetails() {
       toast.error('Error deleting session', { id: toastId });
     }
   };
+
+  const handleUnlinkAccount = async (accountId: string) => {
+    if (!userId) return;
+    const toastId = toast.loading('Unlinking account...');
+    try {
+      const response = await fetch(`/api/users/${userId}/accounts/${accountId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setAccounts((prev) => prev.filter((account) => account.id !== accountId));
+        toast.success('Account unlinked successfully', { id: toastId });
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to unlink account', { id: toastId });
+      }
+    } catch (_error) {
+      toast.error('Failed to unlink account', { id: toastId });
+    }
+  };
   useEffect(() => {
     if (userId) {
       fetchUserDetails();
       fetchUserMemberships();
+      fetchUserAccounts();
       checkAdminPlugin();
     }
-  }, [userId, checkAdminPlugin, fetchUserDetails, fetchUserMemberships]);
+  }, [userId, checkAdminPlugin, fetchUserDetails, fetchUserMemberships, fetchUserAccounts]);
 
   const handleSeedSessions = async (count: number = 3) => {
     if (!userId) return;
@@ -646,6 +708,7 @@ export default function UserDetails() {
                   count: organizations.length,
                 },
                 { id: 'teams', name: 'Teams', icon: Users, count: teams.length },
+                { id: 'accounts', name: 'Accounts', icon: Link2, count: accounts.length },
                 { id: 'sessions', name: 'Sessions', icon: Clock1, count: sessions.length },
               ].map((tab) => (
                 <button
@@ -939,6 +1002,79 @@ export default function UserDetails() {
                           >
                             <UserMinus className="w-4 h-4 mr-1" />
                             Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'accounts' && (
+              <div className="space-y-4">
+                {accounts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-white mb-2">No Linked Accounts</h3>
+                    <p className="text-gray-400">
+                      This user has not connected any external authentication providers yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {accounts.map((account) => (
+                      <div
+                        key={account.id}
+                        className="border border-dashed border-white/10 rounded-none p-4 hover:bg-white/5 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-4 flex-1">
+                            <div className="w-12 h-12 bg-black/80 border border-dashed border-white/20 flex items-center justify-center rounded-none">
+                              <Link2 className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-white font-light inline-flex items-start">
+                                {formatProviderName(account.providerId)}
+                                <sup className="text-xs text-gray-500 ml-2 mt-0.5">
+                                  <span className="mr-1">[</span>
+                                  <span className="text-white/80 font-mono text-xs">
+                                    {account.providerId}
+                                  </span>
+                                  <span className="ml-1">]</span>
+                                </sup>
+                              </h3>
+                              <p className="text-gray-400 text-sm font-sans mt-1">
+                                {account.email ||
+                                  account.providerUserId ||
+                                  account.providerAccountId ||
+                                  'No identifier available'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end space-y-2 text-right">
+                            <div className="flex items-center space-x-2 text-xs font-mono text-gray-400">
+                              <span>Linked:</span>
+                              <span className="text-white">
+                                {formatDateTime(account.createdAt || account.updatedAt)}
+                              </span>
+                            </div>
+                            {account.type && (
+                              <span className="px-2 py-0.5 text-[11px] uppercase font-mono border border-white/10 rounded-none text-white/80">
+                                {account.type}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUnlinkAccount(account.id)}
+                            className="border border-dashed border-red-400/20 text-red-400 hover:bg-red-400/10 rounded-none"
+                          >
+                            <UserMinus className="w-4 h-4 mr-1" />
+                            Unlink
                           </Button>
                         </div>
                       </div>
