@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
-import { auth } from './auth.js';
+import { auth } from './auth';
 import { toNodeHandler } from "better-auth/node";
 
 const app = express();
@@ -24,13 +24,11 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }
-
   next();
 });
 
 app.use(express.json());
 
-// Middleware
 // Health check
 app.get('/health', (req, res) => {
   res.json({ 
@@ -58,7 +56,6 @@ app.get('/', async (req, res) => {
       limit: 5,
     });
     console.log({recentAccounts, recentUsers, sessions})
-
     res.json({
       message: 'Better Auth Test Project',
       description: 'This is a test project for Better Auth Studio',

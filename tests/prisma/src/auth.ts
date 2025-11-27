@@ -65,3 +65,6 @@ export const auth = betterAuth({
 });
 
 
+const authSchema = await auth.$context
+const r = authSchema.tables
+console.log({r})
