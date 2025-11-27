@@ -8,7 +8,7 @@ import {
   Globe,
   Info,
   Key,
-  Loader2,
+  Loader,
   Lock,
   Mail,
   Puzzle,
@@ -344,7 +344,7 @@ export default function Settings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 text-white animate-spin" />
+        <Loader className="w-6 h-6 text-white animate-spin" />
       </div>
     );
   }

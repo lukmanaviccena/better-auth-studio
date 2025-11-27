@@ -434,6 +434,7 @@ export default function UserDetails() {
 
       if (result.success) {
         setOrganizations((prev) => prev.filter((m) => m.id !== membershipId));
+        fetchUserMemberships();
         toast.success('User removed from organization!', { id: toastId });
       } else {
         toast.error(`Error removing user: ${result.error || 'Unknown error'}`, { id: toastId });
@@ -454,6 +455,7 @@ export default function UserDetails() {
 
       if (result.success) {
         setTeams((prev) => prev.filter((m) => m.id !== membershipId));
+        fetchUserMemberships();
         toast.success('User removed from team!', { id: toastId });
       } else {
         toast.error(`Error removing user: ${result.error || 'Unknown error'}`, { id: toastId });

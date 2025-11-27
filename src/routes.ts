@@ -888,7 +888,10 @@ export function createRoutes(
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
 
-      await adapter.delete({ model: 'member', id: membershipId });
+      await adapter.delete({
+        model: 'member',
+        where: [{ field: 'id', value: membershipId }],
+      });
       res.json({ success: true });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to remove user from organization' });
@@ -903,7 +906,10 @@ export function createRoutes(
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
 
-      await adapter.delete({ model: 'teamMember', id: membershipId });
+      await adapter.delete({
+        model: 'teamMember',
+        where: [{ field: 'id', value: membershipId }],
+      });
       res.json({ success: true });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to remove user from team' });

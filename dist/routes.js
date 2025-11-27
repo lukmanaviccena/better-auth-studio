@@ -791,7 +791,10 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if (!adapter || !adapter.delete) {
                 return res.status(500).json({ error: 'Auth adapter not available' });
             }
-            await adapter.delete({ model: 'member', id: membershipId });
+            await adapter.delete({
+                model: 'member',
+                where: [{ field: 'id', value: membershipId }],
+            });
             res.json({ success: true });
         }
         catch (_error) {
@@ -805,7 +808,10 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if (!adapter || !adapter.delete) {
                 return res.status(500).json({ error: 'Auth adapter not available' });
             }
-            await adapter.delete({ model: 'teamMember', id: membershipId });
+            await adapter.delete({
+                model: 'teamMember',
+                where: [{ field: 'id', value: membershipId }],
+            });
             res.json({ success: true });
         }
         catch (_error) {
