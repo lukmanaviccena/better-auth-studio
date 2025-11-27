@@ -20,10 +20,12 @@ import {
   Users,
   X,
 } from '../components/PixelIcons';
+import { MoreVertical, Shield, Trash2 } from 'lucide-react';
 import { Terminal } from '../components/Terminal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface User {
   id: string;
@@ -119,9 +121,13 @@ export default function UserDetails() {
   const [showBanModal, setShowBanModal] = useState(false);
   const [showUnbanModal, setShowUnbanModal] = useState(false);
   const [showSessionSeedModal, setShowSessionSeedModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [banExpiresIn, setBanExpiresIn] = useState<number | undefined>();
   const [adminPluginEnabled, setAdminPluginEnabled] = useState(false);
+  const [editRole, setEditRole] = useState<string>('');
   const [seedingLogs, setSeedingLogs] = useState<
     Array<{
       id: string;
@@ -275,7 +281,7 @@ export default function UserDetails() {
         // Resolve locations for sessions
         resolveSessionLocations(sessions);
       }
-    } catch (_error) {}
+    } catch (_error) { }
   }, [
     userId, // Resolve locations for sessions
     resolveSessionLocations,
@@ -288,7 +294,7 @@ export default function UserDetails() {
         const data = await response.json();
         setAccounts(data.accounts || []);
       }
-    } catch (_error) {}
+    } catch (_error) { }
   }, [userId]);
 
   const handleEditUser = async () => {
@@ -307,20 +313,44 @@ export default function UserDetails() {
       const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, role: editRole || null }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setUser({ ...user, name, email });
+        setUser({ ...user, name, email, role: editRole || undefined });
         setShowEditModal(false);
+        setEditRole('');
         toast.success('User updated successfully!', { id: toastId });
       } else {
         toast.error(`Error updating user: ${result.error || 'Unknown error'}`, { id: toastId });
       }
     } catch (_error) {
       toast.error('Error updating user', { id: toastId });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!user) return;
+
+    const toastId = toast.loading('Deleting user...');
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('User deleted successfully!', { id: toastId });
+        navigate('/users');
+      } else {
+        toast.error(`Error deleting user: ${result.error || 'Unknown error'}`, { id: toastId });
+      }
+    } catch (_error) {
+      toast.error('Error deleting user', { id: toastId });
     }
   };
 
@@ -644,54 +674,105 @@ export default function UserDetails() {
                     id={user.id}
                     variant="subscript"
                   />
+                  {user.role && (
+                    <sup className="ml-2 px-2 pt-2 pb-2 -mt-1 py-0.5 text-[10px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                      {user.role}
+                    </sup>
+                  )}
                   {user.banned && (
                     <sup className="ml-2 px-2 pt-2 pb-2 -mt-1 py-0.5 text-[10px] font-mono uppercase border border-dashed border-red-500/30 bg-red-500/10 text-red-400/80 rounded-none">
                       Banned
                     </sup>
                   )}
+
                 </h1>
                 <p className="text-gray-400 font-mono text-sm">{user.email}</p>
-                <div className="flex items-center space-x-2 mt-2">
-                  {user.role && (
-                    <div className="flex items-center space-x-1 px-2 py-1 rounded-sm text-xs font-mono bg-purple-500/20 text-purple-400">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                      <span>{user.role}</span>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowEditModal(true)}
-                className="border border-white/20 text-white hover:bg-white/10 rounded-none"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit User
-              </Button>
-              {user.banned ? (
+              <div className="relative">
                 <Button
-                  variant="outline"
-                  onClick={() => setShowUnbanModal(true)}
-                  className="border border-green-400/20 text-green-400 hover:bg-green-400/10 rounded-none"
-                  disabled={!adminPluginEnabled}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white rounded-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActionMenuOpen(!actionMenuOpen);
+                  }}
                 >
-                  <Ban className="w-4 h-4 mr-2" />
-                  Unban User
+                  <MoreVertical className="w-4 h-4" />
                 </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowBanModal(true)}
-                  className="border border-red-400/20 text-red-400 hover:bg-red-400/10 rounded-none"
-                  disabled={!adminPluginEnabled}
-                >
-                  <Ban className="w-4 h-4 mr-2" />
-                  Ban User
-                </Button>
-              )}
+
+                {actionMenuOpen && (
+                  <div
+                    className="absolute z-[999] right-0 top-full mt-1 w-48 bg-black border border-white/20 rounded-none shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center space-x-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionMenuOpen(false);
+                        setShowEditModal(true);
+                        setEditRole(user.role || '');
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Edit User</span>
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center space-x-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionMenuOpen(false);
+                        setShowPasswordModal(true);
+                      }}
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Update Password</span>
+                    </button>
+                    {adminPluginEnabled &&
+                      (user.banned ? (
+                        <button
+                          className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-white/10 flex items-center space-x-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActionMenuOpen(false);
+                            setShowUnbanModal(true);
+                          }}
+                        >
+                          <Ban className="w-4 h-4" />
+                          <span>Unban User</span>
+                        </button>
+                      ) : (
+                        <button
+                          className="w-full px-4 py-2 text-left text-sm text-yellow-400 hover:bg-white/10 flex items-center space-x-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActionMenuOpen(false);
+                            setShowBanModal(true);
+                          }}
+                        >
+                          <Ban className="w-4 h-4" />
+                          <span>Ban User</span>
+                        </button>
+                      ))}
+                    <div className="border-t border-white/10 my-1"></div>
+                    <button
+                      className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/10 flex items-center space-x-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionMenuOpen(false);
+                        setShowDeleteModal(true);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete User</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -714,11 +795,10 @@ export default function UserDetails() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
+                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
                       ? 'border-white text-white'
                       : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                  }`}
+                    }`}
                 >
                   <tab.icon className="w-4 h-4 text-white/90" />
                   <span className="inline-flex items-start">
@@ -1190,7 +1270,10 @@ export default function UserDetails() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditRole('');
+                }}
                 className="text-gray-400 hover:text-white rounded-none"
               >
                 ×
@@ -1228,11 +1311,27 @@ export default function UserDetails() {
                   className="w-full px-3 py-2 bg-gray-800 border border-dashed border-white/20 rounded-none text-white placeholder-gray-400 focus:outline-none focus:border-white/50"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Role</label>
+                <Select className="bg-black text-white" value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger className="w-full border border-dashed border-white/20 bg-black text-white rounded-none">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex justify-end space-x-2 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditRole('');
+                }}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Cancel
@@ -1340,6 +1439,128 @@ export default function UserDetails() {
         </div>
       )}
 
+      {/* Delete User Modal */}
+      {showDeleteModal && user && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-black/90 border border-dashed border-white/20 p-6 w-full max-w-md rounded-none">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg text-white font-light">Delete User</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-16 h-16 bg-black/80 border border-dashed border-white/20 flex items-center justify-center">
+                  {user.image ? (
+                    <img src={user.image} alt={user.name} className="w-16 h-16 object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-white" />
+                  )}
+                </div>
+                <div>
+                  <div className="text-white font-light">{user.name}</div>
+                  <div className="text-sm text-gray-400">{user.email}</div>
+                </div>
+              </div>
+              <p className="text-gray-400">
+                Are you sure you want to delete this user? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+                className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteUser}
+                className="bg-red-500 hover:bg-red-600 text-white border border-red-500 rounded-none"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Update Modal */}
+      {showPasswordModal && user && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-black/90 border border-dashed border-white/20 p-6 w-full max-w-md rounded-none">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg text-white font-light">Update Password</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPasswordModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="new-password" className="text-sm text-gray-400 font-light">
+                  New Password
+                </Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowPasswordModal(false)}
+                className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  const password = (document.getElementById('new-password') as HTMLInputElement)?.value;
+                  if (!password) {
+                    toast.error('Please enter a password');
+                    return;
+                  }
+                  const toastId = toast.loading('Updating password...');
+                  try {
+                    const response = await fetch(`/api/users/${userId}/password`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ password }),
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                      setShowPasswordModal(false);
+                      (document.getElementById('new-password') as HTMLInputElement).value = '';
+                      toast.success('Password updated successfully!', { id: toastId });
+                    } else {
+                      toast.error(`Error updating password: ${result.error || 'Unknown error'}`, { id: toastId });
+                    }
+                  } catch (_error) {
+                    toast.error('Error updating password', { id: toastId });
+                  }
+                }}
+                className="bg-white hover:bg-white/90 text-black border border-white/20 rounded-none"
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Session Seed Modal */}
       {showSessionSeedModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -1382,7 +1603,7 @@ export default function UserDetails() {
                     onClick={() => {
                       const count = parseInt(
                         (document.getElementById('session-count') as HTMLInputElement)?.value ||
-                          '3',
+                        '3',
                         10
                       );
                       handleSeedSessions(count);

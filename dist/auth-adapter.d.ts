@@ -21,7 +21,7 @@ export interface AuthAdapter extends UserInternalAdapter {
     }): Promise<T[]>;
 }
 export declare function getAuthAdapter(configPath?: string): Promise<AuthAdapter | null>;
-export declare function createMockUser(adapter: AuthAdapter, index: number): Promise<(Record<string, any> & {
+export declare function createMockUser(adapter: AuthAdapter, index: number, role?: string): Promise<(Record<string, any> & {
     id: string;
     createdAt: Date;
     updatedAt: Date;

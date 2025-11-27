@@ -598,6 +598,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             let users = [];
             if (adapter.findMany) {
                 users = await adapter.findMany({ model: 'user', limit: 100000 }).catch(() => []);
+                console.log({ users });
             }
             else if (adapter.getUsers) {
                 users = await adapter.getUsers();
@@ -633,15 +634,19 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
     router.put('/api/users/:userId', async (req, res) => {
         try {
             const { userId } = req.params;
-            const { name, email } = req.body;
+            const { name, email, role } = req.body;
             const adapter = await getAuthAdapterWithConfig();
             if (!adapter || !adapter.update) {
                 return res.status(500).json({ error: 'Auth adapter not available' });
             }
+            const updateData = { name, email };
+            if (role !== undefined) {
+                updateData.role = role;
+            }
             const user = await adapter.update({
                 model: 'user',
                 where: [{ field: 'id', value: userId }],
-                update: { name, email },
+                update: updateData,
             });
             res.json({ success: true, user });
         }
@@ -1020,7 +1025,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     const fetchLimit = shouldPaginate ? limit : undefined;
                     const allUsers = await adapter.findMany({
                         model: 'user',
-                        limit: fetchLimit,
+                        limit: fetchLimit || 100000,
                     });
                     let filteredUsers = allUsers || [];
                     if (search) {
@@ -3102,7 +3107,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
     });
     router.post('/api/seed/users', async (req, res) => {
         try {
-            const { count = 1 } = req.body;
+            const { count = 1, role } = req.body;
             const adapter = await getAuthAdapterWithConfig();
             if (!adapter) {
                 return res.status(500).json({ error: 'Auth adapter not available' });
@@ -3113,19 +3118,18 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     if (typeof adapter.createUser !== 'function') {
                         throw new Error('createUser method not available on adapter');
                     }
-                    const user = await createMockUser(adapter, i + 1);
+                    let userRole = role;
+                    if (role === 'mix') {
+                        userRole = Math.random() < 0.5 ? 'admin' : 'user';
+                    }
+                    const user = await createMockUser(adapter, i + 1, userRole);
                     if (!user) {
                         throw new Error('Failed to create user');
                     }
                     results.push({
                         success: true,
                         user: {
-                            id: user.id,
-                            email: user.email,
-                            name: user.name,
-                            emailVerified: user.emailVerified,
-                            image: user.image,
-                            createdAt: user.createdAt,
+                            ...user,
                         },
                     });
                 }

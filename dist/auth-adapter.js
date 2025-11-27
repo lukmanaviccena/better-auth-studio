@@ -55,6 +55,7 @@ export async function getAuthAdapter(configPath) {
                         emailVerified: false,
                         name: data.name,
                         email: data.email?.toLowerCase(),
+                        role: data.role || null,
                         image: data.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
                     },
                 });
@@ -186,7 +187,7 @@ async function findAuthConfigPath() {
     }
     return null;
 }
-export async function createMockUser(adapter, index) {
+export async function createMockUser(adapter, index, role) {
     const randomString = Math.random().toString(36).substring(2, 8);
     const userData = {
         email: `user${randomString}@example.com`,
@@ -196,6 +197,9 @@ export async function createMockUser(adapter, index) {
         createdAt: new Date(),
         updatedAt: new Date(),
     };
+    if (role) {
+        userData.role = role;
+    }
     if (!adapter?.createUser) {
         return null;
     }

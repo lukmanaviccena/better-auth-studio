@@ -32,7 +32,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Pagination } from '../components/ui/pagination';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '../components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useCounts } from '../contexts/CountsContext';
 
 interface User {
@@ -77,6 +77,9 @@ export default function Users() {
   const [banReason, setBanReason] = useState('');
   const [banExpiresIn, setBanExpiresIn] = useState<number | undefined>();
   const [adminPluginEnabled, setAdminPluginEnabled] = useState(false);
+  const [editRole, setEditRole] = useState<string>('');
+  const [seedRole, setSeedRole] = useState<string>('');
+  const [createRole, setCreateRole] = useState<string>('');
   const [seedingLogs, setSeedingLogs] = useState<
     Array<{
       id: string;
@@ -122,7 +125,7 @@ export default function Users() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [actionMenuOpen, checkAdminPlugin, fetchUsers]);
 
-  const handleSeedUsers = async (count: number) => {
+  const handleSeedUsers = async (count: number, role?: string) => {
     setSeedingLogs([]);
     setIsSeeding(true);
 
@@ -139,7 +142,7 @@ export default function Users() {
       const response = await fetch('/api/seed/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ count }),
+        body: JSON.stringify({ count, role: role || undefined }),
       });
 
       const result = await response.json();
@@ -212,6 +215,7 @@ export default function Users() {
 
   const openEditModal = (user: User) => {
     setSelectedUser(user);
+    setEditRole(user.role || '');
     setShowEditModal(true);
   };
 
@@ -236,7 +240,7 @@ export default function Users() {
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role: createRole || null }),
       });
 
       const result = await response.json();
@@ -244,6 +248,7 @@ export default function Users() {
       if (result.success) {
         await fetchUsers();
         setShowCreateModal(false);
+        setCreateRole('');
         (document.getElementById('create-name') as HTMLInputElement).value = '';
         (document.getElementById('create-email') as HTMLInputElement).value = '';
         (document.getElementById('create-password') as HTMLInputElement).value = '';
@@ -276,7 +281,7 @@ export default function Users() {
       const response = await fetch(`/api/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, role: editRole || null }),
       });
 
       const result = await response.json();
@@ -285,6 +290,7 @@ export default function Users() {
         await fetchUsers();
         setShowEditModal(false);
         setSelectedUser(null);
+        setEditRole('');
         toast.success('User updated successfully!', { id: toastId });
       } else {
         toast.error(`Error updating user: ${result.error || 'Unknown error'}`, { id: toastId });
@@ -803,6 +809,7 @@ export default function Users() {
               <tr className="border-b border-dashed border-white/10">
                 <th className="text-left py-4 px-4 text-white font-light">User</th>
                 <th className="text-left py-4 px-4 text-white font-light">Email Status</th>
+                <th className="text-left py-4 px-4 text-white font-light">Role</th>
                 <th className="text-left py-4 px-4 text-white font-light">Created</th>
                 <th className="text-right py-4 px-4 text-white font-light">Actions</th>
               </tr>
@@ -810,7 +817,7 @@ export default function Users() {
             <tbody>
               {currentUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 px-4 text-center">
+                  <td colSpan={5} className="py-12 px-4 text-center">
                     <div className="flex flex-col items-center space-y-4">
                       <div className="w-16 h-16 rounded-none border border-dashed border-white/20 bg-white/10 flex items-center justify-center">
                         <UsersIcon className="w-8 h-8 text-white/50" />
@@ -896,6 +903,15 @@ export default function Users() {
                           {user.emailVerified ? 'Verified' : 'Not Verified'}
                         </span>
                       </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      {user.role ? (
+                        <span className="px-2 py-1 text-xs font-mono uppercase bg-white/5 border border-dashed border-white/15 text-white/80 rounded-sm tracking-wide">
+                          {user.role}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-500">—</span>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-sm text-gray-400">
                       <div className="flex flex-col">
@@ -1038,7 +1054,10 @@ export default function Users() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowSeedModal(false)}
+                onClick={() => {
+                  setShowSeedModal(false);
+                  setSeedRole('');
+                }}
                 className="text-gray-400 hover:text-white rounded-none"
               >
                 <X className="w-4 h-4" />
@@ -1051,19 +1070,40 @@ export default function Users() {
                 <div className="flex items-center space-x-2">
                   {/* <h4 className="text-white font-light">Seed Users</h4> */}
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-1">
+                      <Label htmlFor="user-count" className="text-sm text-gray-400 font-light">
+                        Number of users
+                      </Label>
+                      <Input
+                        id="user-count"
+                        type="number"
+                        min="1"
+                        max="100"
+                        defaultValue="5"
+                        className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
+                      />
+                    </div>
+                  </div>
                   <div className="flex-1">
-                    <Label htmlFor="user-count" className="text-sm text-gray-400 font-light">
-                      Number of users
+                    <Label htmlFor="seed-role" className="text-sm text-gray-400 font-light">
+                      Role (optional)
                     </Label>
-                    <Input
-                      id="user-count"
-                      type="number"
-                      min="1"
-                      max="100"
-                      defaultValue="5"
-                      className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
-                    />
+                    <Select className='bg-black text-white' value={seedRole} onValueChange={setSeedRole}>
+                      <SelectTrigger
+                        id="seed-role"
+                        className="mt-1 border border-dashed border-white/20 bg-black text-white rounded-none"
+                      >
+                        <SelectValue placeholder="Select role (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="mix">Mix (Random)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     onClick={() => {
@@ -1071,7 +1111,7 @@ export default function Users() {
                         (document.getElementById('user-count') as HTMLInputElement)?.value || '5',
                         10
                       );
-                      handleSeedUsers(count);
+                      handleSeedUsers(count, seedRole || undefined);
                     }}
                     disabled={isSeeding}
                     className="bg-transparent hover:bg-white/90 bg-white text-black border border-white/20 rounded-none mt-6 disabled:opacity-50"
@@ -1107,7 +1147,10 @@ export default function Users() {
             <div className="flex justify-end mt-6 pt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowSeedModal(false)}
+                onClick={() => {
+                  setShowSeedModal(false);
+                  setSeedRole('');
+                }}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Close
@@ -1125,7 +1168,10 @@ export default function Users() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setCreateRole('');
+                }}
                 className="text-gray-400 hover:text-white rounded-none"
               >
                 <X className="w-4 h-4" />
@@ -1161,11 +1207,32 @@ export default function Users() {
                   className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
                 />
               </div>
+              <div>
+                <Label htmlFor="create-role" className="text-sm text-gray-400 font-light">
+                  Role
+                </Label>
+                <Select className="bg-black text-white" value={createRole} onValueChange={setCreateRole}>
+                  <SelectTrigger
+                    id="create-role"
+                    className="mt-1 border border-dashed border-white/20 bg-black text-white rounded-none"
+                  >
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setCreateRole('');
+                }}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Cancel
@@ -1190,7 +1257,10 @@ export default function Users() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditRole('');
+                }}
                 className="text-gray-400 hover:text-white rounded-none"
               >
                 <X className="w-4 h-4" />
@@ -1232,11 +1302,32 @@ export default function Users() {
                   className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
                 />
               </div>
+              <div>
+                <Label htmlFor="edit-role" className="text-sm text-gray-400 font-light">
+                  Role
+                </Label>
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger
+                    id="edit-role"
+                    className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
+                  >
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditRole('');
+                }}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Cancel
