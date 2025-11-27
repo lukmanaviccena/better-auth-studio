@@ -88,7 +88,6 @@ const AVAILABLE_PLUGINS: PluginInfo[] = [
   },
 ];
 
-// Feature flag to enable/disable the "Coming Soon" overlay
 const SHOW_COMING_SOON_OVERLAY = true;
 
 export default function DatabaseVisualizer() {

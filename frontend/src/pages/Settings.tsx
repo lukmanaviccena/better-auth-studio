@@ -8,6 +8,7 @@ import {
   Globe,
   Info,
   Key,
+  Loader2,
   Lock,
   Mail,
   Puzzle,
@@ -343,13 +344,13 @@ export default function Settings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        <Loader2 className="w-6 h-6 text-white animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8">
       <div className="flex items-center justify-between p-5 pt-7">
         <div>
           <h1 className="text-3xl font-normal text-white tracking-tight">Settings</h1>
