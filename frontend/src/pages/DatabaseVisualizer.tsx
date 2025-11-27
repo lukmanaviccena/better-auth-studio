@@ -16,6 +16,7 @@ import '@xyflow/react/dist/style.css';
 import { Settings } from 'lucide-react';
 import { DatabaseSchemaNode, type DatabaseSchemaNodeData } from '../components/DatabaseSchemaNode';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Analytics } from '@/components/PixelIcons';
 
 const nodeTypes = {
   databaseSchemaNode: DatabaseSchemaNode,
@@ -281,7 +282,7 @@ export default function DatabaseVisualizer() {
       <div className="flex-1 grid grid-cols-4 gap-6 mt-6">
         <div className="col-span-1 space-y-4">
           <Card className="rounded-none bg-black h-fit shadow-sm border border-white/15">
-            <CardHeader className='border-b border-white/15 pb-2 mb-2'>
+            <CardHeader className='border-b border-white/15 pb-2 -pt-1 mb-2'>
               <CardTitle className="font-light text-xl text-white flex items-center space-x-2">
                 <Settings className="w-4 h-4" />
                 <span className='uppercase font-mono text-xs tracking-tight'>Detected Tables</span>
@@ -312,8 +313,9 @@ export default function DatabaseVisualizer() {
 
           {schema && (
             <Card className="rounded-none bg-black shadow-sm border border-white/15">
-              <CardHeader className='border-b border-white/15 pb-2 mb-2'>
+              <CardHeader className='border-b border-white/15 pb-2 -pt-1 mb-2'>
                 <CardTitle className="font-light text-xl text-white flex items-center space-x-2">
+                  <Analytics className="w-4 h-4" />
                   <span className='uppercase font-mono text-xs tracking-tight'>Schema Summary</span>
                 </CardTitle>
               </CardHeader>
