@@ -598,7 +598,6 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             let users = [];
             if (adapter.findMany) {
                 users = await adapter.findMany({ model: 'user', limit: 100000 }).catch(() => []);
-                console.log({ users });
             }
             else if (adapter.getUsers) {
                 users = await adapter.getUsers();

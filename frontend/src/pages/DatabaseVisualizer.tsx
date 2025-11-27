@@ -13,10 +13,11 @@ import {
 } from '@xyflow/react';
 import { useCallback, useEffect, useState } from 'react';
 import '@xyflow/react/dist/style.css';
-import { Settings } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
 import { DatabaseSchemaNode, type DatabaseSchemaNodeData } from '../components/DatabaseSchemaNode';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Analytics } from '@/components/PixelIcons';
+import { Button } from '../components/ui/button';
 
 const nodeTypes = {
   databaseSchemaNode: DatabaseSchemaNode,
@@ -73,6 +74,19 @@ export default function DatabaseVisualizer() {
   const [pluginContributions, setPluginContributions] = useState<PluginContribution[]>([]);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (selectedTable) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedTable]);
 
   const fetchEnabledPlugins = useCallback(async () => {
     try {
@@ -282,7 +296,7 @@ export default function DatabaseVisualizer() {
       <div className="flex-1 grid grid-cols-4 gap-6 mt-6">
         <div className="col-span-1 space-y-4">
           <Card className="rounded-none bg-black h-fit shadow-sm border border-white/15">
-            <CardHeader className='border-b border-white/15 pb-2 -pt-1 mb-2'>
+            <CardHeader className='border-b border-white/15 pb-3 -pt-2 mb-2'>
               <CardTitle className="font-light text-xl text-white flex items-center space-x-2">
                 <Settings className="w-4 h-4" />
                 <span className='uppercase font-mono text-xs tracking-tight'>Detected Tables</span>
@@ -292,7 +306,11 @@ export default function DatabaseVisualizer() {
               {schema && schema.tables.length > 0 ? (
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-1 custom-scroll">
                   {schema.tables.map((table) => (
-                    <div key={table.name} className="border border-white/10 p-3 rounded-none">
+                    <button
+                      key={table.name}
+                      onClick={() => setSelectedTable(table)}
+                      className="w-full text-left border border-white/10 p-3 rounded-none hover:border-white/20 hover:bg-white/5 transition-colors"
+                    >
                       <div className="flex items-center justify-between text-sm text-white">
                         <span>{table.displayName}</span>
                         <span className="text-xs uppercase font-mono text-gray-400">
@@ -302,7 +320,7 @@ export default function DatabaseVisualizer() {
                       <div className="text-xs text-gray-400 mt-1">
                         {table.fields.length} fields · {table.relationships.length} relationships
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
@@ -313,7 +331,7 @@ export default function DatabaseVisualizer() {
 
           {schema && (
             <Card className="rounded-none bg-black shadow-sm border border-white/15">
-              <CardHeader className='border-b border-white/15 pb-2 -pt-1 mb-2'>
+              <CardHeader className='border-b border-white/15 pb-3 -pt-2 mb-2'>
                 <CardTitle className="font-light text-xl text-white flex items-center space-x-2">
                   <Analytics className="w-4 h-4" />
                   <span className='uppercase font-mono text-xs tracking-tight'>Schema Summary</span>
@@ -423,5 +441,126 @@ export default function DatabaseVisualizer() {
     </>
   );
 
-  return <div className="h-screen flex flex-col bg-black">{mainContent}</div>;
+  return (
+    <div className="h-screen flex flex-col bg-black">
+      {mainContent}
+      
+      {/* Table Details Modal */}
+      {selectedTable && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedTable(null)}>
+          <div 
+            className="bg-black border border-dashed border-white/20 rounded-none p-5 w-full max-w-3xl max-h-[75vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-light text-white">{selectedTable.displayName}</h3>
+                <p className="text-xs text-gray-400 mt-0.5 uppercase font-mono">
+                  {selectedTable.name} · {selectedTable.origin === 'core' ? 'Core' : 'Extended'}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedTable(null)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <hr className="border-white/20 border-dashed mb-4" />
+
+            {/* Fields Section */}
+            <div className="mb-6">
+              <h4 className="text-xs uppercase font-mono text-gray-400 mb-3 tracking-wider">Fields</h4>
+              <div className="space-y-0">
+                {selectedTable.fields.map((field, index) => (
+                  <div
+                    key={field.name}
+                    className={`flex items-center border-b border-dashed border-white/10 py-2.5 ${index === selectedTable.fields.length - 1 ? 'border-b-0' : ''}`}
+                  >
+                    <div className="flex-1 flex items-center space-x-3">
+                      <span className="text-white font-mono text-sm min-w-[120px]">{field.name}</span>
+                      <div className="flex items-center space-x-2 flex-1">
+                        {field.primaryKey && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                            PK
+                          </span>
+                        )}
+                        {field.unique && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                            UNIQUE
+                          </span>
+                        )}
+                        {!field.required && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                            NULLABLE
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400 font-mono uppercase min-w-[80px] text-right">{field.type}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Relationships Section */}
+            {selectedTable.relationships.length > 0 && (
+              <div className="mb-6">
+                <hr className="border-white/10 border-dashed mb-4" />
+                <h4 className="text-xs uppercase font-mono text-gray-400 mb-3 tracking-wider">Relationships</h4>
+                <div className="space-y-0">
+                  {selectedTable.relationships.map((rel, index) => {
+                    const targetTable = schema?.tables.find((t) => t.name === rel.target);
+                    const relationshipLabel =
+                      rel.type === 'one-to-one' ? '1:1' : rel.type === 'many-to-one' ? 'N:1' : '1:N';
+                    
+                    return (
+                      <div
+                        key={`${rel.target}-${rel.field}-${index}`}
+                        className={`flex items-center border-b border-dashed border-white/10 py-2.5 ${index === selectedTable.relationships.length - 1 ? 'border-b-0' : ''}`}
+                      >
+                        <div className="flex-1 flex items-center space-x-3">
+                          <span className="text-white font-mono text-sm min-w-[100px]">{rel.field}</span>
+                          <span className="text-xs text-gray-400">→</span>
+                          <span className="text-white font-mono text-sm flex-1">
+                            {targetTable?.displayName || rel.target}
+                          </span>
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none min-w-[40px] text-center">
+                            {relationshipLabel}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="border-t border-dashed border-white/10 pt-3 mt-4">
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-400 uppercase font-mono text-xs">Fields</span>
+                  <p className="text-white mt-0.5 text-sm">{selectedTable.fields.length}</p>
+                </div>
+                <div className="border-l border-dashed border-white/20 pl-4">
+                  <span className="text-gray-400 uppercase font-mono text-xs">Relationships</span>
+                  <p className="text-white mt-0.5 text-sm">{selectedTable.relationships.length}</p>
+                </div>
+                <div className="border-l border-dashed border-white/20 pl-4">
+                  <span className="text-gray-400 uppercase font-mono text-xs">Origin</span>
+                  <p className="text-white mt-0.5 text-sm uppercase font-mono">
+                    {selectedTable.origin === 'core' ? 'Core' : 'Extended'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

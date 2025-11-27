@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { CopyableId } from '../components/CopyableId';
+
+import { getProviderIcon } from '../lib/icons';
 import {
   Ban,
   Building2,
@@ -224,6 +226,7 @@ export default function UserDetails() {
       .replace(/[_-]/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase());
   };
+
 
   const formatDateTime = (value?: string | null) => {
     if (!value) return 'Unknown';
@@ -1111,19 +1114,12 @@ export default function UserDetails() {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-4 flex-1">
                             <div className="w-12 h-12 bg-black/80 border border-dashed border-white/20 flex items-center justify-center rounded-none">
-                              <Link2 className="w-6 h-6 text-white" />
+                              {getProviderIcon(account.providerId)}
                             </div>
                             <div className="flex-1">
                               <h3 className="text-white font-light inline-flex items-start">
                                 {formatProviderName(account.providerId)}
                                 <CopyableId id={account.email || user.email || `Account ID: ${account.id}`} variant="subscript" nonSliced={account.email || user.email ? true : false} />
-                                {/* <sup className="text-xs text-gray-500 ml-2 mt-0.5">
-                                  <span className="mr-1">[</span>
-                                  <span className="text-white/80 font-mono text-xs">
-                                    {account.email || user.email || `Account ID: ${account.id}`}
-                                  </span>
-                                  <span className="ml-1">]</span>
-                                </sup> */}
                               </h3>
                               <p className="text-gray-400 tracking-tight uppercase text-xs font-mono mt-1">
                                 {`ID: ${account.id}`}

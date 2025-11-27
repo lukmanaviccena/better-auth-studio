@@ -1,7 +1,8 @@
-import { Code, Eye, EyeOff, Github, Globe, Key, TestTube } from 'lucide-react';
+import { Code, Eye, EyeOff, Globe, Key, TestTube } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getProviderIcon } from '../lib/icons';
 import {
   ArrowRight,
   CheckCircle,
@@ -445,26 +446,6 @@ export default function Tools() {
     }
   };
 
-  const getProviderIcon = (providerId: string) => {
-    const provider = providerId.toLowerCase();
-    switch (provider) {
-      case 'github':
-        return <Github className="w-5 h-5 text-white" />;
-      case 'google':
-        return <Globe className="w-5 h-5 text-white" />;
-      case 'discord':
-        return <Globe className="w-5 h-5 text-white" />;
-      case 'twitter':
-      case 'x':
-        return <Globe className="w-5 h-5 text-white" />;
-      case 'facebook':
-        return <Globe className="w-5 h-5 text-white" />;
-      case 'apple':
-        return <Globe className="w-5 h-5 text-white" />;
-      default:
-        return <Globe className="w-5 h-5 text-white" />;
-    }
-  };
 
   const closeOAuthWindow = () => {
     if (oauthWindowRef.current && !oauthWindowRef.current.closed) {
