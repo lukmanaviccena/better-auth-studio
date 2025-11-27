@@ -337,20 +337,20 @@ export default function DatabaseVisualizer() {
                   <span className='uppercase font-mono text-xs tracking-tight'>Schema Summary</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between text-white/80">
-                  <span>Tables</span>
-                  <span className="text-white">{schema.tables.length}</span>
+              <CardContent className="space-y-3 pt-2">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider">Tables</span>
+                  <span className="text-white text-sm font-mono font-light">{schema.tables.length}</span>
                 </div>
-                <div className="flex justify-between text-white/80">
-                  <span>Total Fields</span>
-                  <span className="text-white">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider">Total Fields</span>
+                  <span className="text-white text-sm font-mono font-light">
                     {schema.tables.reduce((sum, table) => sum + table.fields.length, 0)}
                   </span>
                 </div>
-                <div className="flex justify-between text-white/80">
-                  <span>Relationships</span>
-                  <span className="text-white">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider">Relationships</span>
+                  <span className="text-white text-sm font-mono font-light">
                     {schema.tables.reduce((sum, table) => sum + table.relationships.length, 0)}
                   </span>
                 </div>
@@ -445,7 +445,6 @@ export default function DatabaseVisualizer() {
     <div className="h-screen flex flex-col bg-black">
       {mainContent}
       
-      {/* Table Details Modal */}
       {selectedTable && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setSelectedTable(null)}>
           <div 
@@ -471,7 +470,6 @@ export default function DatabaseVisualizer() {
 
             <hr className="border-white/20 border-dashed mb-4" />
 
-            {/* Fields Section */}
             <div className="mb-6">
               <h4 className="text-xs uppercase font-mono text-gray-400 mb-3 tracking-wider">Fields</h4>
               <div className="space-y-0">
@@ -553,19 +551,19 @@ export default function DatabaseVisualizer() {
               </div>
             )}
 
-            <div className="border-t border-dashed border-white/20 pt-3 mt-4">
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-400 uppercase font-mono text-xs">Fields</span>
-                  <p className="text-white mt-0.5 text-sm">{selectedTable.fields.length}</p>
+            <div className="border-t border-dashed border-white/20 pt-4 mt-6">
+              <div className="grid grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">Fields</span>
+                  <p className="text-white text-lg font-mono font-light">{selectedTable.fields.length}</p>
                 </div>
-                <div className="border-l border-dashed border-white/20 pl-4">
-                  <span className="text-gray-400 uppercase font-mono text-xs">Relationships</span>
-                  <p className="text-white mt-0.5 text-sm">{selectedTable.relationships.length}</p>
+                <div className="border-l border-dashed border-white/20 pl-6 space-y-1">
+                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">Relationships</span>
+                  <p className="text-white text-lg font-mono font-light">{selectedTable.relationships.length}</p>
                 </div>
-                <div className="border-l border-dashed border-white/20 pl-4">
-                  <span className="text-gray-400 uppercase font-mono text-xs">Origin</span>
-                  <p className="text-white mt-0.5 text-sm uppercase font-mono">
+                <div className="border-l border-dashed border-white/20 pl-6 space-y-1">
+                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">Origin</span>
+                  <p className="text-white text-sm uppercase font-mono font-light">
                     {selectedTable.origin === 'core' ? 'Core' : 'Extended'}
                   </p>
                 </div>
