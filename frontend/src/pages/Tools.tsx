@@ -1,4 +1,4 @@
-import { Code, Download, Eye, EyeOff, Globe, Key, TestTube } from 'lucide-react';
+import { Code, Download, Eye, EyeOff, Globe, Key, Shield, TestTube, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -368,6 +368,21 @@ export default function Tools() {
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
   const [exportLimit, setExportLimit] = useState<string>('1000');
   const [isExporting, setIsExporting] = useState(false);
+  const [showJwtModal, setShowJwtModal] = useState(false);
+  const [jwtInput, setJwtInput] = useState('');
+  const [jwtSecret, setJwtSecret] = useState('');
+  const [jwtResult, setJwtResult] = useState<any>(null);
+  const [isDecodingJwt, setIsDecodingJwt] = useState(false);
+  const [jwtError, setJwtError] = useState<string | null>(null);
+  const [showTokenGeneratorModal, setShowTokenGeneratorModal] = useState(false);
+  const [tokenType, setTokenType] = useState<'api_key' | 'jwt'>('api_key');
+  const [tokenSubject, setTokenSubject] = useState('');
+  const [tokenAudience, setTokenAudience] = useState('');
+  const [tokenExpiresIn, setTokenExpiresIn] = useState('15');
+  const [tokenSecret, setTokenSecret] = useState('');
+  const [tokenCustomClaims, setTokenCustomClaims] = useState('{\n  \n}');
+  const [tokenResult, setTokenResult] = useState<any>(null);
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
 
   const addLog = (
     type: 'info' | 'success' | 'error' | 'progress',
@@ -1015,8 +1030,41 @@ export default function Tools() {
       setRunningTool(null);
     }
   };
+  const formatDateTime = (value?: string) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
   const handleExportData = () => {
     setShowExportModal(true);
+  };
+
+  const handleOpenJwtDecoder = () => {
+    setJwtInput('');
+    setJwtSecret('');
+    setJwtResult(null);
+    setJwtError(null);
+    setShowJwtModal(true);
+  };
+
+  const handleOpenTokenGenerator = () => {
+    setTokenType('api_key');
+    setTokenSubject('');
+    setTokenAudience('');
+    setTokenExpiresIn('15');
+    setTokenSecret('');
+    setTokenCustomClaims('{\n  \n}');
+    setTokenResult(null);
+    setShowTokenGeneratorModal(true);
   };
 
   const fetchAvailableTables = async () => {
@@ -1060,6 +1108,98 @@ export default function Tools() {
 
   const deselectAllTables = () => {
     setSelectedTables(new Set());
+  };
+
+  const handleDecodeJwt = async () => {
+    if (!jwtInput.trim()) {
+      toast.error('Please paste a JWT to decode');
+      return;
+    }
+
+    setIsDecodingJwt(true);
+    setJwtError(null);
+    setJwtResult(null);
+
+    try {
+      const response = await fetch('/api/tools/jwt/decode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: jwtInput.trim(),
+          secret: jwtSecret.trim() || undefined,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setJwtResult(result);
+        toast.success('JWT decoded successfully');
+      } else {
+        const message = result.error || 'Failed to decode JWT';
+        setJwtError(message);
+        toast.error(message);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to decode JWT';
+      setJwtError(message);
+      toast.error(message);
+    } finally {
+      setIsDecodingJwt(false);
+    }
+  };
+
+  const handleGenerateToken = async () => {
+    const expires = parseInt(tokenExpiresIn, 10);
+    if (isNaN(expires) || expires <= 0) {
+      toast.error('Please provide a valid expiration (minutes)');
+      return;
+    }
+
+    let parsedClaims: Record<string, any> | undefined;
+    if (tokenType === 'jwt') {
+      const trimmed = tokenCustomClaims.trim();
+      if (trimmed.length > 0 && trimmed !== '{' && trimmed !== '}') {
+        try {
+          parsedClaims = JSON.parse(trimmed);
+        } catch (_error) {
+          toast.error('Custom claims must be valid JSON');
+          return;
+        }
+      }
+    }
+
+    setIsGeneratingToken(true);
+    setTokenResult(null);
+
+    try {
+      const response = await fetch('/api/tools/token-generator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: tokenType,
+          subject: tokenSubject || undefined,
+          audience: tokenAudience || undefined,
+          expiresInMinutes: expires,
+          customClaims: parsedClaims,
+          secretOverride: tokenSecret || undefined,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setTokenResult(result);
+        addLog('success', `✅ Generated ${tokenType.replace('_', ' ')} token`, 'completed');
+        toast.success('Token generated successfully');
+      } else {
+        throw new Error(result.error || 'Failed to generate token');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to generate token';
+      addLog('error', `❌ ${message}`, 'failed');
+      toast.error(message);
+    } finally {
+      setIsGeneratingToken(false);
+    }
   };
 
   const handleExecuteExport = async () => {
@@ -1189,7 +1329,15 @@ export default function Tools() {
     }
   };
 
-  const enabledToolIds = new Set(['test-oauth', 'test-db', 'hash-password', 'health-check', 'export-data']);
+  const enabledToolIds = new Set([
+    'test-oauth',
+    'test-db',
+    'hash-password',
+    'health-check',
+    'export-data',
+    'jwt-decoder',
+    'token-generator',
+  ]);
 
   const tools: Tool[] = [
     {
@@ -1255,6 +1403,22 @@ export default function Tools() {
       icon: Download,
       action: handleExportData,
       category: 'database',
+    },
+    {
+      id: 'jwt-decoder',
+      name: 'JWT Decoder',
+      description: 'Inspect tokens and verify claims',
+      icon: Shield,
+      action: handleOpenJwtDecoder,
+      category: 'utilities',
+    },
+    {
+      id: 'token-generator',
+      name: 'Token Generator',
+      description: 'Mint short-lived test tokens',
+      icon: Zap,
+      action: handleOpenTokenGenerator,
+      category: 'utilities',
     },
   ];
 
@@ -1775,7 +1939,7 @@ export default function Tools() {
               <div className="flex items-center space-x-2">
                 <Download className="w-5 h-5 text-white" />
                 <h3 className="text-xl text-white font-light uppercase tracking-wider">Export Data</h3>
-              </div>
+    </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -1867,9 +2031,7 @@ export default function Tools() {
                             key={table.name}
                             onClick={() => toggleTableSelection(table.name)}
                             className={`w-full text-left p-3 border-b border-dashed border-white/10 last:border-b-0 transition-colors ${
-                              isSelected
-                                ? 'bg-white/10 border-white/30'
-                                : 'hover:bg-white/5'
+                              isSelected ? 'bg-white/10 border-white/30' : 'hover:bg-white/5'
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -1877,9 +2039,7 @@ export default function Tools() {
                                 <span className="text-white text-sm font-mono">{table.displayName}</span>
                                 <span className="text-xs text-gray-400 ml-2 font-mono">({table.name})</span>
                               </div>
-                              {isSelected && (
-                                <Check className="w-4 h-4 text-white" />
-                              )}
+                              {isSelected && <Check className="w-4 h-4 text-white" />}
                             </div>
                           </button>
                         );
@@ -1915,6 +2075,323 @@ export default function Tools() {
                   </>
                 )}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showJwtModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+          <div className="bg-black border border-dashed border-white/20 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-white" />
+                <h3 className="text-xl text-white font-light uppercase tracking-wider">JWT Decoder</h3>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowJwtModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">JWT Token</Label>
+                <textarea
+                  value={jwtInput}
+                  onChange={(event) => setJwtInput(event.target.value)}
+                  placeholder="Paste JWT here"
+                  className="w-full min-h-[120px] bg-black border border-dashed border-white/20 text-white font-mono text-xs p-3 rounded-none focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                    HMAC Secret (optional)
+                  </Label>
+                  <Input
+                    value={jwtSecret}
+                    onChange={(event) => setJwtSecret(event.target.value)}
+                    placeholder="Defaults to Better Auth secret if omitted"
+                    className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                  />
+                </div>
+                <div className="flex items-end justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setJwtInput('');
+                      setJwtSecret('');
+                      setJwtResult(null);
+                      setJwtError(null);
+                    }}
+                    className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                  >
+                    Clear
+                  </Button>
+                  <Button onClick={handleDecodeJwt} disabled={isDecodingJwt} className="rounded-none">
+                    {isDecodingJwt ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        Decoding...
+                      </>
+                    ) : (
+                      'Decode JWT'
+                    )}
+                  </Button>
+                </div>
+              </div>
+              {jwtError && (
+                <div className="border border-dashed border-red-500/30 bg-red-500/10 text-red-300 text-xs font-mono p-3 rounded-none">
+                  {jwtError}
+                </div>
+              )}
+              {jwtResult && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+                    <div className="border border-dashed border-white/10 p-3 space-y-2">
+                      <div className="text-gray-400 uppercase tracking-wider">Signature</div>
+                      <p className={`text-sm ${jwtResult.verified ? 'text-green-400' : 'text-yellow-300'}`}>
+                        {jwtResult.verified ? 'Verified (HS256)' : 'Not verified'}
+                      </p>
+                      <p className="text-gray-400 break-all">{jwtResult.signature || 'None'}</p>
+                    </div>
+                    <div className="border border-dashed border-white/10 p-3 space-y-2">
+                      <div className="text-gray-400 uppercase tracking-wider">Issued</div>
+                      <p className="text-white">{jwtResult.issuedAtFormatted || 'Unknown'}</p>
+                      <p className="text-gray-500">{jwtResult.issuedAgo || ''}</p>
+                    </div>
+                    <div className="border border-dashed border-white/10 p-3 space-y-2">
+                      <div className="text-gray-400 uppercase tracking-wider">Expires</div>
+                      <p className={`text-white ${jwtResult.expired ? 'text-red-300' : ''}`}>
+                        {jwtResult.expiresAtFormatted || 'No expiry'}
+                      </p>
+                      <p className="text-gray-500">{jwtResult.expiresIn || ''}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border border-dashed border-white/10 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs uppercase font-mono text-gray-400">Header</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(JSON.stringify(jwtResult.header, null, 2))}
+                          className="text-gray-400 hover:text-white rounded-none"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <pre className="text-[11px] text-gray-100 font-mono bg-black/40 p-3 overflow-x-auto max-h-64">
+                        {JSON.stringify(jwtResult.header, null, 2)}
+                      </pre>
+                    </div>
+                    <div className="border border-dashed border-white/10 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs uppercase font-mono text-gray-400">Payload</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(JSON.stringify(jwtResult.payload, null, 2))}
+                          className="text-gray-400 hover:text-white rounded-none"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <pre className="text-[11px] text-gray-100 font-mono bg-black/40 p-3 overflow-x-auto max-h-64">
+                        {JSON.stringify(jwtResult.payload, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                  {jwtResult.customClaims && Object.keys(jwtResult.customClaims).length > 0 && (
+                    <div className="border border-dashed border-white/10 p-3">
+                      <div className="text-xs uppercase font-mono text-gray-400 mb-2">Custom Claims</div>
+                      <pre className="text-[11px] text-gray-100 font-mono bg-black/40 p-3 overflow-x-auto max-h-64">
+                        {JSON.stringify(jwtResult.customClaims, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {showTokenGeneratorModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
+          <div className="bg-black border border-dashed border-white/20 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Zap className="w-5 h-5 text-white" />
+                <h3 className="text-xl text-white font-light uppercase tracking-wider">Token Generator</h3>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTokenGeneratorModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-3 block">Token Type</Label>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { id: 'api_key', label: 'API Key' },
+                    { id: 'jwt', label: 'JWT' },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => setTokenType(option.id as 'api_key' | 'jwt')}
+                      className={`px-4 py-2 border rounded-none text-sm uppercase font-mono transition-colors ${
+                        tokenType === option.id
+                          ? 'border-white/60 bg-white/10 text-white'
+                          : 'border-dashed border-white/20 text-gray-400 hover:border-white/40'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                    Subject / User ID (optional)
+                  </Label>
+                  <Input
+                    value={tokenSubject}
+                    onChange={(event) => setTokenSubject(event.target.value)}
+                    placeholder="User identifier or email"
+                    className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Audience (optional)</Label>
+                  <Input
+                    value={tokenAudience}
+                    onChange={(event) => setTokenAudience(event.target.value)}
+                    placeholder="Audience / app id"
+                    className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                    Expires In (minutes)
+                  </Label>
+                  <Input
+                    type="number"
+                    value={tokenExpiresIn}
+                    onChange={(event) => setTokenExpiresIn(event.target.value)}
+                    min="1"
+                    max="1440"
+                    className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                  />
+                </div>
+                {tokenType === 'jwt' && (
+                  <div>
+                    <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                      Override Secret (optional)
+                    </Label>
+                    <Input
+                      value={tokenSecret}
+                      onChange={(event) => setTokenSecret(event.target.value)}
+                      placeholder="Defaults to Better Auth secret"
+                      className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {tokenType === 'jwt' && (
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Custom Claims (JSON)</Label>
+                  <textarea
+                    value={tokenCustomClaims}
+                    onChange={(event) => setTokenCustomClaims(event.target.value)}
+                    placeholder='{"role":"admin"}'
+                    className="w-full min-h-[120px] bg-black border border-dashed border-white/20 text-white font-mono text-xs p-3 rounded-none focus:outline-none"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1 font-mono">
+                    Leave empty to include only default claims (iss, sub, aud, exp, iat, jti).
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTokenResult(null);
+                    setTokenSubject('');
+                    setTokenAudience('');
+                    setTokenCustomClaims('{\n  \n}');
+                  }}
+                  className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                >
+                  Reset
+                </Button>
+                <Button onClick={handleGenerateToken} disabled={isGeneratingToken} className="rounded-none">
+                  {isGeneratingToken ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Token'
+                  )}
+                </Button>
+              </div>
+
+              {tokenResult && (
+                <div className="space-y-4 border border-dashed border-white/15 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase font-mono text-gray-400">Generated Token</p>
+                      <p className="text-white font-mono text-sm break-all mt-1">{tokenResult.token}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(tokenResult.token)}
+                      className="text-gray-400 hover:text-white rounded-none"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+                    <div>
+                      <p className="text-gray-400 uppercase tracking-wider">Type</p>
+                      <p className="text-white mt-1 capitalize">{tokenResult.type.replace('_', ' ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 uppercase tracking-wider">Expires</p>
+                      <p className="text-white mt-1">{formatDateTime(tokenResult.expiresAt)}</p>
+                    </div>
+                    {tokenResult.url && (
+                      <div className="col-span-1">
+                        <p className="text-gray-400 uppercase tracking-wider">URL</p>
+                        <p className="text-white mt-1 break-all">{tokenResult.url}</p>
+                      </div>
+                    )}
+                  </div>
+                  {tokenResult.metadata && (
+                    <div className="border border-dashed border-white/10 p-3">
+                      <p className="text-xs uppercase font-mono text-gray-400 mb-2">Metadata</p>
+                      <pre className="text-[11px] text-gray-100 font-mono bg-black/40 p-3 overflow-x-auto">
+                        {JSON.stringify(tokenResult.metadata, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

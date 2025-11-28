@@ -418,19 +418,46 @@ export async function createMockSession(adapter: AuthAdapter, userId: string, in
   return await adapter?.createSession(sessionData);
 }
 
-export async function createMockAccount(adapter: AuthAdapter, userId: string, index: number) {
+export async function createMockAccount(adapter: AuthAdapter, userId: string, index: number, providerId?: string) {
+  // List of common OAuth providers
+  const providers = [
+    'github',
+    'google',
+    'discord',
+    'facebook',
+    'twitter',
+    'linkedin',
+    'apple',
+    'microsoft',
+    'gitlab',
+    'bitbucket',
+    'spotify',
+    'twitch',
+    'reddit',
+    'slack',
+    'notion',
+    'tiktok',
+    'zoom',
+  ];
+
+  // Use provided providerId or select randomly
+  const selectedProvider = providerId && providerId !== 'random' 
+    ? providerId 
+    : providers[Math.floor(Math.random() * providers.length)];
+
   const accountData = {
     userId: userId,
     type: 'oauth',
-    provider: 'github',
-    providerAccountId: `github_${index}`,
-    refresh_token: `refresh_token_${index}`,
-    access_token: `access_token_${index}`,
+    provider: selectedProvider,
+    providerId: selectedProvider,
+    accountId: `${selectedProvider}_${index}_${Date.now()}`,
+    refresh_token: `refresh_token_${index}_${Date.now()}`,
+    access_token: `access_token_${index}_${Date.now()}`,
     expires_at: Math.floor(Date.now() / 1000) + 3600,
     token_type: 'bearer',
     scope: 'read:user',
-    id_token: `id_token_${index}`,
-    session_state: `session_state_${index}`,
+    id_token: `id_token_${index}_${Date.now()}`,
+    session_state: `session_state_${index}_${Date.now()}`,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

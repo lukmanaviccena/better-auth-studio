@@ -79,7 +79,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     return (
       <div
         ref={ref}
-        className={`absolute top-full left-0 right-0 z-50 mt-1 border border-dashed border-white/20 bg-black rounded-none shadow-lg ${className}`}
+        className={`absolute top-full left-0 right-0 z-[100] mt-1 border border-dashed border-white/20 bg-black rounded-none shadow-lg max-h-60 overflow-y-auto ${className}`}
         {...props}
       >
         {children}

@@ -101,6 +101,7 @@ interface LocationData {
 interface UserAccount {
   id: string;
   providerId: string;
+  accountId: string;
   email?: string | null;
   image?: string | null;
   createdAt?: string | null;
@@ -123,6 +124,8 @@ export default function UserDetails() {
   const [showBanModal, setShowBanModal] = useState(false);
   const [showUnbanModal, setShowUnbanModal] = useState(false);
   const [showSessionSeedModal, setShowSessionSeedModal] = useState(false);
+  const [showAccountSeedModal, setShowAccountSeedModal] = useState(false);
+  const [accountSeedProvider, setAccountSeedProvider] = useState<string>('random');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
@@ -525,14 +528,17 @@ export default function UserDetails() {
       const response = await fetch(`/api/users/${userId}/accounts/${accountId}`, {
         method: 'DELETE',
       });
-      if (response.ok) {
+      const data = await response.json();
+      if (response.ok && data.success) {
+        // Remove the account from the list immediately
         setAccounts((prev) => prev.filter((account) => account.id !== accountId));
+        // Also refresh the accounts list to ensure consistency
+        await fetchUserAccounts();
         toast.success('Account unlinked successfully', { id: toastId });
       } else {
-        const data = await response.json();
         toast.error(data.error || 'Failed to unlink account', { id: toastId });
       }
-    } catch (_error) {
+    } catch (error) {
       toast.error('Failed to unlink account', { id: toastId });
     }
   };
@@ -611,6 +617,91 @@ export default function UserDetails() {
             id: 'error',
             type: 'error',
             message: `❌ Session seeding failed: ${result.error || 'Unknown error'}`,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch (error) {
+      setSeedingLogs((prev) => [
+        ...prev,
+        {
+          id: 'error',
+          type: 'error',
+          message: `❌ Network error: ${error}`,
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleSeedAccounts = async (count: number = 3, providerId: string = 'random') => {
+    if (!userId) return;
+
+    setSeedingLogs([]);
+    setIsSeeding(true);
+
+    setSeedingLogs([
+      {
+        id: 'start',
+        type: 'info',
+        message: `Starting account seeding process for ${count} accounts...`,
+        timestamp: new Date(),
+      },
+    ]);
+
+    try {
+      const response = await fetch(`/api/users/${userId}/seed-accounts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count, providerId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const progressLogs = result.results.map((r: any, index: number) => {
+          if (r.success) {
+            return {
+              id: `account-${index}`,
+              type: 'progress' as const,
+              message: `Creating account ${index + 1}: ${r.account.providerId || r.account.provider} (${r.account.accountId?.substring(0, 20) || r.account.id.substring(0, 20)}...)`,
+              timestamp: new Date(),
+              status: 'completed' as const,
+            };
+          } else {
+            return {
+              id: `account-${index}`,
+              type: 'error' as const,
+              message: `Failed to create account ${index + 1}: ${r.error}`,
+              timestamp: new Date(),
+            };
+          }
+        });
+
+        setSeedingLogs((prev) => [...prev, ...progressLogs]);
+
+        const successCount = result.results.filter((r: any) => r.success).length;
+        setSeedingLogs((prev) => [
+          ...prev,
+          {
+            id: 'complete',
+            type: 'success',
+            message: `✅ Account seeding completed! Created ${successCount}/${count} accounts successfully`,
+            timestamp: new Date(),
+          },
+        ]);
+
+        // Refresh accounts data
+        fetchUserAccounts();
+      } else {
+        setSeedingLogs((prev) => [
+          ...prev,
+          {
+            id: 'error',
+            type: 'error',
+            message: `❌ Account seeding failed: ${result.error || 'Unknown error'}`,
             timestamp: new Date(),
           },
         ]);
@@ -1096,6 +1187,24 @@ export default function UserDetails() {
 
             {activeTab === 'accounts' && (
               <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-medium text-white">Linked Accounts</h3>
+                    <p className="text-gray-400 text-sm">Manage user OAuth account connections</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSeedingLogs([]);
+                      setIsSeeding(false);
+                      setShowAccountSeedModal(true);
+                    }}
+                    className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                  >
+                    <Link2 className="w-4 h-4 mr-2" />
+                    Seed Accounts
+                  </Button>
+                </div>
                 {accounts.length === 0 ? (
                   <div className="text-center py-12">
                     <Link2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1119,7 +1228,7 @@ export default function UserDetails() {
                             <div className="flex-1">
                               <h3 className="text-white font-light inline-flex items-start">
                                 {formatProviderName(account.providerId)}
-                                <CopyableId id={account.email || user.email || `Account ID: ${account.id}`} variant="subscript" nonSliced={account.email || user.email ? true : false} />
+                                <CopyableId id={account.accountId} variant="subscript" nonSliced={account.email || user.email ? true : false} />
                               </h3>
                               <p className="text-gray-400 tracking-tight uppercase text-xs font-mono mt-1">
                                 {`ID: ${account.id}`}
@@ -1560,8 +1669,8 @@ export default function UserDetails() {
 
       {/* Session Seed Modal */}
       {showSessionSeedModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="overflow-x-hidden bg-black/90 border border-white/10 p-6 w-full pt-4 max-w-2xl rounded-none">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-hidden">
+          <div className="overflow-x-hidden overflow-y-auto bg-black/90 border border-white/10 p-6 w-full pt-4 max-w-2xl rounded-none max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-sm text-white flex items-center justify-center font-light uppercase">
                 <span className="text-white/50 mr-2">[</span>
@@ -1640,6 +1749,125 @@ export default function UserDetails() {
               <Button
                 variant="outline"
                 onClick={() => setShowSessionSeedModal(false)}
+                className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAccountSeedModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-hidden">
+          <div className="overflow-x-hidden overflow-y-auto bg-black/90 border border-white/10 p-6 w-full pt-4 max-w-2xl rounded-none max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm text-white flex items-center justify-center font-light uppercase">
+                <span className="text-white/50 mr-2">[</span>
+                <Link2 className="inline mr-2 w-3 h-3 text-white" />
+                <span className="font-mono text-white/70 uppercase">Seed Accounts</span>
+                <span className="text-white/50 ml-2">]</span>
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAccountSeedModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <hr className="border-white/10 -mx-10 border-dashed -mt-4 mb-4" />
+            <div className="space-y-6">
+              {/* Account Seeding */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="account-count" className="text-sm text-gray-400 font-light">
+                      Number of accounts
+                    </Label>
+                    <Input
+                      id="account-count"
+                      type="number"
+                      min="1"
+                      max="50"
+                      defaultValue="3"
+                      className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="account-provider" className="text-sm text-gray-400 font-light">
+                      Provider
+                    </Label>
+                    <Select value={accountSeedProvider} onValueChange={setAccountSeedProvider}>
+                      <SelectTrigger className="mt-1 border border-dashed border-white/20 bg-black/30 text-white rounded-none">
+                        <SelectValue placeholder="Select provider" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black border border-dashed border-white/20">
+                        <SelectItem value="random">Mix (Random)</SelectItem>
+                        <SelectItem value="github">GitHub</SelectItem>
+                        <SelectItem value="google">Google</SelectItem>
+                        <SelectItem value="discord">Discord</SelectItem>
+                        <SelectItem value="facebook">Facebook</SelectItem>
+                        <SelectItem value="twitter">Twitter</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                        <SelectItem value="apple">Apple</SelectItem>
+                        <SelectItem value="microsoft">Microsoft</SelectItem>
+                        <SelectItem value="gitlab">GitLab</SelectItem>
+                        <SelectItem value="bitbucket">Bitbucket</SelectItem>
+                        <SelectItem value="spotify">Spotify</SelectItem>
+                        <SelectItem value="twitch">Twitch</SelectItem>
+                        <SelectItem value="reddit">Reddit</SelectItem>
+                        <SelectItem value="slack">Slack</SelectItem>
+                        <SelectItem value="notion">Notion</SelectItem>
+                        <SelectItem value="tiktok">TikTok</SelectItem>
+                        <SelectItem value="zoom">Zoom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    const count = parseInt(
+                      (document.getElementById('account-count') as HTMLInputElement)?.value ||
+                        '3',
+                      10
+                    );
+                    handleSeedAccounts(count, accountSeedProvider);
+                  }}
+                  disabled={isSeeding}
+                  className="bg-white hover:bg-white/90 text-black border border-white/20 rounded-none disabled:opacity-50"
+                >
+                  {isSeeding ? (
+                    <>
+                      <Loader className="w-3 h-3 mr-2 animate-spin" />
+                      Seeding...
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="w-3 h-3 mr-2" />
+                      Seed Accounts
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {seedingLogs.length > 0 && (
+                <div className="mt-6">
+                  <Terminal
+                    title="Account Seeding Terminal"
+                    lines={seedingLogs}
+                    isRunning={isSeeding}
+                    className="w-full"
+                    defaultCollapsed={true}
+                  />
+                </div>
+              )}
+            </div>
+            <hr className="border-white/10 -mx-10 border-dashed mt-10" />
+            <div className="flex justify-end mt-6 pt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowAccountSeedModal(false)}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
               >
                 Close

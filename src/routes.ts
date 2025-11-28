@@ -1,3 +1,4 @@
+import { createHmac, randomBytes } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -247,6 +248,22 @@ export function createRoutes(
   geoDbPath?: string
 ): Router {
   const router = Router();
+  const base64UrlEncode = (value: Buffer | string) =>
+    Buffer.from(value).toString('base64').replace(/=+$/u, '').replace(/\+/gu, '-').replace(/\//gu, '_');
+  const base64UrlDecode = (value: string) => {
+    const normalized = value.replace(/-/gu, '+').replace(/_/gu, '/');
+    const padded = normalized + '==='.slice((normalized.length + 3) % 4);
+    return Buffer.from(padded, 'base64').toString('utf8');
+  };
+  const formatRelativeDuration = (ms: number) => {
+    const absMs = Math.abs(ms);
+    const mins = Math.floor(absMs / 60000);
+    if (mins >= 1) {
+      return `${mins} min${mins === 1 ? '' : 's'}`;
+    }
+    const secs = Math.max(1, Math.floor(absMs / 1000));
+    return `${secs}s`;
+  };
 
   if (geoDbPath) {
     setGeoDbPath(geoDbPath);
@@ -958,6 +975,7 @@ export function createRoutes(
         .map((account: any) => ({
           id: account.id,
           providerId: account.providerId || account.provider || 'unknown',
+          accountId: account.accountId || account.providerAccountId || account.id,
           createdAt: account.createdAt || account.created_at || null,
           updatedAt: account.updatedAt || account.updated_at || null,
           email: account.email || account.login?.email || null,
@@ -990,7 +1008,7 @@ export function createRoutes(
         return res.status(404).json({ error: 'Account not found for this user' });
       }
 
-      await adapter.delete({ model: 'account', id: accountId });
+      await adapter.delete({ model: 'account', where: [{ field: 'id', value: accountId }] });
       res.json({ success: true });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to unlink account' });
@@ -3530,6 +3548,66 @@ export function createRoutes(
     }
   });
 
+  router.post('/api/users/:userId/seed-accounts', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const { count = 1, providerId } = req.body;
+      const adapter = await getAuthAdapterWithConfig();
+
+      if (!adapter) {
+        return res.status(500).json({ error: 'Auth adapter not available' });
+      }
+      // @ts-expect-error
+      const user = await adapter.findOne({
+        model: 'user',
+        where: [{ field: 'id', value: userId }],
+      });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const results = [];
+      for (let i = 0; i < count; i++) {
+        try {
+          if (typeof adapter.createAccount !== 'function') {
+            throw new Error('createAccount method not available on adapter');
+          }
+
+          const account = await createMockAccount(adapter, userId, i + 1, providerId);
+          if (!account) {
+            throw new Error('Failed to create account');
+          }
+
+          results.push({
+            success: true,
+            account: {
+              id: account.id,
+              userId: account.userId,
+              providerId: account.providerId || account.provider,
+              provider: account.provider,
+              accountId: account.accountId || account.providerAccountId,
+              createdAt: account.createdAt,
+              updatedAt: account.updatedAt,
+            },
+          });
+        } catch (error) {
+          results.push({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Seeded ${results.filter((r) => r.success).length} accounts for user`,
+        results,
+      });
+    } catch (_error) {
+      res.status(500).json({ error: 'Failed to seed accounts for user' });
+    }
+  });
+
   router.post('/api/seed/accounts', async (req: Request, res: Response) => {
     try {
       const { count = 1 } = req.body;
@@ -4169,6 +4247,166 @@ export function createRoutes(
       res.json({ hasResult: false });
     } catch (_error) {
       res.status(500).json({ hasResult: false, error: 'Failed to check status' });
+    }
+  });
+
+  router.post('/api/tools/jwt/decode', async (req: Request, res: Response) => {
+    try {
+      const { token, secret } = req.body || {};
+
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ success: false, error: 'JWT token is required' });
+      }
+
+      const segments = token.split('.');
+      if (segments.length < 2) {
+        return res.status(400).json({ success: false, error: 'Token must have at least header and payload' });
+      }
+
+      let header: Record<string, any> = {};
+      let payload: Record<string, any> = {};
+
+      try {
+        header = JSON.parse(base64UrlDecode(segments[0]));
+        payload = JSON.parse(base64UrlDecode(segments[1]));
+      } catch (_error) {
+        return res.status(400).json({ success: false, error: 'Invalid token encoding' });
+      }
+
+      const signature = segments[2] || null;
+      let verified = false;
+      let usedSecret: string | null = null;
+
+      if (signature && header.alg === 'HS256') {
+        const secretToUse = typeof secret === 'string' && secret.trim().length > 0 ? secret : authConfig.secret;
+        if (secretToUse) {
+          const signingInput = `${segments[0]}.${segments[1]}`;
+          const expected = createHmac('sha256', secretToUse).update(signingInput).digest('base64url');
+          verified = expected === signature;
+          usedSecret = secretToUse === authConfig.secret ? 'authConfig.secret' : 'custom';
+        }
+      }
+
+      const now = Date.now();
+      const issuedAtSeconds = typeof payload.iat === 'number' ? payload.iat : null;
+      const expiresAtSeconds = typeof payload.exp === 'number' ? payload.exp : null;
+      const issuedAtFormatted = issuedAtSeconds ? new Date(issuedAtSeconds * 1000).toISOString() : null;
+      const expiresAtFormatted = expiresAtSeconds ? new Date(expiresAtSeconds * 1000).toISOString() : null;
+      const issuedAgo =
+        issuedAtSeconds && issuedAtFormatted
+          ? `${formatRelativeDuration(now - issuedAtSeconds * 1000)} ago`
+          : null;
+      const expiresInMs = expiresAtSeconds ? expiresAtSeconds * 1000 - now : null;
+      const expiresIn =
+        expiresInMs !== null
+          ? expiresInMs > 0
+            ? `${formatRelativeDuration(expiresInMs)} remaining`
+            : `${formatRelativeDuration(expiresInMs)} ago`
+          : null;
+      const expired = expiresInMs !== null ? expiresInMs <= 0 : false;
+
+      const standardClaims = new Set([
+        'iss',
+        'sub',
+        'aud',
+        'exp',
+        'nbf',
+        'iat',
+        'jti',
+        'auth_time',
+      ]);
+      const customClaims = Object.fromEntries(
+        Object.entries(payload).filter(([key]) => !standardClaims.has(key))
+      );
+
+      res.json({
+        success: true,
+        header,
+        payload,
+        signature,
+        verified,
+        usedSecret,
+        issuedAtFormatted,
+        issuedAgo,
+        expiresAtFormatted,
+        expiresIn,
+        expired,
+        customClaims,
+      });
+    } catch (_error) {
+      res.status(500).json({ success: false, error: 'Failed to decode JWT' });
+    }
+  });
+
+  router.post('/api/tools/token-generator', async (req: Request, res: Response) => {
+    try {
+      const {
+        type = 'api_key',
+        subject,
+        audience,
+        expiresInMinutes = 15,
+        customClaims,
+        secretOverride,
+      } = req.body || {};
+
+      const safeType = typeof type === 'string' ? type : 'api_key';
+      const expiresMinutes = Number.isFinite(Number(expiresInMinutes)) ? Number(expiresInMinutes) : 15;
+      const boundedMinutes = Math.min(Math.max(expiresMinutes, 1), 1440);
+      const expiresAt = new Date(Date.now() + boundedMinutes * 60 * 1000).toISOString();
+
+      if (safeType === 'api_key') {
+        const token = `ba_api_${randomBytes(24).toString('base64url')}`;
+        return res.json({
+          success: true,
+          type: safeType,
+          token,
+          expiresAt,
+          metadata: {
+            subject: subject || null,
+          },
+        });
+      }
+
+      if (safeType === 'jwt') {
+        const claims =
+          customClaims && typeof customClaims === 'object' ? (customClaims as Record<string, any>) : {};
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const payload = {
+          iss: authConfig.baseURL || 'better-auth-studio',
+          aud: audience || authConfig.baseURL || 'better-auth-studio',
+          sub: subject || 'test-user',
+          iat: nowSeconds,
+          exp: nowSeconds + boundedMinutes * 60,
+          jti: `studio_${Date.now()}`,
+          ...claims,
+        };
+        const header = { alg: 'HS256', typ: 'JWT' };
+        const encodedHeader = base64UrlEncode(JSON.stringify(header));
+        const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+        const secretToUse = typeof secretOverride === 'string' && secretOverride.trim().length > 0
+          ? secretOverride
+          : authConfig.secret || 'better-auth-secret';
+        const signature = createHmac('sha256', secretToUse)
+          .update(`${encodedHeader}.${encodedPayload}`)
+          .digest('base64url');
+        const token = `${encodedHeader}.${encodedPayload}.${signature}`;
+
+        return res.json({
+          success: true,
+          type: safeType,
+          token,
+          expiresAt,
+          metadata: {
+            subject: payload.sub,
+            audience: payload.aud,
+            algorithm: header.alg,
+          },
+        });
+      }
+
+      res.status(400).json({ success: false, error: 'Unsupported token type' });
+    } catch (_error) {
+      res.status(500).json({ success: false, error: 'Failed to generate token' });
     }
   });
 
