@@ -208,7 +208,6 @@ export default function EmailEditor() {
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
     const [showFieldSimulator, setShowFieldSimulator] = useState(false);
 
-    // Prevent body scroll when modal is open
     useEffect(() => {
         if (showCodeModal) {
             document.body.style.overflow = 'hidden';
@@ -226,7 +225,6 @@ export default function EmailEditor() {
             setSelectedTemplate(templateId);
             setEmailHtml(template.html);
             setEmailSubject(template.subject);
-            // Initialize field values with defaults
             const defaults: Record<string, string> = {};
             template.fields.forEach(field => {
                 if (field.includes('user.name')) defaults[field] = 'John Doe';
@@ -380,7 +378,6 @@ export const auth = betterAuth({
         (template) => activeCategory === 'all' || template.category === activeCategory
     );
 
-    // Replace field placeholders with simulated values
     const getSimulatedHtml = (html: string): string => {
         if (!showFieldSimulator || Object.keys(fieldValues).length === 0) {
             return html;
@@ -395,12 +392,11 @@ export const auth = betterAuth({
 
     return (
         <div className="h-screen flex flex-col bg-black">
-            {/* Header */}
             <div className="flex items-center justify-between p-5 pt-7">
                 <div className='pb-8'>
-                    <h1 className="text-3xl font-normal text-white tracking-tight">Tools</h1>
+                    <h1 className="text-3xl font-normal text-white tracking-tight">Emails</h1>
                     <p className="text-gray-300 mt-2 uppercase font-mono font-light text-xs">
-                        Utility tools for managing and testing your Better Auth setup
+                        Customize your email templates with a visual editor
                     </p>
                 </div>
             </div>
@@ -411,7 +407,6 @@ export const auth = betterAuth({
 
 
             <div className="flex-1 flex overflow-hidden">
-                {/* Left Sidebar - Templates */}
                 <div className="w-80 border-r border-dashed border-white/15 flex flex-col overflow-hidden">
                     <div className="p-4 border-b border-dashed border-white/15 flex-shrink-0">
                         <h2 className="text-lg font-light text-white uppercase tracking-wider mb-4">Templates</h2>
@@ -447,11 +442,9 @@ export const auth = betterAuth({
                     </div>
                 </div>
 
-                {/* Main Content Area */}
                 <div className="flex-1 flex flex-col overflow-hidden">
                     {selectedTemplate ? (
                         <>
-                            {/* Header */}
                             <div className="border-b border-dashed border-white/10 p-4 flex items-center justify-between">
                                 <div>
                                     <h3 className="text-lg font-light text-white uppercase tracking-wider">
@@ -486,9 +479,7 @@ export const auth = betterAuth({
                                 </div>
                             </div>
 
-                            {/* Editor Layout */}
                             <div className="flex-1 flex flex-col overflow-hidden">
-                                {/* Subject Bar */}
                                 <div className="p-4 border-b border-dashed border-white/10 bg-black/40">
                                     <div className="flex items-end gap-4">
                                         <div className="flex-1">
@@ -510,7 +501,6 @@ export const auth = betterAuth({
                                     </div>
                                 </div>
 
-                                {/* Dynamic Fields Simulator */}
                                 {showFieldSimulator && selectedTemplate && (
                                     <div className="p-4 border-b border-dashed border-white/10 bg-black/30">
                                         <Label className="text-xs uppercase font-mono text-gray-400 mb-3 block">Field Simulator</Label>
@@ -530,7 +520,6 @@ export const auth = betterAuth({
                                     </div>
                                 )}
 
-                                {/* Dynamic Fields Quick Access */}
                                 {selectedTemplate && (
                                     <div className="p-4 border-b border-dashed border-white/10 bg-black/40">
                                         <Label className="text-xs uppercase font-mono text-gray-400 mb-3 block">Dynamic Fields</Label>
@@ -552,7 +541,6 @@ export const auth = betterAuth({
                                     </div>
                                 )}
 
-                                {/* Visual Editor - Full Width */}
                                 <div className="flex-1 overflow-hidden">
                                     <VisualEmailBuilder
                                         html={showFieldSimulator ? getSimulatedHtml(emailHtml) : emailHtml}
@@ -572,7 +560,6 @@ export const auth = betterAuth({
                 </div>
             </div>
 
-            {/* Code Export Modal */}
             {showCodeModal && selectedTemplate && (
                 <div
                     className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 overflow-hidden"

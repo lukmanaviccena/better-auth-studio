@@ -48,7 +48,6 @@ interface VisualEmailBuilderProps {
     onChange: (html: string) => void;
 }
 
-// Parse HTML to blocks
 const parseHtmlToBlocks = (html: string): EmailBlock[] => {
     if (!html) return [];
 
@@ -200,15 +199,12 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
     const isInternalUpdateRef = useRef(false);
     const lastHtmlRef = useRef<string>('');
 
-    // Parse HTML to blocks on mount and when HTML changes externally (not from our own updates)
     useEffect(() => {
         if (html && html !== lastHtmlRef.current && !isInternalUpdateRef.current) {
             const parsedBlocks = parseHtmlToBlocks(html);
-            // Preserve selection if block still exists
             const currentSelectedId = selectedBlockId;
             setBlocks(parsedBlocks);
 
-            // Restore selection if the block still exists
             if (currentSelectedId && parsedBlocks.find(b => b.id === currentSelectedId)) {
                 setSelectedBlockId(currentSelectedId);
             }
@@ -217,14 +213,12 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
         }
     }, [html, selectedBlockId]);
 
-    // Update HTML when blocks change
     useEffect(() => {
         if (blocks.length > 0) {
             isInternalUpdateRef.current = true;
             const newHtml = blocksToHtml(blocks);
             lastHtmlRef.current = newHtml;
             onChange(newHtml);
-            // Reset flag after a short delay to allow external updates
             setTimeout(() => {
                 isInternalUpdateRef.current = false;
             }, 100);
@@ -312,7 +306,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
     const createBlurHandler = (blockId: string) => {
         return () => {
             setEditingBlockId(null);
-            // Keep selection when blurring from inline edit
             if (selectedBlockId !== blockId) {
                 setSelectedBlockId(blockId);
             }
@@ -330,7 +323,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
     };
 
     const handleInput = (blockId: string, newContent: string) => {
-        // Save cursor position before update
         const element = editingRefs.current.get(blockId);
         let cursorPosition = 0;
         if (element) {
@@ -343,7 +335,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
 
         updateBlock(blockId, { content: newContent });
 
-        // Restore cursor position after update
         setTimeout(() => {
             const updatedElement = editingRefs.current.get(blockId);
             if (updatedElement && cursorPosition > 0) {
@@ -361,13 +352,11 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                         selection?.addRange(range);
                     }
                 } catch (e) {
-                    // Fallback: just focus the element
                     updatedElement.focus();
                 }
             }
         }, 0);
 
-        // Ensure selection is maintained during editing
         if (selectedBlockId !== blockId) {
             setSelectedBlockId(blockId);
         }
@@ -375,7 +364,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
 
     return (
         <div className="flex-1 flex overflow-hidden h-full">
-            {/* Left: Canvas */}
             <div className="flex-1 flex flex-col overflow-hidden bg-white border-r border-dashed border-white/20" style={{ minWidth: '500px', height: '100%' }}>
                 <div className="p-4 border-y border-dashed border-white/10 bg-black/90">
                     <div className="flex items-center justify-between">
@@ -450,13 +438,11 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                                         key={block.id}
                                         className={`relative group mb-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
                                         onClick={(e) => {
-                                            // Don't select if clicking on contentEditable element
                                             if ((e.target as HTMLElement).contentEditable !== 'true') {
                                                 setSelectedBlockId(block.id);
                                             }
                                         }}
                                     >
-                                        {/* Block Controls */}
                                         {isSelected && (
                                             <div className="absolute -left-12 top-0 flex flex-col gap-1 z-10">
                                                 <button
@@ -504,7 +490,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                                             </div>
                                         )}
 
-                                        {/* Block Content */}
                                         {block.type === 'heading' && (
                                             <h1
                                                 ref={(el) => {
@@ -576,7 +561,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                                             <div
                                                 style={{ textAlign: block.styles.textAlign || 'center', margin: block.styles.margin || '16px 0' }}
                                                 onClick={(e) => {
-                                                    // Prevent any clicks on the wrapper when selecting/editing
                                                     if (isSelected || isEditing) {
                                                         e.preventDefault();
                                                         e.stopPropagation();
@@ -597,7 +581,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                                                         handleDoubleClick(block.id);
                                                     }}
                                                     onClick={(e) => {
-                                                        // Always prevent navigation in editor mode
                                                         e.preventDefault();
                                                         e.stopPropagation();
                                                         if (!isEditing) {
@@ -662,7 +645,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                 </div>
             </div>
 
-            {/* Right: Properties Panel */}
             {selectedBlock && (
                 <div className="w-96 border-l border-dashed border-white/20 bg-black/40 flex flex-col flex-shrink-0 overflow-hidden" style={{ minWidth: '384px', maxWidth: '384px', height: '100%' }}>
                     <div className="p-4 border-b border-dashed border-white/10 bg-black/40 z-10 flex-shrink-0">
@@ -672,7 +654,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                     </div>
 
                     <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4" style={{ overscrollBehavior: 'contain', minHeight: 0 }}>
-                        {/* Content */}
                         {selectedBlock.type !== 'divider' && selectedBlock.type !== 'image' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Content</Label>
@@ -685,7 +666,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Link URL for buttons */}
                         {selectedBlock.type === 'button' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Link URL</Label>
@@ -700,7 +680,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Image URL */}
                         {selectedBlock.type === 'image' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Image URL</Label>
@@ -724,7 +703,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Font Family */}
                         {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph' || selectedBlock.type === 'button') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Font Family</Label>
@@ -748,7 +726,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Font Size */}
                         {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph' || selectedBlock.type === 'button') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Font Size</Label>
@@ -763,7 +740,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Text Color */}
                         {selectedBlock.type !== 'divider' && selectedBlock.type !== 'image' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Text Color</Label>
@@ -778,7 +754,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Background Color */}
                         {(selectedBlock.type === 'button' || selectedBlock.type === 'heading') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Background Color</Label>
@@ -793,7 +768,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Text Align */}
                         {selectedBlock.type !== 'divider' && selectedBlock.type !== 'image' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Text Align</Label>
@@ -815,7 +789,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Font Weight */}
                         {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph' || selectedBlock.type === 'button') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Font Weight</Label>
@@ -837,7 +810,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Line Height */}
                         {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Line Height</Label>
@@ -852,7 +824,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Letter Spacing */}
                         {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph' || selectedBlock.type === 'button') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Letter Spacing</Label>
@@ -867,7 +838,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Text Decoration */}
                         {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph' || selectedBlock.type === 'button') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Text Decoration</Label>
@@ -889,7 +859,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Margin */}
                         {selectedBlock.type !== 'divider' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Margin</Label>
@@ -905,7 +874,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Padding (for buttons and headings) */}
                         {(selectedBlock.type === 'button' || selectedBlock.type === 'heading') && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Padding</Label>
@@ -921,7 +889,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Border Radius */}
                         {selectedBlock.type === 'button' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Border Radius</Label>
@@ -936,7 +903,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Border (for buttons) */}
                         {selectedBlock.type === 'button' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Border</Label>
@@ -952,7 +918,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </div>
                         )}
 
-                        {/* Width and Height (for images) */}
                         {selectedBlock.type === 'image' && (
                             <>
                                 <div>
@@ -980,7 +945,6 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             </>
                         )}
 
-                        {/* Divider Border */}
                         {selectedBlock.type === 'divider' && (
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Border Style</Label>
