@@ -10,7 +10,10 @@ import {
     Bold,
     Italic,
     Underline,
-    Strikethrough
+    Strikethrough,
+    AlignLeft,
+    AlignCenter,
+    AlignRight
 } from 'lucide-react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from './ui/button';
@@ -862,7 +865,11 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                             <div>
                                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">Text Align</Label>
                                 <div className="flex gap-2">
-                                    {(['left', 'center', 'right'] as const).map(align => (
+                                    {([
+                                        { value: 'left' as const, icon: AlignLeft },
+                                        { value: 'center' as const, icon: AlignCenter },
+                                        { value: 'right' as const, icon: AlignRight }
+                                    ]).map(({ value: align, icon: Icon }) => (
                                         <Button
                                             key={align}
                                             variant={selectedBlock.styles.textAlign === align ? 'default' : 'ghost'}
@@ -870,9 +877,10 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                                             onClick={() => updateBlock(selectedBlock.id, {
                                                 styles: { ...selectedBlock.styles, textAlign: align }
                                             })}
-                                            className="flex-1 text-xs rounded-none border border-dashed border-white/20"
+                                            className="flex-1 rounded-none border border-dashed border-white/20 flex items-center justify-center"
+                                            title={align}
                                         >
-                                            {align}
+                                            <Icon className="w-4 h-4" />
                                         </Button>
                                     ))}
                                 </div>
