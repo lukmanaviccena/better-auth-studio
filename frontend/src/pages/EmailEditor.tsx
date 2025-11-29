@@ -496,7 +496,7 @@ export const auth = betterAuth({
                                             onClick={() => setShowFieldSimulator(!showFieldSimulator)}
                                             className="h-10 border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
                                         >
-                                            {showFieldSimulator ? 'Hide' : 'Show'} Field Simulator
+                                            {showFieldSimulator ? 'Hide' : 'Show'} Field 
                                         </Button>
                                     </div>
                                 </div>
