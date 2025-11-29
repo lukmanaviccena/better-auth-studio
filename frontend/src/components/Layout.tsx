@@ -93,6 +93,9 @@ function normalizeStudioStatus(status?: string): WatchIndicatorStatus {
   }
 }
 
+const EMAIL_TEMPLATES_COUNT = 5;
+const TOOLS_COUNT = 11;
+
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { counts, loading } = useCounts();
@@ -102,6 +105,7 @@ export default function Layout({ children }: LayoutProps) {
   const [watchState, setWatchState] = useState<WatchIndicatorState>({
     status: 'connecting',
   });
+  const [schemaCount, setSchemaCount] = useState<number | null>(null);
   const pendingRefreshRef = useRef(false);
   const refreshRecoveryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingHardRefreshRef = useRef(false);
@@ -148,7 +152,20 @@ export default function Layout({ children }: LayoutProps) {
       } catch (_error) {}
     };
 
+    const fetchSchemaCount = async () => {
+      try {
+        const response = await fetch('/api/database/schema');
+        const data = await response.json();
+        if (data.success && data.schema && data.schema.tables) {
+          setSchemaCount(data.schema.tables.length);
+        }
+      } catch (_error) {
+        setSchemaCount(null);
+      }
+    };
+
     fetchVersion();
+    fetchSchemaCount();
 
     return () => {
       clearRecoveryTimeout();
@@ -278,9 +295,24 @@ export default function Layout({ children }: LayoutProps) {
       icon: Building2,
       badge: loading ? '...' : formatCount(counts.organizations),
     },
-    { name: 'Database', href: '/database', icon: Database },
-    { name: 'Emails', href: '/emails', icon: Mail },
-    { name: 'Tools', href: '/tools', icon: Wrench },
+    {
+      name: 'Database',
+      href: '/database',
+      icon: Database,
+      badge: schemaCount !== null ? formatCount(schemaCount) : undefined,
+    },
+    {
+      name: 'Emails',
+      href: '/emails',
+      icon: Mail,
+      badge: formatCount(EMAIL_TEMPLATES_COUNT),
+    },
+    {
+      name: 'Tools',
+      href: '/tools',
+      icon: Wrench,
+      badge: formatCount(TOOLS_COUNT),
+    },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
