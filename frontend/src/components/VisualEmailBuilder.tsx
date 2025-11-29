@@ -383,9 +383,10 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
             setSelectedBlockId(blockId);
         }
     };
+
     return (
-        <div className="flex-1 flex overflow-hidden h-[70vh] min-h-full">
-            <div className="flex-1 flex flex-col overflow-hidden bg-white border-r border-dashed border-white/20" style={{ minWidth: '500px', height: '100%' }}>
+        <div className="flex-1 flex overflow-hidden h-full min-h-0">
+            <div className="flex-1 flex flex-col overflow-hidden bg-white border-r border-dashed border-white/20 min-h-0" style={{ minWidth: '500px' }}>
                 <div className="p-4 border-y border-dashed border-white/10 bg-black/90">
                     <div className="flex items-center justify-between">
                         <Label className="text-xs uppercase font-mono text-gray-400">Email Canvas</Label>
@@ -443,7 +444,7 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 bg-gray-50" style={{ overscrollBehavior: 'contain', minHeight: 0 }}>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 bg-gray-50 min-h-0" style={{ overscrollBehavior: 'contain' }}>
                     <div className="max-w-2xl mx-auto bg-white shadow-lg p-8" style={{ width: '100%', paddingBottom: '2rem' }}>
                         {blocks.length === 0 ? (
                             <div className="text-center py-20 text-gray-400">

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { CodeBlock } from '../components/CodeBlock';
 import VisualEmailBuilder from '../components/VisualEmailBuilder';
 
 interface EmailTemplate {
@@ -394,8 +395,7 @@ export const auth = betterAuth({
     };
 
     return (
-        <div className="h-screen flex flex-col bg-black">
-            {/* Header */}
+        <div className="h-[130vh] flex flex-col bg-black">
             <div className="flex items-center justify-between p-5 pt-7">
                 <div className='pb-8'>
                     <h1 className="text-3xl font-normal text-white tracking-tight">Emails</h1>
@@ -420,8 +420,8 @@ export const auth = betterAuth({
                                     key={category}
                                     onClick={() => setActiveCategory(category)}
                                     className={`px-2 py-1 text-[10px] font-mono uppercase border border-dashed rounded-none transition-colors ${activeCategory === category
-                                            ? 'border-white/30 bg-white/5 text-white'
-                                            : 'border-white/10 bg-black/40 text-gray-300 hover:border-white/20'
+                                        ? 'border-white/30 bg-white/5 text-white'
+                                        : 'border-white/10 bg-black/40 text-gray-300 hover:border-white/20'
                                         }`}
                                 >
                                     {category}
@@ -435,8 +435,8 @@ export const auth = betterAuth({
                                 key={template.id}
                                 onClick={() => handleSelectTemplate(template.id)}
                                 className={`w-full text-left p-3 border border-dashed rounded-none transition-colors ${selectedTemplate === template.id
-                                        ? 'border-white/30 bg-white/5 text-white'
-                                        : 'border-white/10 bg-black/40 text-gray-300 hover:border-white/20 hover:bg-white/5'
+                                    ? 'border-white/30 bg-white/5 text-white'
+                                    : 'border-white/10 bg-black/40 text-gray-300 hover:border-white/20 hover:bg-white/5'
                                     }`}
                             >
                                 <div className="text-sm uppercase font-mono">{template.name}</div>
@@ -446,12 +446,10 @@ export const auth = betterAuth({
                     </div>
                 </div>
 
-                {/* Main Content Area */}
                 <div className="flex-1 flex flex-col overflow-hidden">
                     {selectedTemplate ? (
                         <>
-                            {/* Header */}
-                            <div className="border-b border-dashed border-white/10 p-4 flex items-center justify-between">
+                            <div className="border-b border-dashed border-white/15 p-4 flex items-center justify-between">
                                 <div>
                                     <h3 className="text-lg font-light text-white uppercase tracking-wider">
                                         {emailTemplates[selectedTemplate]?.name}
@@ -509,7 +507,7 @@ export const auth = betterAuth({
                                 {showFieldSimulator && selectedTemplate && (
                                     <div className="p-4 border-b overflow-hidden border-dashed border-white/10 bg-black/30">
                                         <Label className="text-xs uppercase font-mono text-gray-400 mb-3 block">Fields</Label>
-                                        <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-hidden">
+                                        <div className="grid grid-cols-2 gap-3 max-h-full overflow-y-hidden">
                                             {emailTemplates[selectedTemplate]?.fields.map((field) => (
                                                 <div key={field}>
                                                     <Label className="text-xs font-mono text-gray-400 mb-1 block">{field}</Label>
@@ -524,8 +522,6 @@ export const auth = betterAuth({
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Dynamic Fields Quick Access */}
                                 {selectedTemplate && (
                                     <div className="p-4 border-b border-dashed border-white/10 bg-black/40">
                                         <Label className="text-xs uppercase font-mono text-gray-400 mb-3 block">Dynamic Fields</Label>
@@ -547,7 +543,6 @@ export const auth = betterAuth({
                                     </div>
                                 )}
 
-                                {/* Visual Editor - Full Width */}
                                 <div className="flex-1 overflow-hidden">
                                     <VisualEmailBuilder
                                         html={showFieldSimulator ? getSimulatedHtml(emailHtml) : emailHtml}
@@ -570,7 +565,7 @@ export const auth = betterAuth({
             {/* Code Export Modal */}
             {showCodeModal && selectedTemplate && (
                 <div
-                    className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 overflow-hidden"
+                    className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 overflow-hidden"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) {
                             setShowCodeModal(false);
@@ -578,14 +573,19 @@ export const auth = betterAuth({
                     }}
                 >
                     <div
-                        className="bg-black border border-dashed border-white/20 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                        className="bg-black border border-white/15 rounded-none p-0 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center space-x-2">
-                                <Code className="w-5 h-5 text-white" />
-                                <h3 className="text-xl text-white font-light uppercase tracking-wider">Code Snippet</h3>
+                        <div className="flex items-center justify-between px-6 py-0 pt-2  border-white/15 border-b-0 bg-black/50">
+                            <div className="flex items-center justify-between p-2 pt-2">
+                                <div className='pb-2'>
+                                    <h1 className="text-xl font-normal uppercase text-white tracking-tight">Export</h1>
+                                    <p className="text-gray-300 mt-2 uppercase font-mono font-light text-xs">
+                                        Export the code for the selected template
+                                    </p>
+                                </div>
                             </div>
+
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -595,22 +595,19 @@ export const auth = betterAuth({
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
-                        <div className="border border-dashed border-white/10 p-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <Label className="text-xs uppercase font-mono text-gray-400">Better Auth Integration</Label>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => copyToClipboard(generateCodeSnippet(selectedTemplate))}
-                                    className="text-gray-400 hover:text-white rounded-none"
-                                >
-                                    <Copy className="w-4 h-4 mr-1" />
-                                    Copy
-                                </Button>
-                            </div>
-                            <pre className="text-[11px] text-gray-100 font-mono bg-black/40 p-4 overflow-x-auto">
-                                <code>{generateCodeSnippet(selectedTemplate)}</code>
-                            </pre>
+                        <div className='flex flex-col items-center justify-center'>
+                            <hr className="w-full border-white/15 h-px" />
+                            <div className="relative z-20 h-8 w-[calc(100%)] mx-auto -translate-x-1/2 left-1/2 bg-[repeating-linear-gradient(-45deg,#e0f2fe,#e0f2fe_1px,transparent_1px,transparent_6px)] opacity-[8%]" />
+                            <hr className="w-full border-white/15 h-px" />
+                        </div>
+
+
+                        <div className="flex-1 overflow-auto p-6 bg-black">
+                            <CodeBlock
+                                code={generateCodeSnippet(selectedTemplate)}
+                                language="typescript"
+                                fileName="auth.ts"
+                            />
                         </div>
                     </div>
                 </div>
