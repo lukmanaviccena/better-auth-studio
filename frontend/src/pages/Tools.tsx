@@ -443,7 +443,6 @@ export default function Tools() {
   } | null>(null);
   const [isCheckingPassword, setIsCheckingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // Prevent body scroll when Config Validator modal is open
   useEffect(() => {
     if (showConfigValidator) {
       document.body.style.overflow = 'hidden';
@@ -455,7 +454,6 @@ export default function Tools() {
     };
   }, [showConfigValidator]);
 
-  // Prevent body scroll when Password Strength modal is open
   useEffect(() => {
     if (showPasswordStrengthModal) {
       document.body.style.overflow = 'hidden';
@@ -467,7 +465,6 @@ export default function Tools() {
     };
   }, [showPasswordStrengthModal]);
 
-  // Prevent body scroll when UUID Generator modal is open
   useEffect(() => {
     if (showUuidModal) {
       document.body.style.overflow = 'hidden';
@@ -742,7 +739,6 @@ export default function Tools() {
     sessionStorage.removeItem(`oauth_test_result_${sessionId}`);
   };
 
-  // Check for OAuth callback results from URL (fallback if postMessage fails)
   useEffect(() => {
     const oauthResult = searchParams.get('oauth_test_result');
     if (oauthResult) {
