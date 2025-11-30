@@ -9,6 +9,7 @@ import {
   Globe,
   Info,
   Key,
+  Lock,
   Shield,
   TestTube,
   XCircle,
@@ -428,6 +429,20 @@ export default function Tools() {
     version?: string;
     variant?: string;
   } | null>(null);
+  const [showPasswordStrengthModal, setShowPasswordStrengthModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState<{
+    score: number;
+    strength: 'weak' | 'fair' | 'good' | 'strong' | 'very-strong';
+    checks: Array<{ name: string; passed: boolean; message: string }>;
+    meetsConfig: boolean;
+    configRequirements: {
+      minLength: number;
+      maxLength: number;
+    };
+  } | null>(null);
+  const [isCheckingPassword, setIsCheckingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   // Prevent body scroll when Config Validator modal is open
   useEffect(() => {
     if (showConfigValidator) {
@@ -439,6 +454,18 @@ export default function Tools() {
       document.body.style.overflow = '';
     };
   }, [showConfigValidator]);
+
+  // Prevent body scroll when Password Strength modal is open
+  useEffect(() => {
+    if (showPasswordStrengthModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showPasswordStrengthModal]);
 
   // Prevent body scroll when UUID Generator modal is open
   useEffect(() => {
@@ -1120,6 +1147,46 @@ export default function Tools() {
     setShowUuidModal(true);
   };
 
+  const handleOpenPasswordStrengthChecker = () => {
+    setShowPasswordStrengthModal(true);
+    setPasswordInput('');
+    setPasswordStrength(null);
+    setShowPassword(false);
+  };
+
+  const handleCheckPasswordStrength = async () => {
+    if (!passwordInput.trim()) {
+      toast.error('Please enter a password to check');
+      return;
+    }
+
+    setIsCheckingPassword(true);
+    setPasswordStrength(null);
+
+    try {
+      const response = await fetch('/api/tools/password-strength', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: passwordInput,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setPasswordStrength(result);
+        toast.success('Password strength checked');
+      } else {
+        toast.error(result.error || 'Failed to check password strength');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to check password strength';
+      toast.error(message);
+    } finally {
+      setIsCheckingPassword(false);
+    }
+  };
+
   const handleGenerateUuids = () => {
     const count = Math.min(Math.max(parseInt(uuidCount) || 1, 1), 100);
     const results: string[] = [];
@@ -1475,6 +1542,7 @@ export default function Tools() {
     'token-generator',
     'validate-config',
     'uuid-generator',
+    'password-strength',
   ]);
 
   const tools: Tool[] = [
@@ -1556,6 +1624,14 @@ export default function Tools() {
       description: 'Generate and validate UUIDs',
       icon: FileText,
       action: handleOpenUuidGenerator,
+      category: 'utilities',
+    },
+    {
+      id: 'password-strength',
+      name: 'Password Strength Checker',
+      description: 'Validate passwords against your config',
+      icon: Lock,
+      action: handleOpenPasswordStrengthChecker,
       category: 'utilities',
     },
   ];
@@ -3077,6 +3153,177 @@ export default function Tools() {
                   <p className="text-gray-500 text-xs">Universally unique</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPasswordStrengthModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] overflow-hidden">
+          <div className="bg-black border border-dashed border-white/20 rounded-none p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Lock className="w-5 h-5 text-white" />
+                <h3 className="text-xl text-white font-light uppercase tracking-wider">
+                  Password Strength Checker
+                </h3>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPasswordStrengthModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={passwordInput}
+                    onChange={(event) => setPasswordInput(event.target.value)}
+                    placeholder="Enter password to check"
+                    className="w-full bg-black border border-dashed border-white/20 text-white font-mono text-xs pr-10 rounded-none"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white rounded-none"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-end justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPasswordInput('');
+                    setPasswordStrength(null);
+                    setShowPassword(false);
+                  }}
+                  className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                >
+                  Clear
+                </Button>
+                <Button
+                  onClick={handleCheckPasswordStrength}
+                  disabled={isCheckingPassword || !passwordInput.trim()}
+                  className="rounded-none"
+                >
+                  {isCheckingPassword ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Checking...
+                    </>
+                  ) : (
+                    'Check Strength'
+                  )}
+                </Button>
+              </div>
+
+              {passwordStrength && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+                    <div className="border border-dashed border-white/10 p-3 space-y-2">
+                      <div className="text-gray-400 uppercase tracking-wider">Strength</div>
+                      <p
+                        className={`text-sm font-medium ${
+                          passwordStrength.strength === 'very-strong'
+                            ? 'text-green-400'
+                            : passwordStrength.strength === 'strong'
+                              ? 'text-green-300'
+                              : passwordStrength.strength === 'good'
+                                ? 'text-yellow-300'
+                                : passwordStrength.strength === 'fair'
+                                  ? 'text-orange-300'
+                                  : 'text-red-300'
+                        }`}
+                      >
+                        {passwordStrength.strength
+                          .split('-')
+                          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')}
+                      </p>
+                      <div className="w-full bg-black/40 h-2 rounded-none">
+                        <div
+                          className={`h-full transition-all ${
+                            passwordStrength.strength === 'very-strong'
+                              ? 'bg-green-400 w-full'
+                              : passwordStrength.strength === 'strong'
+                                ? 'bg-green-300 w-4/5'
+                                : passwordStrength.strength === 'good'
+                                  ? 'bg-yellow-300 w-3/5'
+                                  : passwordStrength.strength === 'fair'
+                                    ? 'bg-orange-300 w-2/5'
+                                    : 'bg-red-300 w-1/5'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                    <div className="border border-dashed border-white/10 p-3 space-y-2">
+                      <div className="text-gray-400 uppercase tracking-wider">Score</div>
+                      <p className="text-white text-sm">{passwordStrength.score} / 5</p>
+                      <p className="text-gray-500 text-xs">
+                        {passwordStrength.score === 5
+                          ? 'Excellent'
+                          : passwordStrength.score === 4
+                            ? 'Very Good'
+                            : passwordStrength.score === 3
+                              ? 'Good'
+                              : passwordStrength.score === 2
+                                ? 'Fair'
+                                : 'Weak'}
+                      </p>
+                    </div>
+                    <div className="border border-dashed border-white/10 p-3 space-y-2">
+                      <div className="text-gray-400 uppercase tracking-wider">Config Match</div>
+                      <p
+                        className={`text-sm ${
+                          passwordStrength.meetsConfig ? 'text-green-400' : 'text-red-300'
+                        }`}
+                      >
+                        {passwordStrength.meetsConfig ? '✓ Meets Requirements' : '✗ Fails Requirements'}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {passwordStrength.configRequirements.minLength} -{' '}
+                        {passwordStrength.configRequirements.maxLength} chars
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border border-dashed border-white/10 p-3">
+                    <div className="text-xs uppercase font-mono text-gray-400 mb-3">Checks</div>
+                    <div className="space-y-2">
+                      {passwordStrength.checks.map((check, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-black/40 border border-dashed border-white/10"
+                        >
+                          <span className="text-white font-mono text-xs">{check.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`text-xs font-mono ${
+                                check.passed ? 'text-green-400' : 'text-red-300'
+                              }`}
+                            >
+                              {check.passed ? '✓' : '✗'}
+                            </span>
+                            <span className="text-xs text-gray-400 font-mono">{check.message}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -94,7 +94,7 @@ function normalizeStudioStatus(status?: string): WatchIndicatorStatus {
 }
 
 const EMAIL_TEMPLATES_COUNT = 5;
-const TOOLS_COUNT = 11;
+const TOOLS_COUNT = 12;
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();

@@ -4954,5 +4954,147 @@ export function createRoutes(
     }
   });
 
+  router.post('/api/tools/password-strength', async (req: Request, res: Response) => {
+    try {
+      const { password } = req.body || {};
+
+      if (!password || typeof password !== 'string') {
+        return res.status(400).json({ success: false, error: 'Password is required' });
+      }
+
+      const emailAndPassword = authConfig.emailAndPassword as { minPasswordLength?: number; maxPasswordLength?: number } || {};
+      const minLength = emailAndPassword?.minPasswordLength || 8;
+      const maxLength = emailAndPassword?.maxPasswordLength || 128;
+
+      const checks: Array<{ name: string; passed: boolean; message: string }> = [];
+      let score = 0;
+
+      // Length check
+      const lengthCheck = password.length >= minLength && password.length <= maxLength;
+      checks.push({
+        name: 'Length',
+        passed: lengthCheck,
+        message: lengthCheck
+          ? `Meets length requirement (${minLength}-${maxLength} chars)`
+          : `Must be between ${minLength} and ${maxLength} characters`,
+      });
+      if (lengthCheck) score += 1;
+
+      const minLengthCheck = password.length >= minLength;
+      checks.push({
+        name: 'Minimum Length',
+        passed: minLengthCheck,
+        message: minLengthCheck
+          ? `At least ${minLength} characters`
+          : `Must be at least ${minLength} characters`,
+      });
+      if (minLengthCheck && password.length >= 12) score += 0.5;
+
+      const maxLengthCheck = password.length <= maxLength;
+      checks.push({
+        name: 'Maximum Length',
+        passed: maxLengthCheck,
+        message: maxLengthCheck
+          ? `Within ${maxLength} character limit`
+          : `Must not exceed ${maxLength} characters`,
+      });
+
+      // Uppercase check
+      const hasUppercase = /[A-Z]/.test(password);
+      checks.push({
+        name: 'Uppercase Letter',
+        passed: hasUppercase,
+        message: hasUppercase ? 'Contains uppercase letter' : 'Missing uppercase letter',
+      });
+      if (hasUppercase) score += 0.5;
+
+      // Lowercase check
+      const hasLowercase = /[a-z]/.test(password);
+      checks.push({
+        name: 'Lowercase Letter',
+        passed: hasLowercase,
+        message: hasLowercase ? 'Contains lowercase letter' : 'Missing lowercase letter',
+      });
+      if (hasLowercase) score += 0.5;
+
+      // Number check
+      const hasNumber = /\d/.test(password);
+      checks.push({
+        name: 'Number',
+        passed: hasNumber,
+        message: hasNumber ? 'Contains number' : 'Missing number',
+      });
+      if (hasNumber) score += 0.5;
+
+      // Special character check
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+      checks.push({
+        name: 'Special Character',
+        passed: hasSpecialChar,
+        message: hasSpecialChar ? 'Contains special character' : 'Missing special character',
+      });
+      if (hasSpecialChar) score += 0.5;
+
+      // Common patterns check
+      const commonPatterns = [
+        /12345/,
+        /password/i,
+        /qwerty/i,
+        /abc123/i,
+        /admin/i,
+        /letmein/i,
+      ];
+      const hasCommonPattern = commonPatterns.some((pattern) => pattern.test(password));
+      checks.push({
+        name: 'Common Pattern',
+        passed: !hasCommonPattern,
+        message: hasCommonPattern
+          ? 'Contains common pattern (weak)'
+          : 'No common patterns detected',
+      });
+      if (!hasCommonPattern) score += 0.5;
+
+      // Entropy check (basic)
+      const uniqueChars = new Set(password).size;
+      const entropyCheck = uniqueChars >= password.length * 0.5;
+      checks.push({
+        name: 'Character Variety',
+        passed: entropyCheck,
+        message: entropyCheck
+          ? 'Good character variety'
+          : 'Low character variety (repetitive)',
+      });
+      if (entropyCheck) score += 0.5;
+
+      // Determine strength
+      const finalScore = Math.min(Math.round(score), 5);
+      let strength: 'weak' | 'fair' | 'good' | 'strong' | 'very-strong';
+      if (finalScore <= 1) strength = 'weak';
+      else if (finalScore === 2) strength = 'fair';
+      else if (finalScore === 3) strength = 'good';
+      else if (finalScore === 4) strength = 'strong';
+      else strength = 'very-strong';
+
+      const meetsConfig = lengthCheck && minLengthCheck && maxLengthCheck;
+
+      res.json({
+        success: true,
+        score: finalScore,
+        strength,
+        checks,
+        meetsConfig,
+        configRequirements: {
+          minLength,
+          maxLength,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to check password strength',
+      });
+    }
+  });
+
   return router;
 }
