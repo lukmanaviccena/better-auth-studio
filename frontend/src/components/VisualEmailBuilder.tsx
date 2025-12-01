@@ -37,12 +37,14 @@ export interface EmailBlock {
     padding?: string;
     margin?: string;
     width?: string;
+    maxWidth?: string;
     height?: string;
     borderRadius?: string;
     border?: string;
     lineHeight?: string;
     letterSpacing?: string;
     textDecoration?: string;
+    display?: string;
   };
   attributes?: {
     href?: string;
@@ -133,19 +135,27 @@ const parseHtmlToBlocks = (html: string): EmailBlock[] => {
           href: link.getAttribute('href') || '',
         },
       });
-    } else if (tagName === 'img') {
+    } else if (tagName === 'img' || (tagName === 'div' && element.querySelector('img'))) {
+      const img = element.querySelector('img') || (element as HTMLImageElement);
+      const imgStyles = tagName === 'img' 
+        ? styles 
+        : parseStyles(img.getAttribute('style') || '');
+      const divStyles = tagName === 'div' ? styles : {};
+      
       blocks.push({
         id: `block-${Date.now()}-${index}`,
         type: 'image',
         content: '',
         styles: {
-          width: styles.width || '100%',
-          height: styles.height || 'auto',
-          margin: styles.margin || '16px 0',
+          width: imgStyles.width || divStyles.width || '70px',
+          maxWidth: imgStyles.maxWidth || divStyles.maxWidth || '70px',
+          height: imgStyles.height || divStyles.height || 'auto',
+          margin: divStyles.margin || styles.margin || '0 0 30px 0',
+          display: imgStyles.display || 'block',
         },
         attributes: {
-          src: (element as HTMLImageElement).src || '',
-          alt: (element as HTMLImageElement).alt || '',
+          src: img.getAttribute('src') || '',
+          alt: img.getAttribute('alt') || '',
         },
       });
     } else if (tagName === 'hr') {
@@ -212,8 +222,16 @@ const blocksToHtml = (blocks: EmailBlock[]): string => {
           <a href="${href}" style="display: inline-block; ${buttonStyleString};">${block.content}</a>
         </div>`;
         }
-        case 'image':
-          return `<img src="${block.attributes?.src || ''}" alt="${block.attributes?.alt || ''}" style="${styleString}" />`;
+        case 'image': {
+          const imageStyleString = Object.entries(block.styles)
+            .filter(([_, value]) => value)
+            .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+            .join('; ');
+          const margin = block.styles.margin || '0 0 30px 0';
+          return `<div style="margin: ${margin}">
+            <img src="${block.attributes?.src || ''}" alt="${block.attributes?.alt || ''}" style="${imageStyleString}" />
+          </div>`;
+        }
         case 'divider':
           return `<hr style="${styleString}" />`;
         default:
@@ -692,14 +710,15 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                     )}
 
                     {block.type === 'image' && (
-                      <div style={{ margin: block.styles.margin || '16px 0', textAlign: 'center' }}>
+                      <div style={{ margin: block.styles.margin || '0 0 30px 0', textAlign: 'left' }}>
                         <img
                           src={block.attributes?.src || 'https://via.placeholder.com/600x300'}
                           alt={block.attributes?.alt || ''}
                           style={{
-                            width: block.styles.width || '100%',
+                            width: block.styles.width || '70px',
+                            maxWidth: block.styles.maxWidth || '70px',
                             height: block.styles.height || 'auto',
-                            maxWidth: '100%',
+                            display: block.styles.display || 'block',
                             outline: isSelected ? '2px dashed #3b82f6' : 'none',
                           }}
                         />

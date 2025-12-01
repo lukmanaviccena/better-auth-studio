@@ -29,6 +29,9 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <title>Reset Your Password</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="margin-bottom: 30px;">
+    <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
+  </div>
   <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
     <h1 style="margin: 0; font-size: 24px; font-weight: 300;">Reset Your Password</h1>
   </div>
@@ -49,10 +52,10 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <p style="color: #666; font-size: 14px; margin-top: 30px;">If you didn't request this, please ignore this email.</p>
   
   <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Your Company. All rights reserved.</p>
+  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Better Auth. All rights reserved.</p>
 </body>
 </html>`,
-    fields: ['user.name', 'user.email', 'url', 'token', 'expiresIn', 'year'],
+    fields: ['user.name', 'user.email', 'url', 'token', 'expiresIn'],
     category: 'authentication',
   },
   'email-verification': {
@@ -67,6 +70,9 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <title>Verify Your Email</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="margin-bottom: 30px;">
+    <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
+  </div>
   <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
     <h1 style="margin: 0; font-size: 24px; font-weight: 300;">Verify Your Email</h1>
   </div>
@@ -85,10 +91,10 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <p style="color: #666; font-size: 14px;">This link will expire in {{expiresIn}}.</p>
   
   <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Your Company. All rights reserved.</p>
+  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Better Auth. All rights reserved.</p>
 </body>
 </html>`,
-    fields: ['user.name', 'user.email', 'url', 'token', 'expiresIn', 'year'],
+    fields: ['user.name', 'user.email', 'url', 'token', 'expiresIn'],
     category: 'authentication',
   },
   'magic-link': {
@@ -103,6 +109,9 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <title>Sign In</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="margin-bottom: 30px;">
+    <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
+  </div>
   <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
     <h1 style="margin: 0; font-size: 24px; font-weight: 300;">Sign In</h1>
   </div>
@@ -123,10 +132,10 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <p style="color: #666; font-size: 14px; margin-top: 30px;">If you didn't request this, please ignore this email.</p>
   
   <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Your Company. All rights reserved.</p>
+  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Better Auth. All rights reserved.</p>
 </body>
 </html>`,
-    fields: ['user.email', 'url', 'token', 'expiresIn', 'year'],
+    fields: ['user.email', 'url', 'token', 'expiresIn'],
     category: 'authentication',
   },
   'org-invitation': {
@@ -141,6 +150,9 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <title>Organization Invitation</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="margin-bottom: 30px;">
+    <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
+  </div>
   <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
     <h1 style="margin: 0; font-size: 24px; font-weight: 300;">You've Been Invited</h1>
   </div>
@@ -159,7 +171,7 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <p style="color: #666; font-size: 14px;">This invitation will expire in {{expiresIn}}.</p>
   
   <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Your Company. All rights reserved.</p>
+  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Better Auth. All rights reserved.</p>
 </body>
 </html>`,
     fields: [
@@ -170,7 +182,6 @@ const emailTemplates: Record<string, EmailTemplate> = {
       'url',
       'role',
       'expiresIn',
-      'year',
     ],
     category: 'organization',
   },
@@ -186,6 +197,9 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <title>Welcome</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="margin-bottom: 30px;">
+    <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
+  </div>
   <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
     <h1 style="margin: 0; font-size: 24px; font-weight: 300;">Welcome!</h1>
   </div>
@@ -201,10 +215,10 @@ const emailTemplates: Record<string, EmailTemplate> = {
   </div>
   
   <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Your Company. All rights reserved.</p>
+  <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Better Auth. All rights reserved.</p>
 </body>
 </html>`,
-    fields: ['user.name', 'user.email', 'app.name', 'dashboardUrl', 'year'],
+    fields: ['user.name', 'user.email', 'app.name', 'dashboardUrl'],
     category: 'notification',
   },
 };
@@ -244,7 +258,6 @@ export default function EmailEditor() {
         else if (field.includes('url')) defaults[field] = 'https://example.com/reset?token=abc123';
         else if (field.includes('token')) defaults[field] = 'abc123xyz';
         else if (field.includes('expiresIn')) defaults[field] = '24 hours';
-        else if (field.includes('year')) defaults[field] = new Date().getFullYear().toString();
         else if (field.includes('app.name')) defaults[field] = 'My App';
         else if (field.includes('org.name')) defaults[field] = 'Acme Corp';
         else if (field.includes('org.slug')) defaults[field] = 'acme-corp';
@@ -388,10 +401,15 @@ export const auth = betterAuth({
   );
 
   const getSimulatedHtml = (html: string): string => {
-    if (!showFieldSimulator || Object.keys(fieldValues).length === 0) {
-      return html;
-    }
     let simulatedHtml = html;
+    
+    // Always replace {{year}} with current year
+    simulatedHtml = simulatedHtml.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
+    
+    if (!showFieldSimulator || Object.keys(fieldValues).length === 0) {
+      return simulatedHtml;
+    }
+    
     Object.entries(fieldValues).forEach(([field, value]) => {
       const placeholder = `{{${field}}}`;
       simulatedHtml = simulatedHtml.replace(
@@ -400,6 +418,11 @@ export const auth = betterAuth({
       );
     });
     return simulatedHtml;
+  };
+
+  const getDisplayHtml = (html: string): string => {
+    // Always replace {{year}} with current year, even when field simulator is off
+    return html.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
   };
 
   return (
@@ -571,7 +594,7 @@ export const auth = betterAuth({
 
                 <div className="flex-1 overflow-hidden">
                   <VisualEmailBuilder
-                    html={showFieldSimulator ? getSimulatedHtml(emailHtml) : emailHtml}
+                    html={showFieldSimulator ? getSimulatedHtml(emailHtml) : getDisplayHtml(emailHtml)}
                     onChange={handleHtmlChange}
                   />
                 </div>

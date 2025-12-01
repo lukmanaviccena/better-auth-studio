@@ -4424,7 +4424,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if (hasNumber)
                 score += 0.5;
             // Special character check
-            const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
             checks.push({
                 name: 'Special Character',
                 passed: hasSpecialChar,
@@ -4433,14 +4433,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if (hasSpecialChar)
                 score += 0.5;
             // Common patterns check
-            const commonPatterns = [
-                /12345/,
-                /password/i,
-                /qwerty/i,
-                /abc123/i,
-                /admin/i,
-                /letmein/i,
-            ];
+            const commonPatterns = [/12345/, /password/i, /qwerty/i, /abc123/i, /admin/i, /letmein/i];
             const hasCommonPattern = commonPatterns.some((pattern) => pattern.test(password));
             checks.push({
                 name: 'Common Pattern',
@@ -4457,9 +4450,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             checks.push({
                 name: 'Character Variety',
                 passed: entropyCheck,
-                message: entropyCheck
-                    ? 'Good character variety'
-                    : 'Low character variety (repetitive)',
+                message: entropyCheck ? 'Good character variety' : 'Low character variety (repetitive)',
             });
             if (entropyCheck)
                 score += 0.5;
