@@ -209,10 +209,9 @@ const blocksToHtml = (blocks: EmailBlock[]): string => {
           return `<p style="${styleString}">${block.content}</p>`;
         case 'button': {
           const href = block.attributes?.href || '{{url}}';
-          // For buttons, we need to explicitly set text-decoration to preserve user's choice
           const buttonStyles = { ...block.styles };
           if (!buttonStyles.textDecoration) {
-            buttonStyles.textDecoration = 'none'; // Default for buttons to remove link underline
+            buttonStyles.textDecoration = 'none';
           }
           const buttonStyleString = Object.entries(buttonStyles)
             .filter(([_, value]) => value)
@@ -439,10 +438,10 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
   return (
     <div className="flex-1 flex overflow-hidden h-full min-h-0">
       <div
-        className="flex-1 flex flex-col overflow-hidden bg-white border-r border-dashed border-white/20 min-h-0"
+        className="flex-1 flex flex-col overflow-hidden bg-white border-none border-white/10 min-h-0"
         style={{ minWidth: '500px' }}
       >
-        <div className="p-4 border-y border-dashed border-white/10 bg-black/90">
+        <div className="p-4 border-y border-dashed border-white/10 bg-black/[93%]">
           <div className="flex items-center justify-between">
             <Label className="text-xs uppercase font-mono text-gray-400">Email Editor</Label>
             <div className="flex items-center gap-2">
