@@ -13,6 +13,7 @@ export default defineConfig({
         singleFork: true,
       },
     },
+    testTimeout: 10000, // Increase timeout for async operations
   },
   resolve: {
     alias: {

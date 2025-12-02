@@ -25,13 +25,10 @@ describe('CLI', () => {
     `;
     
     writeFileSync(join(testDir, 'auth.ts'), authConfigContent);
-    
-    // Simulate the findAuthConfigPath function logic
-    const possibleConfigFiles = ['auth.ts', 'auth.js', 'auth.tsx', 'auth.jsx'];
+    const possibleConfigFiles = ['auth.ts', 'auth.js'];
     let foundPath: string | null = null;
-    
     for (const configFile of possibleConfigFiles) {
-      const configPath = join(process.cwd(), configFile);
+      const configPath = join(testDir, configFile);
       if (existsSync(configPath)) {
         foundPath = configPath;
         break;
