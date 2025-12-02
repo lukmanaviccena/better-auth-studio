@@ -93,7 +93,9 @@ const parseHtmlToBlocks = (html: string): EmailBlock[] => {
           color: styles.color || '#000000',
           backgroundColor: styles.backgroundColor || styles['background-color'] || undefined,
           textAlign: (styles.textAlign as any) || 'left',
-          padding: styles.padding || (styles.backgroundColor || styles['background-color'] ? '8px 12px' : '0'),
+          padding:
+            styles.padding ||
+            (styles.backgroundColor || styles['background-color'] ? '8px 12px' : '0'),
           margin: styles.margin || '0 0 16px 0',
           textDecoration: styles.textDecoration || 'none',
         },
@@ -110,7 +112,9 @@ const parseHtmlToBlocks = (html: string): EmailBlock[] => {
           color: styles.color || '#333333',
           backgroundColor: styles.backgroundColor || styles['background-color'] || undefined,
           textAlign: (styles.textAlign as any) || 'left',
-          padding: styles.padding || (styles.backgroundColor || styles['background-color'] ? '8px 12px' : '0'),
+          padding:
+            styles.padding ||
+            (styles.backgroundColor || styles['background-color'] ? '8px 12px' : '0'),
           margin: styles.margin || '0 0 16px 0',
           textDecoration: styles.textDecoration || 'none',
         },
@@ -139,11 +143,9 @@ const parseHtmlToBlocks = (html: string): EmailBlock[] => {
       });
     } else if (tagName === 'img' || (tagName === 'div' && element.querySelector('img'))) {
       const img = element.querySelector('img') || (element as HTMLImageElement);
-      const imgStyles = tagName === 'img' 
-        ? styles 
-        : parseStyles(img.getAttribute('style') || '');
+      const imgStyles = tagName === 'img' ? styles : parseStyles(img.getAttribute('style') || '');
       const divStyles = tagName === 'div' ? styles : {};
-      
+
       blocks.push({
         id: `block-${Date.now()}-${index}`,
         type: 'image',
@@ -153,7 +155,10 @@ const parseHtmlToBlocks = (html: string): EmailBlock[] => {
           maxWidth: imgStyles.maxWidth || divStyles.maxWidth || '70px',
           height: imgStyles.height || divStyles.height || 'auto',
           margin: divStyles.margin || styles.margin || '0 0 30px 0',
-          textAlign: (divStyles.textAlign || styles.textAlign || 'left') as 'left' | 'center' | 'right',
+          textAlign: (divStyles.textAlign || styles.textAlign || 'left') as
+            | 'left'
+            | 'center'
+            | 'right',
         },
         attributes: {
           src: img.getAttribute('src') || '',
@@ -229,7 +234,10 @@ const blocksToHtml = (blocks: EmailBlock[]): string => {
         }
         case 'image': {
           const imageStyleString = Object.entries(block.styles)
-            .filter(([key, value]) => value && key !== 'textAlign' && key !== 'margin' && key !== 'display')
+            .filter(
+              ([key, value]) =>
+                value && key !== 'textAlign' && key !== 'margin' && key !== 'display'
+            )
             .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
             .join('; ');
           const margin = block.styles.margin || '0 0 30px 0';
@@ -603,7 +611,9 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                           color: block.styles.color || '#000000',
                           backgroundColor: block.styles.backgroundColor || undefined,
                           textAlign: block.styles.textAlign || 'left',
-                          padding: block.styles.padding || (block.styles.backgroundColor ? '8px 12px' : '0'),
+                          padding:
+                            block.styles.padding ||
+                            (block.styles.backgroundColor ? '8px 12px' : '0'),
                           margin: block.styles.margin || '0 0 16px 0',
                           lineHeight: block.styles.lineHeight || '1.2',
                           letterSpacing: block.styles.letterSpacing || '0',
@@ -639,7 +649,9 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                           color: block.styles.color || '#333333',
                           backgroundColor: block.styles.backgroundColor || undefined,
                           textAlign: block.styles.textAlign || 'left',
-                          padding: block.styles.padding || (block.styles.backgroundColor ? '8px 12px' : '0'),
+                          padding:
+                            block.styles.padding ||
+                            (block.styles.backgroundColor ? '8px 12px' : '0'),
                           margin: block.styles.margin || '0 0 16px 0',
                           lineHeight: block.styles.lineHeight || '1.6',
                           letterSpacing: block.styles.letterSpacing || '0',
@@ -718,7 +730,12 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                     )}
 
                     {block.type === 'image' && (
-                      <div style={{ margin: block.styles.margin || '0 0 30px 0', textAlign: block.styles.textAlign || 'left' }}>
+                      <div
+                        style={{
+                          margin: block.styles.margin || '0 0 30px 0',
+                          textAlign: block.styles.textAlign || 'left',
+                        }}
+                      >
                         <img
                           src={block.attributes?.src || 'https://via.placeholder.com/600x300'}
                           alt={block.attributes?.alt || ''}
@@ -1009,7 +1026,9 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
               </div>
             )}
 
-            {(selectedBlock.type === 'button' || selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph') && (
+            {(selectedBlock.type === 'button' ||
+              selectedBlock.type === 'heading' ||
+              selectedBlock.type === 'paragraph') && (
               <div>
                 <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
                   Background Color
@@ -1020,39 +1039,48 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                   onChange={(e) => {
                     const newBackgroundColor = e.target.value;
                     const currentPadding = selectedBlock.styles.padding;
-                    const hasBackgroundColor = newBackgroundColor && newBackgroundColor !== '#ffffff';
+                    const hasBackgroundColor =
+                      newBackgroundColor && newBackgroundColor !== '#ffffff';
                     // Auto-add padding if background color is set and no padding exists
-                    const shouldAddPadding = hasBackgroundColor && (!currentPadding || currentPadding === '0');
-                    
+                    const shouldAddPadding =
+                      hasBackgroundColor && (!currentPadding || currentPadding === '0');
+
                     updateBlock(selectedBlock.id, {
-                      styles: { 
-                        ...selectedBlock.styles, 
+                      styles: {
+                        ...selectedBlock.styles,
                         backgroundColor: hasBackgroundColor ? newBackgroundColor : undefined,
-                        padding: shouldAddPadding ? '8px 12px' : (hasBackgroundColor ? (currentPadding || '8px 12px') : (currentPadding === '8px 12px' ? '0' : currentPadding)),
+                        padding: shouldAddPadding
+                          ? '8px 12px'
+                          : hasBackgroundColor
+                            ? currentPadding || '8px 12px'
+                            : currentPadding === '8px 12px'
+                              ? '0'
+                              : currentPadding,
                       },
                     });
                   }}
                   className="h-8 w-full bg-black border border-dashed border-white/20 rounded-none"
                 />
-                {selectedBlock.styles.backgroundColor && selectedBlock.styles.backgroundColor !== '#ffffff' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const currentPadding = selectedBlock.styles.padding;
-                      updateBlock(selectedBlock.id, {
-                        styles: { 
-                          ...selectedBlock.styles, 
-                          backgroundColor: undefined,
-                          padding: currentPadding === '8px 12px' ? '0' : currentPadding,
-                        },
-                      });
-                    }}
-                    className="text-xs text-gray-400 hover:text-white mt-1 rounded-none"
-                  >
-                    Clear Background
-                  </Button>
-                )}
+                {selectedBlock.styles.backgroundColor &&
+                  selectedBlock.styles.backgroundColor !== '#ffffff' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const currentPadding = selectedBlock.styles.padding;
+                        updateBlock(selectedBlock.id, {
+                          styles: {
+                            ...selectedBlock.styles,
+                            backgroundColor: undefined,
+                            padding: currentPadding === '8px 12px' ? '0' : currentPadding,
+                          },
+                        });
+                      }}
+                      className="text-xs text-gray-400 hover:text-white mt-1 rounded-none"
+                    >
+                      Clear Background
+                    </Button>
+                  )}
               </div>
             )}
 

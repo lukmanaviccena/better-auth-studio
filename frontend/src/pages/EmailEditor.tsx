@@ -174,15 +174,7 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <p style="color: #999; font-size: 12px; text-align: center;">© {{year}} Better Auth. All rights reserved.</p>
 </body>
 </html>`,
-    fields: [
-      'inviter.name',
-      'inviter.email',
-      'org.name',
-      'org.slug',
-      'url',
-      'role',
-      'expiresIn',
-    ],
+    fields: ['inviter.name', 'inviter.email', 'org.name', 'org.slug', 'url', 'role', 'expiresIn'],
     category: 'organization',
   },
   welcome: {
@@ -467,14 +459,14 @@ export const auth = betterAuth({
 
   const getSimulatedHtml = (html: string): string => {
     let simulatedHtml = html;
-    
+
     // Always replace {{year}} with current year
     simulatedHtml = simulatedHtml.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
-    
+
     if (!showFieldSimulator || Object.keys(fieldValues).length === 0) {
       return simulatedHtml;
     }
-    
+
     Object.entries(fieldValues).forEach(([field, value]) => {
       const placeholder = `{{${field}}}`;
       simulatedHtml = simulatedHtml.replace(
@@ -659,7 +651,9 @@ export const auth = betterAuth({
 
                 <div className="flex-1 overflow-hidden">
                   <VisualEmailBuilder
-                    html={showFieldSimulator ? getSimulatedHtml(emailHtml) : getDisplayHtml(emailHtml)}
+                    html={
+                      showFieldSimulator ? getSimulatedHtml(emailHtml) : getDisplayHtml(emailHtml)
+                    }
                     onChange={handleHtmlChange}
                   />
                 </div>

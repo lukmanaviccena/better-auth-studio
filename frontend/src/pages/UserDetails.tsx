@@ -1123,7 +1123,12 @@ export default function UserDetails() {
                                 <CopyableId
                                   id={membership.team.id}
                                   variant="subscript"
-                                  nonSliced={membership.team.organizationSlug || membership.team.organizationName ? true : false}
+                                  nonSliced={
+                                    membership.team.organizationSlug ||
+                                    membership.team.organizationName
+                                      ? true
+                                      : false
+                                  }
                                 />
                               </h3>
                               <p className="text-gray-400 text-sm font-sans mt-1">

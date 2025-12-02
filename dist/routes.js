@@ -4493,7 +4493,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             if (provider.toLowerCase() === 'google') {
                 try {
                     const tokenInfoUrl = `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=test`;
-                    const isValidClientIdFormat = /^[\d\w\-]+\.apps\.googleusercontent\.com$|^\d+$/.test(clientId);
+                    const isValidClientIdFormat = /^[\d\w-]+\.apps\.googleusercontent\.com$|^\d+$/.test(clientId);
                     if (!isValidClientIdFormat) {
                         return res.json({
                             success: false,
@@ -4598,9 +4598,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             const secretLength = typeof length === 'number' && length >= 16 && length <= 128 ? length : 32;
             const secretFormat = format === 'base64' ? 'base64' : 'hex';
             const secretBytes = randomBytes(secretLength);
-            const secret = secretFormat === 'hex'
-                ? secretBytes.toString('hex')
-                : secretBytes.toString('base64');
+            const secret = secretFormat === 'hex' ? secretBytes.toString('hex') : secretBytes.toString('base64');
             const entropy = secretLength * 8; // bits of entropy
             res.json({
                 success: true,
@@ -4630,8 +4628,8 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             const envPath = join(process.cwd(), '.env');
             const envLocalPath = join(process.cwd(), '.env.local');
             // Try .env.local first, then .env
-            let targetPath = existsSync(envLocalPath) ? envLocalPath : envPath;
-            let envContent = existsSync(targetPath) ? readFileSync(targetPath, 'utf-8') : '';
+            const targetPath = existsSync(envLocalPath) ? envLocalPath : envPath;
+            const envContent = existsSync(targetPath) ? readFileSync(targetPath, 'utf-8') : '';
             // Generate environment variable names
             const providerUpper = provider.toUpperCase();
             const clientIdKey = `${providerUpper}_CLIENT_ID`;
@@ -4678,8 +4676,8 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             }
             const envPath = join(process.cwd(), '.env');
             const envLocalPath = join(process.cwd(), '.env.local');
-            let targetPath = existsSync(envLocalPath) ? envLocalPath : envPath;
-            let envContent = existsSync(targetPath) ? readFileSync(targetPath, 'utf-8') : '';
+            const targetPath = existsSync(envLocalPath) ? envLocalPath : envPath;
+            const envContent = existsSync(targetPath) ? readFileSync(targetPath, 'utf-8') : '';
             const envLines = envContent.split('\n');
             const envMap = new Map();
             const newLines = [];
@@ -4722,8 +4720,11 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 while (newLines.length > 0 && !newLines[newLines.length - 1].trim()) {
                     newLines.pop();
                 }
-                if (newLines.length > 0 && newLines[newLines.length - 1] && !newLines[newLines.length - 1].endsWith('\n')) {
-                    if (!newLines[newLines.length - 1].endsWith('\r\n') && !newLines[newLines.length - 1].endsWith('\n')) {
+                if (newLines.length > 0 &&
+                    newLines[newLines.length - 1] &&
+                    !newLines[newLines.length - 1].endsWith('\n')) {
+                    if (!newLines[newLines.length - 1].endsWith('\r\n') &&
+                        !newLines[newLines.length - 1].endsWith('\n')) {
                         newLines.push('');
                     }
                 }

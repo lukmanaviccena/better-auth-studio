@@ -490,155 +490,155 @@ export default function DatabaseVisualizer() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 pt-4">
-            <div className="mb-6">
-              <h4 className="text-xs uppercase font-mono text-gray-400 mb-3 tracking-wider">
-                Fields
-              </h4>
-              <div className="space-y-0">
-                {selectedTable.fields.map((field, index) => {
-                  const relatedInfo = selectedTable.relationships.find(
-                    (rel) => rel.field === field.name
-                  );
-                  const relatedTarget =
-                    relatedInfo && schema
-                      ? schema.tables.find((t) => t.name === relatedInfo.target)
-                      : null;
-
-                  return (
-                    <div
-                      key={field.name}
-                      className={`border-b border-dashed border-white/10 py-3 ${index === selectedTable.fields.length - 1 ? 'border-b-0' : ''}`}
-                    >
-                      <div className="flex items-start justify-between mb-1.5">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-white font-mono text-sm">{field.name}</span>
-                          {field.primaryKey && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
-                              PK
-                            </span>
-                          )}
-                          {field.unique && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
-                              UNIQUE
-                            </span>
-                          )}
-                          {!field.required && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
-                              NULLABLE
-                            </span>
-                          )}
-                          {relatedInfo && (
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openTableByName(relatedInfo.target);
-                              }}
-                              title={`Relates to ${relatedTarget?.displayName || relatedInfo.target}`}
-                              className="p-1 text-gray-300 hover:text-white transition-colors"
-                            >
-                              <Link2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-400 font-mono uppercase">
-                          {field.type}
-                        </span>
-                      </div>
-                      <div className="ml-0 space-y-0.5">
-                        {field.description && (
-                          <p className="text-xs text-gray-500 font-light">{field.description}</p>
-                        )}
-                        {field.defaultValue !== undefined && (
-                          <p className="text-xs text-gray-500 font-mono">
-                            Default:{' '}
-                            <span className="text-gray-400">{String(field.defaultValue)}</span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {selectedTable.relationships.length > 0 && (
               <div className="mb-6">
-                <hr className="border-white/10 border-dashed mb-4" />
                 <h4 className="text-xs uppercase font-mono text-gray-400 mb-3 tracking-wider">
-                  Relationships
+                  Fields
                 </h4>
                 <div className="space-y-0">
-                  {selectedTable.relationships.map((rel, index) => {
-                    const targetTable = schema?.tables.find((t) => t.name === rel.target);
-                    const relationshipLabel =
-                      rel.type === 'one-to-one'
-                        ? '1:1'
-                        : rel.type === 'many-to-one'
-                          ? 'N:1'
-                          : '1:N';
+                  {selectedTable.fields.map((field, index) => {
+                    const relatedInfo = selectedTable.relationships.find(
+                      (rel) => rel.field === field.name
+                    );
+                    const relatedTarget =
+                      relatedInfo && schema
+                        ? schema.tables.find((t) => t.name === relatedInfo.target)
+                        : null;
 
                     return (
                       <div
-                        key={`${rel.target}-${rel.field}-${index}`}
-                        className={`border-b border-dashed border-white/10 py-3 ${index === selectedTable.relationships.length - 1 ? 'border-b-0' : ''}`}
+                        key={field.name}
+                        className={`border-b border-dashed border-white/10 py-3 ${index === selectedTable.fields.length - 1 ? 'border-b-0' : ''}`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-start justify-between mb-1.5">
                           <div className="flex items-center space-x-2">
-                            <span className="text-white font-mono text-sm">{rel.field}</span>
-                            <span className="text-xs text-gray-400">→</span>
-                            <button
-                              type="button"
-                              onClick={() => openTableByName(rel.target)}
-                              className="text-white font-mono text-sm underline decoration-dotted hover:text-white/80 flex items-center space-x-1"
-                              title={`View ${targetTable?.displayName || rel.target} schema`}
-                            >
-                              <span>{targetTable?.displayName || rel.target}</span>
-                              <Link2 className="w-3 h-3 text-white/70" />
-                            </button>
+                            <span className="text-white font-mono text-sm">{field.name}</span>
+                            {field.primaryKey && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                                PK
+                              </span>
+                            )}
+                            {field.unique && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                                UNIQUE
+                              </span>
+                            )}
+                            {!field.required && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                                NULLABLE
+                              </span>
+                            )}
+                            {relatedInfo && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openTableByName(relatedInfo.target);
+                                }}
+                                title={`Relates to ${relatedTarget?.displayName || relatedInfo.target}`}
+                                className="p-1 text-gray-300 hover:text-white transition-colors"
+                              >
+                                <Link2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
-                          <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
-                            {relationshipLabel}
+                          <span className="text-xs text-gray-400 font-mono uppercase">
+                            {field.type}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1 font-mono uppercase ml-0">
-                          {rel.type.replace('-', ' ')}
-                        </p>
+                        <div className="ml-0 space-y-0.5">
+                          {field.description && (
+                            <p className="text-xs text-gray-500 font-light">{field.description}</p>
+                          )}
+                          {field.defaultValue !== undefined && (
+                            <p className="text-xs text-gray-500 font-mono">
+                              Default:{' '}
+                              <span className="text-gray-400">{String(field.defaultValue)}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-            )}
 
-            <div className="border-t border-dashed border-white/20 pt-4 mt-6">
-              <div className="grid grid-cols-3 gap-6">
-                <div className="space-y-1">
-                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">
-                    Fields
-                  </span>
-                  <p className="text-white text-lg font-mono font-light">
-                    {selectedTable.fields.length}
-                  </p>
-                </div>
-                <div className="border-l border-dashed border-white/20 pl-6 space-y-1">
-                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">
+              {selectedTable.relationships.length > 0 && (
+                <div className="mb-6">
+                  <hr className="border-white/10 border-dashed mb-4" />
+                  <h4 className="text-xs uppercase font-mono text-gray-400 mb-3 tracking-wider">
                     Relationships
-                  </span>
-                  <p className="text-white text-lg font-mono font-light">
-                    {selectedTable.relationships.length}
-                  </p>
+                  </h4>
+                  <div className="space-y-0">
+                    {selectedTable.relationships.map((rel, index) => {
+                      const targetTable = schema?.tables.find((t) => t.name === rel.target);
+                      const relationshipLabel =
+                        rel.type === 'one-to-one'
+                          ? '1:1'
+                          : rel.type === 'many-to-one'
+                            ? 'N:1'
+                            : '1:N';
+
+                      return (
+                        <div
+                          key={`${rel.target}-${rel.field}-${index}`}
+                          className={`border-b border-dashed border-white/10 py-3 ${index === selectedTable.relationships.length - 1 ? 'border-b-0' : ''}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-white font-mono text-sm">{rel.field}</span>
+                              <span className="text-xs text-gray-400">→</span>
+                              <button
+                                type="button"
+                                onClick={() => openTableByName(rel.target)}
+                                className="text-white font-mono text-sm underline decoration-dotted hover:text-white/80 flex items-center space-x-1"
+                                title={`View ${targetTable?.displayName || rel.target} schema`}
+                              >
+                                <span>{targetTable?.displayName || rel.target}</span>
+                                <Link2 className="w-3 h-3 text-white/70" />
+                              </button>
+                            </div>
+                            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase border border-dashed border-white/15 bg-white/5 text-white/80 rounded-none">
+                              {relationshipLabel}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1 font-mono uppercase ml-0">
+                            {rel.type.replace('-', ' ')}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="border-l border-dashed border-white/20 pl-6 space-y-1">
-                  <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">
-                    Origin
-                  </span>
-                  <p className="text-white text-sm uppercase font-mono font-light">
-                    {selectedTable.origin === 'core' ? 'Core' : 'Extended'}
-                  </p>
+              )}
+
+              <div className="border-t border-dashed border-white/20 pt-4 mt-6">
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="space-y-1">
+                    <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">
+                      Fields
+                    </span>
+                    <p className="text-white text-lg font-mono font-light">
+                      {selectedTable.fields.length}
+                    </p>
+                  </div>
+                  <div className="border-l border-dashed border-white/20 pl-6 space-y-1">
+                    <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">
+                      Relationships
+                    </span>
+                    <p className="text-white text-lg font-mono font-light">
+                      {selectedTable.relationships.length}
+                    </p>
+                  </div>
+                  <div className="border-l border-dashed border-white/20 pl-6 space-y-1">
+                    <span className="text-gray-400 uppercase font-mono text-xs tracking-wider block">
+                      Origin
+                    </span>
+                    <p className="text-white text-sm uppercase font-mono font-light">
+                      {selectedTable.origin === 'core' ? 'Core' : 'Extended'}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
         </div>

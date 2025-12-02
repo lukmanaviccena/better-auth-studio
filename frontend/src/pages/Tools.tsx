@@ -1300,7 +1300,7 @@ export default function Tools() {
     setSelectedProvider('google');
     setOauthCredentials(null);
     setShowOAuthSecret(false);
-    
+
     try {
       const response = await fetch('/api/config');
       const data = await response.json();
@@ -1346,7 +1346,7 @@ export default function Tools() {
       }
 
       const data = await response.json();
-      
+
       if (data.clientId && data.clientSecret) {
         setOauthCredentials({
           clientId: data.clientId,
@@ -1445,7 +1445,8 @@ export default function Tools() {
         throw new Error(data.message || 'Failed to write credentials');
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to write credentials to .env';
+      const message =
+        error instanceof Error ? error.message : 'Failed to write credentials to .env';
       setEnvWriteResult({
         success: false,
         message,
@@ -3452,7 +3453,7 @@ export default function Tools() {
                 <h3 className="text-xl text-white font-light uppercase tracking-wider">
                   Password Strength Checker
                 </h3>
-    </div>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -3689,7 +3690,9 @@ export default function Tools() {
                 </Button>
                 <Button
                   onClick={handleFetchOAuthCredentials}
-                  disabled={isFetchingCredentials || !selectedProvider || (!oauthOrigin.trim() && !baseUrl)}
+                  disabled={
+                    isFetchingCredentials || !selectedProvider || (!oauthOrigin.trim() && !baseUrl)
+                  }
                   className="rounded-none"
                 >
                   {isFetchingCredentials ? (
@@ -3770,7 +3773,9 @@ export default function Tools() {
                           {envWriteResult.success ? (
                             <span className="text-green-400 uppercase">
                               ✓ {envWriteResult.message.toLowerCase()} →{' '}
-                              <span className="normal-case text-gray-400">{envWriteResult.path}</span>
+                              <span className="normal-case text-gray-400">
+                                {envWriteResult.path}
+                              </span>
                             </span>
                           ) : (
                             <span className="text-red-300">✗ {envWriteResult.message}</span>
@@ -3970,7 +3975,9 @@ export default function Tools() {
                     <div className="flex items-start space-x-2">
                       <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
                       <div>
-                        <div className="uppercase font-mono mb-2 text-gray-400 tracking-wider">Security Best Practices</div>
+                        <div className="uppercase font-mono mb-2 text-gray-400 tracking-wider">
+                          Security Best Practices
+                        </div>
                         <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-300">
                           <li>Use a minimum of 32 bytes (256 bits) for production</li>
                           <li>Store secrets in environment variables, never in code</li>
