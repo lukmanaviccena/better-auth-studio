@@ -196,12 +196,22 @@ const TERMINAL_SCRIPT: TerminalLine[] = [
   { text: "✔ health check passed! all systems operational", tone: "success" },
   { text: "$ Fetching OAuth credentials...", tone: "command" },
   { text: "✔ credentials fetched successfully for github and google", tone: "success" },
-  {text: "$ testing oauth providers..." , tone: "command" },
-  { text: "⌁ testing github oauth...", tone: "info" },
-  { text: "✔ oauth succeeded — kinfishtech@gmail.com", tone: "success" },
-  { text: "⌁ testing google oauth...", tone: "info" },
-  { text: "✔ oauth succeeded — kinfishtech@gmail.com", tone: "success" },
-  { text: "✔ oauth providers tested successfully", tone: "success" },
+  { text: "$ validating your configuration..." , tone: "command" },
+  { text: "⌁ checking BETTER_AUTH_SECRET...", tone: "info" },
+  { text: "✔ BETTER_AUTH_SECRET found and valid", tone: "success" },
+  { text: "⌁ checking database connection...", tone: "info" },
+  { text: "✔ database connection established", tone: "success" },
+  { text: "✔ configuration validated successfully", tone: "success" },
+  { text: "$ exporting users to json..." , tone: "command" },
+  { text: "✔ users exported to json successfully", tone: "success" },
+  { text: "$ hashing passwords..." , tone: "command" },
+  { text: "⌁ hashing passwords with bcrypt...", tone: "info" },
+  { text: "✔ passwords hashed successfully", tone: "success" },
+  { text: "$ decoding jwt..." , tone: "command" },
+  { text: "⌁ decoding jwt with BETTER_AUTH_SECRET...", tone: "info" },
+  { text: "✔ jwt decoded successfully", tone: "success" },
+  { text: "$ generating uuid..." , tone: "command" },
+  { text: "✔ uuid generated successfully", tone: "success" },
 ];
 
 interface HeroProps {
@@ -264,7 +274,7 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
           setTerminalLogs((prev) => [...prev, line]);
           updateTerminalHeight([...terminalLogsRef.current, line], "");
           scrollToBottom();
-        }, index * 900); 
+        }, index * 900);
         timeoutsRef.current.push(timeout);
       });
     });
@@ -422,12 +432,12 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
                   <div
                     key={`${line.text}-${idx}`}
                     className={`flex items-start gap-2 whitespace-pre-wrap leading-relaxed ${line.tone === "command"
-                        ? "text-white/90"
-                        : line.tone === "success"
-                          ? "text-emerald-400"
-                          : line.tone === "muted"
-                            ? "text-white/40"
-                            : "text-white/70"
+                      ? "text-white/90"
+                      : line.tone === "success"
+                        ? "text-emerald-400"
+                        : line.tone === "muted"
+                          ? "text-white/40"
+                          : "text-white/70"
                       }`}
                   >
                     <span>{line.text}</span>
