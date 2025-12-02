@@ -1,12 +1,12 @@
 # Better Auth - SvelteKit Example
 
-This is a SvelteKit example project demonstrating Better Auth integration with Drizzle ORM and PostgreSQL.
+This is a SvelteKit example project demonstrating Better Auth integration with Prisma ORM and PostgreSQL.
 
 ## Features
 
 - **SvelteKit** - Modern web framework
 - **Better Auth** - Authentication library
-- **Drizzle ORM** - TypeScript ORM
+- **Prisma** - TypeScript ORM
 - **PostgreSQL** - Database
 
 ## Setup
@@ -21,13 +21,19 @@ pnpm install
 
 The `.env` file is already configured with the PostgreSQL database URL. Make sure to add your OAuth credentials if needed.
 
-3. Run database migrations:
+3. Generate Prisma Client:
+
+```bash
+pnpm db:generate
+```
+
+4. Run database migrations:
 
 ```bash
 pnpm db:push
 ```
 
-4. Start the development server:
+5. Start the development server:
 
 ```bash
 pnpm dev
@@ -35,7 +41,7 @@ pnpm dev
 
 The app will be available at `http://localhost:5173`
 
-5. Open Better Auth Studio:
+6. Open Better Auth Studio:
 
 ```bash
 pnpm studio
@@ -51,13 +57,12 @@ src/
 │   ├── auth.ts          # Better Auth configuration
 │   ├── auth-client.ts   # Client-side auth utilities
 │   └── db/
-│       ├── index.ts     # Database connection
-│       └── schema.ts    # Drizzle schema definitions
+│       └── index.ts     # Prisma client instance
+├── generated/
+│   └── prisma/          # Generated Prisma Client
+prisma/
+└── schema.prisma        # Prisma schema definitions
 └── routes/
-    ├── api/
-    │   └── auth/
-    │       └── [...all]/
-    │           └── +server.ts  # Auth API routes
     ├── auth/
     │   └── +page.svelte        # Auth page
     └── +page.svelte            # Home page

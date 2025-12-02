@@ -1,21 +1,11 @@
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "./db";
-import * as schema from "../../auth-schema";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import prisma from "./db";
 import { organization, admin, twoFactor, apiKey } from "better-auth/plugins";
 
 export const auth = betterAuth({
     secret: process.env.AUTH_SECRET || "better-auth-secret-123456789",
-    database: drizzleAdapter(db, {
-        provider: "pg", schema: {
-            user: schema.user,
-            account: schema.account,
-            session: schema.session,
-            verification: schema.verification,
-            invitation: schema.invitation,
-            organization: schema.organization,
-        }
-    }),
+    database: prismaAdapter(prisma, { provider: "postgresql" }),
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5173",
     basePath: "/api/auth",
     socialProviders: {
