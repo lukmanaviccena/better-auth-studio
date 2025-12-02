@@ -889,8 +889,16 @@ export default function Users() {
                           <div className="flex items-center gap-2">
                             <div className="text-white font-light">{user.name}</div>
                             {user.banned && (
-                              <span className="px-2 py-0.5 text-[10px] font-semibold bg-red-500/20 border border-red-500/50 text-red-400 rounded-sm uppercase tracking-wide">
-                                Banned
+                              <span className="relative group inline-block">
+                                <span className="px-2 py-0.5 text-[10px] font-semibold bg-red-500/20 border border-red-500/50 text-red-400 rounded-sm uppercase tracking-wide cursor-help">
+                                  Banned
+                                </span>
+                                {user.banReason && (
+                                  <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-2 py-1 text-[10px] font-mono text-gray-300 bg-black border border-dashed border-white/20 rounded-none whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none z-50">
+                                    {user.banReason}
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-transparent border-t-white/20"></span>
+                                  </span>
+                                )}
                               </span>
                             )}
                           </div>
