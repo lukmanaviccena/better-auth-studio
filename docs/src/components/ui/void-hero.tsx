@@ -194,6 +194,14 @@ const TERMINAL_SCRIPT: TerminalLine[] = [
   { text: "$ testing health check..", tone: "command" },
   { text: "⌁ running system health check api...", tone: "info" },
   { text: "✔ health check passed! all systems operational", tone: "success" },
+  { text: "$ Fetching OAuth credentials...", tone: "command" },
+  { text: "✔ credentials fetched successfully for github and google", tone: "success" },
+  {text: "$ testing oauth providers..." , tone: "command" },
+  { text: "⌁ testing github oauth...", tone: "info" },
+  { text: "✔ oauth succeeded — kinfishtech@gmail.com", tone: "success" },
+  { text: "⌁ testing google oauth...", tone: "info" },
+  { text: "✔ oauth succeeded — kinfishtech@gmail.com", tone: "success" },
+  { text: "✔ oauth providers tested successfully", tone: "success" },
 ];
 
 interface HeroProps {
