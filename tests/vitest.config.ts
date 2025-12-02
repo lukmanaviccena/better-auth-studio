@@ -7,6 +7,12 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.test.ts'],
     exclude: ['node_modules', 'dist', 'examples'],
+    pool: 'forks', // Use forks instead of threads to support process.chdir
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
   resolve: {
     alias: {

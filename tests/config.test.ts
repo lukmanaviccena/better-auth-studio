@@ -12,11 +12,10 @@ describe('Config', () => {
       rmSync(testDir, { recursive: true, force: true });
     }
     mkdirSync(testDir, { recursive: true });
-    process.chdir(testDir);
+    // Use absolute paths instead of chdir
   });
 
   afterEach(() => {
-    process.chdir(originalCwd);
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
@@ -37,14 +36,14 @@ describe('Config', () => {
     
     writeFileSync(join(testDir, 'auth.ts'), authConfigContent);
     
-    const config = await findAuthConfig('auth.ts');
+    const config = await findAuthConfig(join(testDir, 'auth.ts'));
     
     expect(config).toBeDefined();
     expect(config?.database?.adapter).toBe('prisma');
   });
 
   it('should return null for missing config file', async () => {
-    const config = await findAuthConfig('non-existent-auth.ts');
+    const config = await findAuthConfig(join(testDir, 'non-existent-auth.ts'));
     
     expect(config).toBeNull();
   });
@@ -52,7 +51,7 @@ describe('Config', () => {
   it('should handle invalid config file gracefully', async () => {
     writeFileSync(join(testDir, 'auth.ts'), 'invalid syntax here');
     
-    const config = await findAuthConfig('auth.ts');
+    const config = await findAuthConfig(join(testDir, 'auth.ts'));
     
     // Should either return null or handle error gracefully
     expect(config === null || typeof config === 'object').toBe(true);
@@ -71,7 +70,7 @@ describe('Config', () => {
     
     writeFileSync(join(testDir, 'src', 'auth.ts'), authConfigContent);
     
-    const config = await findAuthConfig('src/auth.ts');
+    const config = await findAuthConfig(join(testDir, 'src', 'auth.ts'));
     
     expect(config).toBeDefined();
   });
@@ -93,7 +92,7 @@ describe('Config', () => {
     
     writeFileSync(join(testDir, 'auth.ts'), authConfigContent);
     
-    const config = await findAuthConfig('auth.ts');
+    const config = await findAuthConfig(join(testDir, 'auth.ts'));
     
     expect(config).toBeDefined();
     expect(config?.socialProviders).toBeDefined();

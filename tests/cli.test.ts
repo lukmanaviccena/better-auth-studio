@@ -4,18 +4,15 @@ import { join, isAbsolute } from 'path';
 
 describe('CLI', () => {
   const testDir = join(process.cwd(), '.test-temp-cli');
-  const originalCwd = process.cwd();
 
   beforeEach(() => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
     mkdirSync(testDir, { recursive: true });
-    process.chdir(testDir);
   });
 
   afterEach(() => {
-    process.chdir(originalCwd);
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
@@ -59,7 +56,7 @@ describe('CLI', () => {
     let foundPath: string | null = null;
     
     for (const configFile of possibleConfigFiles) {
-      const configPath = join(process.cwd(), configFile);
+      const configPath = join(testDir, configFile);
       if (existsSync(configPath)) {
         foundPath = configPath;
         break;
@@ -75,7 +72,7 @@ describe('CLI', () => {
     let foundPath: string | null = null;
     
     for (const configFile of possibleConfigFiles) {
-      const configPath = join(process.cwd(), configFile);
+      const configPath = join(testDir, configFile);
       if (existsSync(configPath)) {
         foundPath = configPath;
         break;
@@ -92,7 +89,7 @@ describe('CLI', () => {
       if (isAbsolute(configPath) && existsSync(configPath)) {
         return configPath;
       }
-      const absolutePath = join(process.cwd(), configPath);
+      const absolutePath = join(testDir, configPath);
       if (existsSync(absolutePath)) {
         return absolutePath;
       }
@@ -116,8 +113,8 @@ describe('CLI', () => {
     const getFileDisplayInfo = (filePath: string) => {
       const absolutePath = isAbsolute(filePath) 
         ? filePath 
-        : join(process.cwd(), filePath);
-      const relativePath = relative(process.cwd(), absolutePath);
+        : join(testDir, filePath);
+      const relativePath = relative(testDir, absolutePath);
       
       return {
         absolutePath,
