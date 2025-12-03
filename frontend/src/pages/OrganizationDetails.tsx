@@ -90,7 +90,7 @@ export default function OrganizationDetails() {
     'details'
   );
   const [teamsEnabled, setTeamsEnabled] = useState(false);
-  const [_, setOrganizationEnabled] = useState(false);
+  const [organizationEnabled, setOrganizationEnabled] = useState(false);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSeedMembersModal, setShowSeedMembersModal] = useState(false);
@@ -145,7 +145,15 @@ export default function OrganizationDetails() {
       fetchMembers();
       fetchTeams();
     }
-  }, [orgId]);
+    
+    const interval = setInterval(() => {
+      if (!organizationEnabled && orgId) {
+        checkOrganizationEnabled();
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [orgId, organizationEnabled]);
 
   useEffect(() => {
     if (teamsEnabled && orgId) {

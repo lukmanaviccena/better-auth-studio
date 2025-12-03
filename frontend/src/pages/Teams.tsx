@@ -41,7 +41,15 @@ export default function Teams() {
 
   useEffect(() => {
     checkPluginStatus();
-  }, []);
+    
+    const interval = setInterval(() => {
+      if (!pluginStatus?.enabled) {
+        checkPluginStatus();
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [pluginStatus?.enabled]);
 
   const checkPluginStatus = async () => {
     try {
@@ -196,7 +204,7 @@ export default function Teams() {
               )}
 
               <Button
-                onClick={() => window.location.reload()}
+                onClick={checkPluginStatus}
                 className="bg-white hover:bg-white/90 text-black border border-white/20 rounded-none"
               >
                 Check Again

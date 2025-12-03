@@ -105,10 +105,12 @@ export function getPathAliases(cwd) {
 /**
  * .tsx files are not supported by Jiti.
  */
-const jitiOptions = (cwd) => {
+const jitiOptions = (cwd, noCache = false) => {
     const alias = getPathAliases(cwd) || {};
     return {
         debug: false,
+        fsCache: noCache ? false : undefined,
+        moduleCache: noCache ? false : undefined,
         transformOptions: {
             babel: {
                 presets: [
@@ -123,7 +125,7 @@ const jitiOptions = (cwd) => {
                 ],
             },
         },
-        extensions: ['.ts', '.js', '.jsx'],
+        extensions: ['.ts', '.js'],
         alias,
     };
 };
@@ -135,7 +137,7 @@ const isDefaultExport = (object) => {
         Object.keys(object).length > 0 &&
         'options' in object);
 };
-export async function getConfig({ cwd, configPath, shouldThrowOnError = false, }) {
+export async function getConfig({ cwd, configPath, shouldThrowOnError = false, noCache = false, }) {
     try {
         let configFile = null;
         if (configPath) {
@@ -145,7 +147,7 @@ export async function getConfig({ cwd, configPath, shouldThrowOnError = false, }
             const { config } = await loadConfig({
                 configFile: resolvedPath,
                 dotenv: true,
-                jitiOptions: jitiOptions(cwd),
+                jitiOptions: jitiOptions(cwd, noCache),
             });
             if (!('auth' in config) && !isDefaultExport(config)) {
                 if (shouldThrowOnError) {
@@ -161,7 +163,7 @@ export async function getConfig({ cwd, configPath, shouldThrowOnError = false, }
                 try {
                     const { config } = await loadConfig({
                         configFile: possiblePath,
-                        jitiOptions: jitiOptions(cwd),
+                        jitiOptions: jitiOptions(cwd, noCache),
                     });
                     const hasConfig = Object.keys(config).length > 0;
                     if (hasConfig) {

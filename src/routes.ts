@@ -76,7 +76,7 @@ function _resolveModuleWithExtensions(id: string, parent: string): string {
   return id;
 }
 
-export async function safeImportAuthConfig(authConfigPath: string): Promise<any> {
+export async function safeImportAuthConfig(authConfigPath: string, noCache = false): Promise<any> {
   try {
     if (authConfigPath.endsWith('.ts')) {
       const aliases: Record<string, string> = {};
@@ -160,8 +160,8 @@ export async function safeImportAuthConfig(authConfigPath: string): Promise<any>
 
       const jiti = createJiti(import.meta.url, {
         debug: false,
-        fsCache: true,
-        moduleCache: true,
+        fsCache: noCache ? false : true,
+        moduleCache: noCache ? false : true,
         interopDefault: true,
         alias: aliases,
       });
@@ -670,6 +670,7 @@ export function createRoutes(
             cwd: process.cwd(),
             configPath: authConfigPath,
             shouldThrowOnError: false,
+            noCache: true, // Disable cache for real-time plugin checks
           });
 
           if (betterAuthConfig) {
@@ -1320,7 +1321,7 @@ export function createRoutes(
       try {
         let authModule;
         try {
-          authModule = await safeImportAuthConfig(authConfigPath);
+          authModule = await safeImportAuthConfig(authConfigPath, true); // Disable cache for real-time plugin checks
         } catch (_importError) {
           // Fallback: read file content directly
           const content = readFileSync(authConfigPath, 'utf-8');
@@ -3034,6 +3035,7 @@ export function createRoutes(
           cwd: process.cwd(),
           configPath: authConfigPath,
           shouldThrowOnError: false,
+          noCache: true, // Disable cache for real-time plugin status checks
         });
         if (betterAuthConfig) {
           const plugins = betterAuthConfig.plugins || [];
@@ -3738,6 +3740,7 @@ export function createRoutes(
           cwd: process.cwd(),
           configPath: authConfigPath,
           shouldThrowOnError: false,
+          noCache: true, 
         });
 
         if (betterAuthConfig) {

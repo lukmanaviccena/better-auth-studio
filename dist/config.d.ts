@@ -42,10 +42,11 @@ export interface AuthConfig {
 }
 declare let possiblePaths: string[];
 export declare function getPathAliases(cwd: string): Record<string, string> | null;
-export declare function getConfig({ cwd, configPath, shouldThrowOnError, }: {
+export declare function getConfig({ cwd, configPath, shouldThrowOnError, noCache, }: {
     cwd: string;
     configPath?: string;
     shouldThrowOnError?: boolean;
+    noCache?: boolean;
 }): Promise<any>;
 export { possiblePaths };
 export declare function findAuthConfig(configPath?: string): Promise<AuthConfig | null>;

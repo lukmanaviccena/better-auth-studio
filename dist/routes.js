@@ -61,7 +61,7 @@ function _resolveModuleWithExtensions(id, parent) {
     }
     return id;
 }
-export async function safeImportAuthConfig(authConfigPath) {
+export async function safeImportAuthConfig(authConfigPath, noCache = false) {
     try {
         if (authConfigPath.endsWith('.ts')) {
             const aliases = {};
@@ -136,8 +136,8 @@ export async function safeImportAuthConfig(authConfigPath) {
             }
             const jiti = createJiti(import.meta.url, {
                 debug: false,
-                fsCache: true,
-                moduleCache: true,
+                fsCache: noCache ? false : true,
+                moduleCache: noCache ? false : true,
                 interopDefault: true,
                 alias: aliases,
             });
@@ -582,6 +582,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         cwd: process.cwd(),
                         configPath: authConfigPath,
                         shouldThrowOnError: false,
+                        noCache: true, // Disable cache for real-time plugin checks
                     });
                     if (betterAuthConfig) {
                         const plugins = betterAuthConfig.plugins || [];
@@ -1183,7 +1184,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             try {
                 let authModule;
                 try {
-                    authModule = await safeImportAuthConfig(authConfigPath);
+                    authModule = await safeImportAuthConfig(authConfigPath, true); // Disable cache for real-time plugin checks
                 }
                 catch (_importError) {
                     // Fallback: read file content directly
@@ -2606,6 +2607,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     cwd: process.cwd(),
                     configPath: authConfigPath,
                     shouldThrowOnError: false,
+                    noCache: true, // Disable cache for real-time plugin status checks
                 });
                 if (betterAuthConfig) {
                     const plugins = betterAuthConfig.plugins || [];
@@ -3246,6 +3248,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     cwd: process.cwd(),
                     configPath: authConfigPath,
                     shouldThrowOnError: false,
+                    noCache: true,
                 });
                 if (betterAuthConfig) {
                     const plugins = betterAuthConfig?.plugins || [];

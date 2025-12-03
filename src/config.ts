@@ -166,10 +166,12 @@ export function getPathAliases(cwd: string): Record<string, string> | null {
 /**
  * .tsx files are not supported by Jiti.
  */
-const jitiOptions = (cwd: string): JO => {
+const jitiOptions = (cwd: string, noCache = false): JO => {
   const alias = getPathAliases(cwd) || {};
   return {
     debug: false,
+    fsCache: noCache ? false : undefined,
+    moduleCache: noCache ? false : undefined,
     transformOptions: {
       babel: {
         presets: [
@@ -205,10 +207,12 @@ export async function getConfig({
   cwd,
   configPath,
   shouldThrowOnError = false,
+  noCache = false,
 }: {
   cwd: string;
   configPath?: string;
   shouldThrowOnError?: boolean;
+  noCache?: boolean;
 }) {
   try {
     let configFile: any | null = null;
@@ -227,7 +231,7 @@ export async function getConfig({
       >({
         configFile: resolvedPath,
         dotenv: true,
-        jitiOptions: jitiOptions(cwd),
+        jitiOptions: jitiOptions(cwd, noCache),
       });
       if (!('auth' in config) && !isDefaultExport(config)) {
         if (shouldThrowOnError) {
@@ -255,7 +259,7 @@ export async function getConfig({
             };
           }>({
             configFile: possiblePath,
-            jitiOptions: jitiOptions(cwd),
+            jitiOptions: jitiOptions(cwd, noCache),
           });
           const hasConfig = Object.keys(config).length > 0;
           if (hasConfig) {
