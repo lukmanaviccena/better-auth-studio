@@ -10,9 +10,7 @@ import { addSvelteKitEnvModules } from './add-svelte-kit-env-modules.js';
 import { getTsconfigInfo } from './get-tsconfig-info.js';
 let possiblePaths = [
     'auth.ts',
-    'auth.tsx',
     'auth.js',
-    'auth.jsx',
     'auth.server.js',
     'auth.server.ts',
 ];
@@ -65,6 +63,21 @@ function getPathAliasesRecursive(tsconfigPath, visited = new Set()) {
                 result[finalAlias || ''] = path.join(resolvedBaseUrl, finalAliasedPath);
             }
         }
+        console.log({ tsconfigPath, tsConfig });
+        if (tsConfig.extends) {
+            const extendsPath = Array.isArray(tsConfig.extends)
+                ? tsConfig.extends[0]
+                : tsConfig.extends;
+            const extendedPath = path.isAbsolute(extendsPath)
+                ? extendsPath
+                : path.resolve(configDir, extendsPath);
+            const extendedAliases = getPathAliasesRecursive(extendedPath, visited);
+            for (const [alias, aliasPath] of Object.entries(extendedAliases)) {
+                if (!(alias in result)) {
+                    result[alias] = aliasPath;
+                }
+            }
+        }
         if (tsConfig.references) {
             for (const ref of tsConfig.references) {
                 const refPath = resolveReferencePath(configDir, ref.path);
@@ -83,7 +96,7 @@ function getPathAliasesRecursive(tsconfigPath, visited = new Set()) {
         return {};
     }
 }
-function getPathAliases(cwd) {
+export function getPathAliases(cwd) {
     const tsConfigPath = path.join(cwd, 'tsconfig.json');
     if (!fs.existsSync(tsConfigPath)) {
         return null;
@@ -118,7 +131,7 @@ const jitiOptions = (cwd) => {
                 ],
             },
         },
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
+        extensions: ['.ts', '.js', '.jsx'],
         alias,
     };
 };
@@ -209,7 +222,7 @@ export async function getConfig({ cwd, configPath, shouldThrowOnError = false, }
         if (shouldThrowOnError) {
             throw e;
         }
-        logger.error("Couldn't read your auth config.", e);
+        // logger.error("Couldn't read your auth config.", e);
         process.exit(1);
     }
 }
