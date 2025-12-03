@@ -4,7 +4,6 @@ import mongodb from "./db";
 import { organization, admin, twoFactor, apiKey } from "better-auth/plugins";
 
 export const auth = betterAuth({
-    secret: process.env.AUTH_SECRET || "better-auth-secret-123456789",
     database: mongodbAdapter(mongodb),
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5173",
     basePath: "/api/auth",

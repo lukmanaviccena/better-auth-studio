@@ -1,5 +1,5 @@
 {
-  "name": "test-drizzle",
+  "name": "better-auth-express-drizzle-example",
   "version": "1.0.0",
   "description": "Test project for Better Auth Studio",
   "main": "dist/index.js",

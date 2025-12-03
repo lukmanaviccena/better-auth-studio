@@ -380,6 +380,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 databaseType = type;
             }
         }
+        console.log({ authConfig });
         const config = {
             appName: authConfig.appName || 'Better Auth',
             baseURL: authConfig.baseURL || process.env.BETTER_AUTH_URL,
@@ -1283,6 +1284,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                 'http://localhost:3000';
             const basePathRaw = authConfig.basePath || '/api/auth';
             const basePath = basePathRaw === '/' ? '' : basePathRaw.startsWith('/') ? basePathRaw : `/${basePathRaw}`;
+            console.log({ baseUrl, basePathRaw, basePath });
             const endpointChecks = [
                 {
                     label: 'Sign In',
