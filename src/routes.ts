@@ -1497,7 +1497,7 @@ export function createRoutes(
             }
 
             const response = await fetch(targetUrl, fetchOptions);
-            const ok = response.status < 500 && response.status !== 404 && response.status !== 302;
+            const ok = response.status !== 404 && response.status !== 302;
             if (!ok) {
               return {
                 label: check.label,
@@ -3740,7 +3740,7 @@ export function createRoutes(
           cwd: process.cwd(),
           configPath: authConfigPath,
           shouldThrowOnError: false,
-          noCache: true, 
+          noCache: true,
         });
 
         if (betterAuthConfig) {

@@ -1351,7 +1351,7 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                         fetchOptions.body = check.body;
                     }
                     const response = await fetch(targetUrl, fetchOptions);
-                    const ok = response.status < 500 && response.status !== 404 && response.status !== 302;
+                    const ok = response.status !== 404 && response.status !== 302;
                     if (!ok) {
                         return {
                             label: check.label,
