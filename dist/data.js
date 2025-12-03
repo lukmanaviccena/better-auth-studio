@@ -2,6 +2,7 @@ import { getAuthAdapter } from './auth-adapter.js';
 export async function getAuthData(_authConfig, type = 'stats', options, configPath) {
     try {
         const adapter = await getAuthAdapter(configPath);
+        console.log({ adapter: adapter?.options?.adapterConfig });
         if (!adapter) {
             console.log('No adapter found. if you think this is an issue from our side. please file a github issue at https://github.com/Kinfe123/better-auth/issues');
         }
