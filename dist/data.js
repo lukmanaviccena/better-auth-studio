@@ -2,10 +2,11 @@ import { getAuthAdapter } from './auth-adapter.js';
 export async function getAuthData(_authConfig, type = 'stats', options, configPath) {
     try {
         const adapter = await getAuthAdapter(configPath);
-        console.log({ adapter: adapter?.options?.adapterConfig });
-        if (!adapter) {
-            console.log('No adapter found. if you think this is an issue from our side. please file a github issue at https://github.com/Kinfe123/better-auth/issues');
-        }
+        setTimeout(() => {
+            if (adapter === null) {
+                console.log('No adapter found. if you think this is an issue from our side. please file a github issue at https://github.com/Kinfe123/better-auth/issues');
+            }
+        }, 2000);
         switch (type) {
             case 'stats':
                 return await getRealStats(adapter);
@@ -31,7 +32,6 @@ export async function getAuthData(_authConfig, type = 'stats', options, configPa
 }
 async function getRealStats(adapter) {
     try {
-        // Use findMany with high limit to get all records
         let users = [];
         let sessions = [];
         if (adapter.findMany) {
