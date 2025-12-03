@@ -184,7 +184,7 @@ const jitiOptions = (cwd: string): JO => {
         ],
       },
     },
-    extensions: ['.ts', '.js', '.jsx'],
+    extensions: ['.ts', '.js'],
     alias,
   };
 };
