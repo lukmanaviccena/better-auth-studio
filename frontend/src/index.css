@@ -116,6 +116,17 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-white/40;
   }
+
+  /* Text selection styling */
+  ::selection {
+    background-color: white;
+    color: black;
+  }
+
+  ::-moz-selection {
+    background-color: white;
+    color: black;
+  }
 }
 
 @layer components {
@@ -170,5 +181,16 @@
   }
   body {
     @apply bg-black text-white;
+  }
+
+  /* Text selection styling - white background with black text */
+  ::selection {
+    background-color: white;
+    color: black;
+  }
+
+  ::-moz-selection {
+    background-color: white;
+    color: black;
   }
 }
