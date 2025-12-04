@@ -1414,7 +1414,7 @@ export default function UserDetails() {
                 }}
                 className="text-gray-400 hover:text-white rounded-none"
               >
-                ×
+                <X className='w-4 h-4' />
               </Button>
             </div>
             <div className="space-y-4">
