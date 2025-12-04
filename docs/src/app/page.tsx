@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Hero } from "@/components/ui/void-hero";
+import { Hero } from "@/components/ui/hero";
 import Navigation from "@/components/Navigation";
 async function getLatestStudioVersion(): Promise<string | null> {
   try {
@@ -29,7 +29,7 @@ export default async function Home() {
       <Suspense fallback={null}>
         <Hero
           title="Better-Auth Studio"
-          description="An admin dashboard for Better Auth. Manage users, sessions, organizations, teams , database along with testing tools and much more with an intuitive interface."
+          description="An admin dashboard for Better Auth. Manage users, sessions, organizations, teams , database along with testing , utitility and much more with an intuitive interface."
           links={[]}
           version={version}
         />

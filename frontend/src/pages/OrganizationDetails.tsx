@@ -834,17 +834,18 @@ export default function OrganizationDetails() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-white/10">
-        <nav className="flex space-x-8">
+      <div className="border border-dashed border-white/20 rounded-none">
+        <div className="border-b border-dashed border-white/20">
+          <nav className="flex space-x-8 px-6">
           <button
             onClick={() => setActiveTab('details')}
-            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
+            className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
               activeTab === 'details'
                 ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
             }`}
           >
-            <Building2 className="w-4 h-4" />
+            <Building2 className="w-4 h-4 text-white/90" />
             <span className="inline-flex items-start">
               Details
               <sup className="text-xs text-gray-500 ml-1 inline-flex items-baseline">
@@ -860,13 +861,13 @@ export default function OrganizationDetails() {
           </button>
           <button
             onClick={() => setActiveTab('members')}
-            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
+            className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
               activeTab === 'members'
                 ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 text-white/90" />
             <span className="inline-flex items-start">
               Members
               <sup className="text-xs text-gray-500 ml-1 inline-flex items-baseline">
@@ -882,13 +883,13 @@ export default function OrganizationDetails() {
           </button>
           <button
             onClick={() => setActiveTab('invitations')}
-            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
+            className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
               activeTab === 'invitations'
                 ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
             }`}
           >
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4 text-white/90" />
             <span className="inline-flex items-start">
               Invitations
               <sup className="text-xs text-gray-500 ml-1 inline-flex items-baseline">
@@ -904,13 +905,13 @@ export default function OrganizationDetails() {
           </button>
           <button
             onClick={() => setActiveTab('teams')}
-            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
+            className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
               activeTab === 'teams'
                 ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 text-white/90" />
             <span className="inline-flex items-start">
               Teams
               <sup className="text-xs text-gray-500 ml-1 inline-flex items-baseline">
@@ -925,8 +926,9 @@ export default function OrganizationDetails() {
             </span>
           </button>
         </nav>
-      </div>
+        </div>
 
+        <div className="p-6">
       {/* Tab Content */}
       {activeTab === 'details' && (
         <div className="space-y-6">
@@ -1470,6 +1472,8 @@ export default function OrganizationDetails() {
           )}
         </div>
       )}
+        </div>
+      </div>
 
       {/* Invite User Modal */}
       {showInviteModal && (

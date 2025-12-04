@@ -346,7 +346,7 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
           <p className="font-mono uppercase text-[12.5px] text-white/50 mb-6">
             {description}
           </p>
-          <div className="bg-black/20 backdrop-blur-sm border border-white/20 border-dashed rounded-none p-4 font-mono text-xs">
+          <div className="bg-black/20 backdrop-blur-sm border border-white/15 hover:border-white/20 transition-all duration-300 border-dashed rounded-none p-4 font-mono text-xs">
             <div className="text-white/70 flex items-center text-[10px] uppercase font-mono mb-2">
               <svg
                 fill="none"
@@ -407,7 +407,7 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
         </div>
 
         <div className="hidden lg:block absolute bottom-6 right-6 lg:right-10 w-[420px] lg:w-[520px]">
-          <div className="relative overflow-hidden border border-white/20 border-dashed rounded-none bg-transparent backdrop-blur-2xl animate-[terminal-pop_0.6s_ease-out]">
+          <div className="relative overflow-hidden border group hover:border-white/20 transition-all duration-300 border-white/15 border-dashed rounded-none bg-transparent backdrop-blur-2xl animate-[terminal-pop_0.6s_ease-out]">
             <div className="absolute inset-0 bg-linear-to-br from-transparent/20 via-transparent/5 to-transparent opacity-70 blur-3xl" />
             <div className="relative px-6 pt-4 pb-0 font-mono text-[12px] text-white">
               <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-white/60 mb-3">

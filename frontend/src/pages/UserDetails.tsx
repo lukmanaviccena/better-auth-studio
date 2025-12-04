@@ -287,7 +287,7 @@ export default function UserDetails() {
         setSessions(sessions);
         resolveSessionLocations(sessions);
       }
-    } catch (_error) {}
+    } catch (_error) { }
   }, [userId, resolveSessionLocations]);
 
   const fetchUserAccounts = useCallback(async () => {
@@ -297,7 +297,7 @@ export default function UserDetails() {
         const data = await response.json();
         setAccounts(data.accounts || []);
       }
-    } catch (_error) {}
+    } catch (_error) { }
   }, [userId]);
 
   const handleEditUser = async () => {
@@ -892,11 +892,10 @@ export default function UserDetails() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
+                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
                       ? 'border-white text-white'
                       : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                  }`}
+                    }`}
                 >
                   <tab.icon className="w-4 h-4 text-white/90" />
                   <span className="inline-flex items-start">
@@ -1026,6 +1025,21 @@ export default function UserDetails() {
             )}
             {activeTab === 'organizations' && (
               <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg relative text-white font-light inline-flex items-start">
+                      Organizations
+                      <sup className="text-xs text-gray-500 ml-1 mt-0">
+                        <span className="mr-1">[</span>
+                        <span className="text-white font-mono text-xs">{organizations.length}</span>
+                        <span className="ml-1">]</span>
+                      </sup>
+                    </h3>
+                    <p className="text-gray-400 font-light font-mono text-xs uppercase mt-1">
+                      Organizations this user belongs to
+                    </p>
+                  </div>
+                </div>
                 {organizations.length === 0 ? (
                   <div className="text-center py-12">
                     <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1119,6 +1133,21 @@ export default function UserDetails() {
 
             {activeTab === 'teams' && (
               <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg relative text-white font-light inline-flex items-start">
+                      Teams
+                      <sup className="text-xs text-gray-500 ml-1 mt-0">
+                        <span className="mr-1">[</span>
+                        <span className="text-white font-mono text-xs">{teams.length}</span>
+                        <span className="ml-1">]</span>
+                      </sup>
+                    </h3>
+                    <p className="text-gray-400 font-light font-mono text-xs uppercase mt-1">
+                      Teams this user belongs to
+                    </p>
+                  </div>
+                </div>
                 {teams.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1145,7 +1174,7 @@ export default function UserDetails() {
                                   variant="subscript"
                                   nonSliced={
                                     membership.team.organizationSlug ||
-                                    membership.team.organizationName
+                                      membership.team.organizationName
                                       ? true
                                       : false
                                   }
@@ -1219,8 +1248,17 @@ export default function UserDetails() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-medium text-white">Linked Accounts</h3>
-                    <p className="text-gray-400 text-sm">Manage user OAuth account connections</p>
+                    <h3 className="text-lg relative text-white font-light inline-flex items-start">
+                      Linked Accounts
+                      <sup className="text-xs text-gray-500 ml-1 mt-0">
+                        <span className="mr-1">[</span>
+                        <span className="text-white font-mono text-xs">{accounts.length}</span>
+                        <span className="ml-1">]</span>
+                      </sup>
+                    </h3>
+                    <p className="text-gray-400 font-light font-mono text-xs uppercase mt-1">
+                      Manage user OAuth account connections
+                    </p>
                   </div>
                   <Button
                     variant="outline"
@@ -1298,8 +1336,17 @@ export default function UserDetails() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-medium text-white">Sessions</h3>
-                    <p className="text-gray-400 text-sm">Manage user authentication sessions</p>
+                    <h3 className="text-lg relative text-white font-light inline-flex items-start">
+                      Sessions
+                      <sup className="text-xs text-gray-500 ml-1 mt-0">
+                        <span className="mr-1">[</span>
+                        <span className="text-white font-mono text-xs">{sessions.length}</span>
+                        <span className="ml-1">]</span>
+                      </sup>
+                    </h3>
+                    <p className="text-gray-400 font-light font-mono text-xs uppercase mt-1">
+                      Manage user authentication sessions
+                    </p>
                   </div>
                   <Button
                     variant="outline"
@@ -1748,7 +1795,7 @@ export default function UserDetails() {
                     onClick={() => {
                       const count = parseInt(
                         (document.getElementById('session-count') as HTMLInputElement)?.value ||
-                          '3',
+                        '3',
                         10
                       );
                       handleSeedSessions(count);
