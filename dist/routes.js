@@ -4707,7 +4707,8 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
                     let value = match[2].trim();
                     // Remove surrounding quotes if present (handles both single and double quotes)
                     if (value.length >= 2) {
-                        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                        if ((value.startsWith('"') && value.endsWith('"')) ||
+                            (value.startsWith("'") && value.endsWith("'"))) {
                             value = value.slice(1, -1).trim();
                         }
                     }
