@@ -504,7 +504,25 @@ export default function Tools() {
     middlewareLogic: string;
     expanded?: boolean;
   }>>([]);
-  const [pluginRateLimit, setPluginRateLimit] = useState(false);
+  const [pluginEndpoints, setPluginEndpoints] = useState<Array<{
+    name: string;
+    path: string;
+    method: 'GET' | 'POST';
+    handlerLogic: string;
+    expanded?: boolean;
+  }>>([]);
+  const [pluginRateLimitEnabled, setPluginRateLimitEnabled] = useState(false);
+  const [pluginRateLimit, setPluginRateLimit] = useState<{
+    path: string;
+    pathType: 'exact' | 'prefix' | 'regex';
+    window: number;
+    max: number;
+  }>({
+    path: '/my-plugin/*',
+    pathType: 'prefix',
+    window: 15 * 60 * 1000,
+    max: 100,
+  });
   const [pluginResult, setPluginResult] = useState<any>(null);
   const [isGeneratingPlugin, setIsGeneratingPlugin] = useState(false);
   const [pluginError, setPluginError] = useState<string | null>(null);
@@ -1584,7 +1602,13 @@ export default function Tools() {
     setPluginTables([]);
     setPluginHooks([]);
     setPluginMiddleware([]);
-    setPluginRateLimit(false);
+    setPluginRateLimitEnabled(false);
+    setPluginRateLimit({
+      path: '/my-plugin/*',
+      pathType: 'prefix',
+      window: 15 * 60 * 1000,
+      max: 100,
+    });
     setPluginResult(null);
     setPluginError(null);
     setActiveCodeTab('server');
@@ -1602,6 +1626,13 @@ export default function Tools() {
     newMw[index].expanded = !newMw[index].expanded;
     setPluginMiddleware(newMw);
   };
+
+  const toggleEndpointExpanded = (index: number) => {
+    const newEndpoints = [...pluginEndpoints];
+    newEndpoints[index].expanded = !newEndpoints[index].expanded;
+    setPluginEndpoints(newEndpoints);
+  };
+
 
   const handleGeneratePlugin = async () => {
     if (!pluginName.trim()) {
@@ -1645,7 +1676,18 @@ export default function Tools() {
             pathType: mw.pathType,
             middlewareLogic: mw.middlewareLogic.trim(),
           })),
-          rateLimit: pluginRateLimit || undefined,
+          endpoints: pluginEndpoints.filter((ep) => ep.name.trim() && ep.path.trim()).map((ep) => ({
+            name: ep.name.trim(),
+            path: ep.path.trim(),
+            method: ep.method,
+            handlerLogic: ep.handlerLogic.trim(),
+          })),
+          rateLimit: pluginRateLimitEnabled ? {
+            path: pluginRateLimit.path.trim(),
+            pathType: pluginRateLimit.pathType,
+            window: pluginRateLimit.window,
+            max: pluginRateLimit.max,
+          } : undefined,
         }),
       });
 
@@ -3686,16 +3728,241 @@ export default function Tools() {
               </div>
 
               <div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-white" />
+                    <Label className="text-xs uppercase font-mono text-gray-400">Endpoints</Label>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setPluginEndpoints([
+                        ...pluginEndpoints,
+                        {
+                          name: '',
+                          path: '/my-plugin/endpoint',
+                          method: 'POST',
+                          handlerLogic: '// Endpoint handler logic here\nreturn ctx.json({ success: true });',
+                          expanded: true,
+                        },
+                      ])
+                    }
+                    className="text-xs text-gray-400 hover:text-white rounded-none"
+                  >
+                    + Add Endpoint
+                  </Button>
+                </div>
+                {pluginEndpoints.length === 0 ? (
+                  <p className="text-xs text-gray-500 font-mono">No endpoints added</p>
+                ) : (
+                  <div className="space-y-2">
+                    {pluginEndpoints.map((endpoint, index) => {
+                      const endpointLabel = `${endpoint.method} ${endpoint.path}: ${endpoint.name || `Endpoint ${index + 1}`}`;
+                      return (
+                        <div key={index} className="border border-dashed border-white/10">
+                          <button
+                            onClick={() => toggleEndpointExpanded(index)}
+                            className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors text-left"
+                          >
+                            <span className="text-xs font-mono text-white px-2 py-1 bg-black/40 border border-dashed border-white/20 rounded-none">
+                              {endpointLabel}
+                            </span>
+                            <ChevronRight
+                              className={`w-4 h-4 text-white/60 transition-transform ${endpoint.expanded ? 'rotate-90' : ''}`}
+                            />
+                          </button>
+                          {endpoint.expanded && (
+                            <div className="border-t border-dashed border-white/10 p-4 space-y-4">
+                              <div>
+                                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                                  Endpoint Name
+                                </Label>
+                                <Input
+                                  value={endpoint.name}
+                                  onChange={(e) => {
+                                    const newEndpoints = [...pluginEndpoints];
+                                    newEndpoints[index].name = e.target.value;
+                                    setPluginEndpoints(newEndpoints);
+                                  }}
+                                  placeholder="e.g., Custom Action, Data Fetch"
+                                  className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                                    Path
+                                  </Label>
+                                  <Input
+                                    value={endpoint.path}
+                                    onChange={(e) => {
+                                      const newEndpoints = [...pluginEndpoints];
+                                      newEndpoints[index].path = e.target.value;
+                                      setPluginEndpoints(newEndpoints);
+                                    }}
+                                    placeholder="/my-plugin/endpoint"
+                                    className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                                    Method
+                                  </Label>
+                                  <Select
+                                    value={endpoint.method}
+                                    onValueChange={(value: string) => {
+                                      const newEndpoints = [...pluginEndpoints];
+                                      newEndpoints[index].method = value as 'GET' | 'POST';
+                                      setPluginEndpoints(newEndpoints);
+                                    }}
+                                  >
+                                    <SelectTrigger className="bg-black border border-dashed border-white/20 text-white rounded-none">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="GET">GET</SelectItem>
+                                      <SelectItem value="POST">POST</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <Code className="w-4 h-4 text-white" />
+                                  <Label className="text-xs uppercase font-mono text-gray-400">
+                                    Handler Logic (TypeScript)
+                                  </Label>
+                                </div>
+                                <p className="text-xs text-gray-400 mb-2 font-mono">
+                                  This is the TypeScript code that will be executed when the endpoint is called. You can access the context via ctx parameter.
+                                </p>
+                                <textarea
+                                  value={endpoint.handlerLogic}
+                                  onChange={(e) => {
+                                    const newEndpoints = [...pluginEndpoints];
+                                    newEndpoints[index].handlerLogic = e.target.value;
+                                    setPluginEndpoints(newEndpoints);
+                                  }}
+                                  className="w-full min-h-[200px] bg-black border border-dashed border-white/20 text-white font-mono text-xs p-3 rounded-none focus:outline-none focus:border-white/40"
+                                  placeholder="// Endpoint handler logic here\nreturn ctx.json({ success: true });"
+                                />
+                              </div>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setPluginEndpoints(pluginEndpoints.filter((_, i) => i !== index));
+                                }}
+                                className="w-full border border-dashed border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-none"
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Remove Endpoint
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center space-x-2 mb-3">
                   <Checkbox
                     id="rate-limit"
-                    checked={pluginRateLimit}
-                    onCheckedChange={(checked) => setPluginRateLimit(checked === true)}
+                    checked={pluginRateLimitEnabled}
+                    onCheckedChange={(checked) => setPluginRateLimitEnabled(checked === true)}
                   />
                   <Label htmlFor="rate-limit" className="text-xs uppercase font-mono text-gray-400 cursor-pointer">
-                    Include Rate Limiting
+                    Enable Rate Limiting
                   </Label>
                 </div>
+                {pluginRateLimitEnabled && (
+                  <div className="border border-dashed border-white/10 p-4 space-y-4 mt-3">
+                    <div>
+                      <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                        Path
+                      </Label>
+                      <Input
+                        value={pluginRateLimit.path}
+                        onChange={(e) => {
+                          setPluginRateLimit({
+                            ...pluginRateLimit,
+                            path: e.target.value,
+                          });
+                        }}
+                        placeholder="/my-plugin/*"
+                        className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                        Path Type
+                      </Label>
+                      <Select
+                        value={pluginRateLimit.pathType}
+                        onValueChange={(value: string) => {
+                          setPluginRateLimit({
+                            ...pluginRateLimit,
+                            pathType: value as 'exact' | 'prefix' | 'regex',
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="bg-black border border-dashed border-white/20 text-white rounded-none">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="exact">Exact Match</SelectItem>
+                          <SelectItem value="prefix">Prefix Match</SelectItem>
+                          <SelectItem value="regex">Regex Match</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                          Window (ms)
+                        </Label>
+                        <Input
+                          type="number"
+                          value={pluginRateLimit.window}
+                          onChange={(e) => {
+                            setPluginRateLimit({
+                              ...pluginRateLimit,
+                              window: parseInt(e.target.value, 10) || 0,
+                            });
+                          }}
+                          placeholder="900000"
+                          className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                        />
+                        <p className="text-[11px] text-gray-500 mt-1 font-mono">
+                          Time window in milliseconds (e.g., 900000 = 15 minutes)
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                          Max Requests
+                        </Label>
+                        <Input
+                          type="number"
+                          value={pluginRateLimit.max}
+                          onChange={(e) => {
+                            setPluginRateLimit({
+                              ...pluginRateLimit,
+                              max: parseInt(e.target.value, 10) || 0,
+                            });
+                          }}
+                          placeholder="100"
+                          className="bg-black border border-dashed border-white/20 text-white rounded-none"
+                        />
+                        <p className="text-[11px] text-gray-500 mt-1 font-mono">
+                          Maximum requests per window
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end space-x-2">
@@ -3707,7 +3974,14 @@ export default function Tools() {
                     setPluginTables([]);
                     setPluginHooks([]);
                     setPluginMiddleware([]);
-                    setPluginRateLimit(false);
+                    setPluginEndpoints([]);
+                    setPluginRateLimitEnabled(false);
+    setPluginRateLimit({
+      path: '/my-plugin/*',
+      pathType: 'prefix',
+      window: 15 * 60 * 1000,
+      max: 100,
+    });
                     setPluginResult(null);
                     setPluginError(null);
                   }}
