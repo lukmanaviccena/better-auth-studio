@@ -524,9 +524,11 @@ export default function Tools() {
     max: 100,
   });
   const [pluginResult, setPluginResult] = useState<any>(null);
+  const codeGenerationRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPlugin, setIsGeneratingPlugin] = useState(false);
   const [pluginError, setPluginError] = useState<string | null>(null);
   const [activeCodeTab, setActiveCodeTab] = useState<'server' | 'client' | 'serverSetup' | 'clientSetup'>('server');
+  const [clientFramework, setClientFramework] = useState<'react' | 'svelte' | 'solid' | 'vue' | 'client'>('client');
   useEffect(() => {
     if (showConfigValidator) {
       document.body.style.overflow = 'hidden';
@@ -611,6 +613,17 @@ export default function Tools() {
       document.body.style.overflow = '';
     };
   }, [showUuidModal]);
+  useEffect(() => {
+    if (showPluginGeneratorModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  } , [showPluginGeneratorModal])
+  
 
   const addLog = (
     type: 'info' | 'success' | 'error' | 'progress',
@@ -1599,6 +1612,7 @@ export default function Tools() {
   const handleOpenPluginGenerator = () => {
     setPluginName('');
     setPluginDescription('');
+    setClientFramework('client');
     setPluginTables([]);
     setPluginHooks([]);
     setPluginMiddleware([]);
@@ -1682,6 +1696,7 @@ export default function Tools() {
         body: JSON.stringify({
           pluginName: pluginName.trim(),
           description: pluginDescription.trim() || undefined,
+          clientFramework: clientFramework,
           tables: validTables.map((table) => ({
             name: table.name.trim(),
             fields: table.fields.filter((f) => f.name.trim()),
@@ -1719,6 +1734,10 @@ export default function Tools() {
       if (result.success) {
         setPluginResult(result.plugin);
         toast.success('Plugin generated successfully');
+        // Scroll to code generation component smoothly
+        setTimeout(() => {
+          codeGenerationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
       } else {
         const message = result.error || 'Failed to generate plugin';
         setPluginError(message);
@@ -3199,6 +3218,27 @@ export default function Tools() {
               </div>
 
               <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Client Framework
+                </Label>
+                <Select value={clientFramework} onValueChange={(value: any) => setClientFramework(value)}>
+                  <SelectTrigger className="bg-black border border-dashed border-white/20 text-white rounded-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Generic (better-auth/client)</SelectItem>
+                    <SelectItem value="react">React (better-auth/react)</SelectItem>
+                    <SelectItem value="svelte">Svelte (better-auth/svelte)</SelectItem>
+                    <SelectItem value="solid">Solid (better-auth/solid)</SelectItem>
+                    <SelectItem value="vue">Vue (better-auth/vue)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-gray-500 mt-1 font-mono">
+                  Select the framework for client setup code
+                </p>
+              </div>
+
+              <div>
                 <div className="flex items-center justify-between mb-3">
                   <Label className="text-xs uppercase font-mono text-gray-400">
                     Tables (optional)
@@ -4016,6 +4056,7 @@ export default function Tools() {
                   onClick={() => {
                     setPluginName('');
                     setPluginDescription('');
+                    setClientFramework('client');
                     setPluginTables([]);
                     setPluginHooks([]);
                     setPluginMiddleware([]);
@@ -4057,7 +4098,7 @@ export default function Tools() {
               )}
 
               {pluginResult && (
-                <div className="space-y-4 border border-dashed border-white/15 p-4">
+                <div ref={codeGenerationRef} className="space-y-4 border border-dashed border-white/15 p-4">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-xs uppercase font-mono text-gray-400">Generated Code</p>
                     <div className="flex space-x-2">
@@ -4088,7 +4129,6 @@ export default function Tools() {
                           const url = window.URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          // Extract just the filename from the path
                           const fileName = filePath.split('/').pop() || filePath;
                           a.download = fileName;
                           document.body.appendChild(a);
