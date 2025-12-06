@@ -4955,97 +4955,122 @@ export function createRoutes(
       const pascalCaseName = sanitizedName.charAt(0).toUpperCase() + sanitizedName.slice(1);
 
       // Generate schema
-      const schemaCode = tables.length > 0 ? tables.map((table: any) => {
-        const fields = table.fields?.filter((f: any) => f.name.trim()).map((field: any) => {
-          let attrStr = `type: "${field.type}"`;
-          if (field.required) attrStr += ',\n            required: true';
-          if (field.unique) attrStr += ',\n            unique: true';
-          return `          ${field.name}: {\n            ${attrStr}\n          }`;
-        }).join(',\n') || '';
-        
-        return `      ${table.name}: {
+      const schemaCode =
+        tables.length > 0
+          ? tables
+              .map((table: any) => {
+                const fields =
+                  table.fields
+                    ?.filter((f: any) => f.name.trim())
+                    .map((field: any) => {
+                      let attrStr = `type: "${field.type}"`;
+                      if (field.required) attrStr += ',\n            required: true';
+                      if (field.unique) attrStr += ',\n            unique: true';
+                      return `          ${field.name}: {\n            ${attrStr}\n          }`;
+                    })
+                    .join(',\n') || '';
+
+                return `      ${table.name}: {
         fields: {
 ${fields}
         },
       }`;
-      }).join(',\n') : '';
+              })
+              .join(',\n')
+          : '';
 
       // Generate hooks
-      const beforeHooks = hooks.filter((h: any) => h.timing === 'before').map((hook: any) => {
-        let matcher = '';
-        if (hook.action === 'sign-up') {
-          matcher = `(ctx) => ctx.path.startsWith("/sign-up")`;
-        } else if (hook.action === 'sign-in') {
-          matcher = `(ctx) => ctx.path.startsWith("/sign-in")`;
-        } else if (hook.action === 'custom' && hook.customPath) {
-          matcher = `(ctx) => ctx.path === "${hook.customPath}"`;
-          if (hook.customMatcher) {
-            matcher = `(ctx) => ctx.path === "${hook.customPath}" && (${hook.customMatcher})`;
+      const beforeHooks = hooks
+        .filter((h: any) => h.timing === 'before')
+        .map((hook: any) => {
+          let matcher = '';
+          if (hook.action === 'sign-up') {
+            matcher = `(ctx) => ctx.path.startsWith("/sign-up")`;
+          } else if (hook.action === 'sign-in') {
+            matcher = `(ctx) => ctx.path.startsWith("/sign-in")`;
+          } else if (hook.action === 'custom' && hook.customPath) {
+            matcher = `(ctx) => ctx.path === "${hook.customPath}"`;
+            if (hook.customMatcher) {
+              matcher = `(ctx) => ctx.path === "${hook.customPath}" && (${hook.customMatcher})`;
+            }
+          } else {
+            matcher = `(ctx) => true`;
           }
-        } else {
-          matcher = `(ctx) => true`;
-        }
-        
-        return `        {
-          matcher: ${matcher},
-          handler: createAuthMiddleware(async (ctx) => {
-            // ${hook.name || `${hook.timing} ${hook.action} hook`}
-            ${hook.hookLogic || '// Hook logic here'}
-          }),
-        }`;
-      });
 
-      const afterHooks = hooks.filter((h: any) => h.timing === 'after').map((hook: any) => {
-        let matcher = '';
-        if (hook.action === 'sign-up') {
-          matcher = `(ctx) => ctx.path.startsWith("/sign-up")`;
-        } else if (hook.action === 'sign-in') {
-          matcher = `(ctx) => ctx.path.startsWith("/sign-in")`;
-        } else if (hook.action === 'custom' && hook.customPath) {
-          matcher = `(ctx) => ctx.path === "${hook.customPath}"`;
-          if (hook.customMatcher) {
-            matcher = `(ctx) => ctx.path === "${hook.customPath}" && (${hook.customMatcher})`;
-          }
-        } else {
-          matcher = `(ctx) => true`;
-        }
-        
-        return `        {
+          return `        {
           matcher: ${matcher},
           handler: createAuthMiddleware(async (ctx) => {
             // ${hook.name || `${hook.timing} ${hook.action} hook`}
             ${hook.hookLogic || '// Hook logic here'}
           }),
         }`;
-      });
+        });
+
+      const afterHooks = hooks
+        .filter((h: any) => h.timing === 'after')
+        .map((hook: any) => {
+          let matcher = '';
+          if (hook.action === 'sign-up') {
+            matcher = `(ctx) => ctx.path.startsWith("/sign-up")`;
+          } else if (hook.action === 'sign-in') {
+            matcher = `(ctx) => ctx.path.startsWith("/sign-in")`;
+          } else if (hook.action === 'custom' && hook.customPath) {
+            matcher = `(ctx) => ctx.path === "${hook.customPath}"`;
+            if (hook.customMatcher) {
+              matcher = `(ctx) => ctx.path === "${hook.customPath}" && (${hook.customMatcher})`;
+            }
+          } else {
+            matcher = `(ctx) => true`;
+          }
+
+          return `        {
+          matcher: ${matcher},
+          handler: createAuthMiddleware(async (ctx) => {
+            // ${hook.name || `${hook.timing} ${hook.action} hook`}
+            ${hook.hookLogic || '// Hook logic here'}
+          }),
+        }`;
+        });
 
       // Generate middleware
-      const middlewareCode = middleware.map((mw: any) => {
-        return `      {
+      const middlewareCode = middleware
+        .map((mw: any) => {
+          return `      {
         path: "${mw.path}",
         middleware: createAuthMiddleware(async (ctx) => {
           // ${mw.name || 'Middleware'}
           ${mw.middlewareLogic || '// Middleware logic here'}
         }),
       }`;
-      }).join(',\n');
+        })
+        .join(',\n');
 
       // Generate endpoints
-      const endpointsCode = endpoints.length > 0 ? endpoints.map((endpoint: any) => {
-        const endpointName = endpoint.name?.trim() || `endpoint${endpoints.indexOf(endpoint) + 1}`;
-        const sanitizedName = endpointName.replace(/[^a-zA-Z0-9]/g, '');
-        const endpointPath = endpoint.path?.trim() || `/${camelCaseName}/${sanitizedName}`;
-        const handlerLogic = endpoint.handlerLogic || '// Endpoint handler logic here\n          return ctx.json({ success: true });';
-        const formattedHandlerLogic = handlerLogic.split('\n').map((line: string) => {
-          const trimmed = line.trim();
-          if (!trimmed) return '';
-          if (!line.startsWith('          ')) {
-            return '          ' + trimmed;
-          }
-          return line;
-        }).filter(Boolean).join('\n');
-        
-        return `      ${sanitizedName}: createAuthEndpoint(
+      const endpointsCode =
+        endpoints.length > 0
+          ? endpoints
+              .map((endpoint: any) => {
+                const endpointName =
+                  endpoint.name?.trim() || `endpoint${endpoints.indexOf(endpoint) + 1}`;
+                const sanitizedName = endpointName.replace(/[^a-zA-Z0-9]/g, '');
+                const endpointPath = endpoint.path?.trim() || `/${camelCaseName}/${sanitizedName}`;
+                const handlerLogic =
+                  endpoint.handlerLogic ||
+                  '// Endpoint handler logic here\n          return ctx.json({ success: true });';
+                const formattedHandlerLogic = handlerLogic
+                  .split('\n')
+                  .map((line: string) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return '';
+                    if (!line.startsWith('          ')) {
+                      return '          ' + trimmed;
+                    }
+                    return line;
+                  })
+                  .filter(Boolean)
+                  .join('\n');
+
+                return `      ${sanitizedName}: createAuthEndpoint(
         "${endpointPath}",
         {
           method: "${endpoint.method || 'POST'}" as const,
@@ -5055,33 +5080,37 @@ ${fields}
 ${formattedHandlerLogic}
         },
       ),`;
-      }).join('\n') : '';
+              })
+              .join('\n')
+          : '';
 
-      const rateLimitCode = rateLimit ? (() => {
-        const rl = rateLimit as any;
-        let pathMatcher = '';
-        if (rl.pathType === 'exact') {
-          pathMatcher = `(path: string) => path === "${rl.path}"`;
-        } else if (rl.pathType === 'prefix') {
-          pathMatcher = `(path: string) => path.startsWith("${rl.path}")`;
-        } else if (rl.pathType === 'regex') {
-          pathMatcher = `(path: string) => new RegExp("${rl.path.replace(/"/g, '\\"')}").test(path)`;
-        } else {
-          pathMatcher = `(path: string) => true`;
-        }
-        
-        const windowValue = rl.window && rl.window > 0 ? rl.window : 15 * 60 * 1000;
-        const maxValue = rl.max && rl.max > 0 ? rl.max : 100;
-        
-        return `      window: ${windowValue},
+      const rateLimitCode = rateLimit
+        ? (() => {
+            const rl = rateLimit as any;
+            let pathMatcher = '';
+            if (rl.pathType === 'exact') {
+              pathMatcher = `(path: string) => path === "${rl.path}"`;
+            } else if (rl.pathType === 'prefix') {
+              pathMatcher = `(path: string) => path.startsWith("${rl.path}")`;
+            } else if (rl.pathType === 'regex') {
+              pathMatcher = `(path: string) => new RegExp("${rl.path.replace(/"/g, '\\"')}").test(path)`;
+            } else {
+              pathMatcher = `(path: string) => true`;
+            }
+
+            const windowValue = rl.window && rl.window > 0 ? rl.window : 15 * 60 * 1000;
+            const maxValue = rl.max && rl.max > 0 ? rl.max : 100;
+
+            return `      window: ${windowValue},
       max: ${maxValue},
       pathMatcher: ${pathMatcher}`;
-      })() : '';
+          })()
+        : '';
 
       const cleanCode = (code: string): string => {
         return code
           .split('\n')
-          .map(line => line.trimEnd())
+          .map((line) => line.trimEnd())
           .filter((line, index, arr) => {
             if (line === '' && arr[index + 1] === '') return false;
             return true;
@@ -5092,11 +5121,11 @@ ${formattedHandlerLogic}
       };
 
       const pluginParts: string[] = [];
-      
+
       if (schemaCode) {
         pluginParts.push(`    schema: {\n${schemaCode}\n    }`);
       }
-      
+
       if (beforeHooks.length > 0 || afterHooks.length > 0) {
         const hooksParts: string[] = [];
         if (beforeHooks.length > 0) {
@@ -5107,15 +5136,15 @@ ${formattedHandlerLogic}
         }
         pluginParts.push(`    hooks: {\n${hooksParts.join(',\n')}\n    }`);
       }
-      
+
       if (middlewareCode) {
         pluginParts.push(`    middlewares: [\n${middlewareCode}\n    ]`);
       }
-      
+
       if (endpointsCode) {
         pluginParts.push(`    endpoints: {\n${endpointsCode}\n    }`);
       }
-      
+
       if (rateLimitCode) {
         pluginParts.push(`    rateLimit: {\n${rateLimitCode}\n    }`);
       }
@@ -5123,12 +5152,15 @@ ${formattedHandlerLogic}
       // Generate server plugin code
       const imports: string[] = ['import type { BetterAuthPlugin } from "@better-auth/core"'];
       if (hooks.length > 0 || middleware.length > 0 || endpoints.length > 0) {
-        imports.push('import { createAuthEndpoint, createAuthMiddleware } from "@better-auth/core/api"');
+        imports.push(
+          'import { createAuthEndpoint, createAuthMiddleware } from "@better-auth/core/api"'
+        );
       }
 
-      const serverPluginBody = pluginParts.length > 0 
-        ? `    id: "${camelCaseName}" as const,\n${pluginParts.join(',\n')}`
-        : `    id: "${camelCaseName}" as const`;
+      const serverPluginBody =
+        pluginParts.length > 0
+          ? `    id: "${camelCaseName}" as const,\n${pluginParts.join(',\n')}`
+          : `    id: "${camelCaseName}" as const`;
 
       const serverPluginCode = cleanCode(`import type { BetterAuthPlugin } from "@better-auth/core";
 ${imports.join('\n')}
@@ -5141,11 +5173,16 @@ ${serverPluginBody}
 };
 `);
 
-      const pathMethods = endpoints.length > 0 ? endpoints.map((endpoint: any) => {
-        const endpointPath = endpoint.path?.trim() || '';
-        const method = endpoint.method || 'POST';
-        return `      "${endpointPath}": "${method}"`;
-      }).join(',\n') : '';
+      const pathMethods =
+        endpoints.length > 0
+          ? endpoints
+              .map((endpoint: any) => {
+                const endpointPath = endpoint.path?.trim() || '';
+                const method = endpoint.method || 'POST';
+                return `      "${endpointPath}": "${method}"`;
+              })
+              .join(',\n')
+          : '';
 
       const sessionAffectingPaths = endpoints
         .filter((endpoint: any) => {
@@ -5160,11 +5197,13 @@ ${serverPluginBody}
       }`;
         });
 
-      const atomListenersCode = sessionAffectingPaths.length > 0 
-        ? `\n    atomListeners: [\n${sessionAffectingPaths.join(',\n')}\n    ],` 
-        : '';
+      const atomListenersCode =
+        sessionAffectingPaths.length > 0
+          ? `\n    atomListeners: [\n${sessionAffectingPaths.join(',\n')}\n    ],`
+          : '';
 
-      const clientPluginCode = cleanCode(`import type { BetterAuthClientPlugin } from "@better-auth/core";
+      const clientPluginCode =
+        cleanCode(`import type { BetterAuthClientPlugin } from "@better-auth/core";
 import type { ${camelCaseName} } from "..";
 
 export const ${camelCaseName}Client = () => {
@@ -5202,7 +5241,9 @@ export const auth = betterAuth({
         solid: 'import.meta.env.PUBLIC_BETTER_AUTH_URL || "http://localhost:5173"',
         vue: 'import.meta.env.PUBLIC_BETTER_AUTH_URL || "http://localhost:5173"',
       };
-      const baseURL = baseURLMap[clientFramework] || 'process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"';
+      const baseURL =
+        baseURLMap[clientFramework] ||
+        'process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"';
 
       const clientSetupCode = cleanCode(`import { createAuthClient } from "${frameworkImport}";
 import { ${camelCaseName}Client } from "./plugin/${camelCaseName}/client";
