@@ -4998,6 +4998,33 @@ ${fields}
               .join(',\n')
           : '';
 
+      const preserveIndentation = (code: string, baseIndent: string): string => {
+        if (!code.trim()) return '';
+        
+        const lines = code.split('\n');
+        const nonEmptyLines = lines.filter(line => line.trim());
+        
+        if (nonEmptyLines.length === 0) return '';
+        
+        const minIndent = Math.min(
+          ...nonEmptyLines.map(line => {
+            const match = line.match(/^(\s*)/);
+            return match ? match[1].length : 0;
+          })
+        );
+        
+        return lines
+          .map(line => {
+            if (!line.trim()) return '';
+            const currentIndent = line.match(/^(\s*)/)?.[1] || '';
+            const relativeIndent = Math.max(0, currentIndent.length - minIndent);
+            const content = line.trim();
+            return baseIndent + ' '.repeat(relativeIndent) + content;
+          })
+          .filter(Boolean)
+          .join('\n');
+      };
+
       const beforeHooks = hooks
         .filter((h: any) => h.timing === 'before')
         .map((hook: any) => {
@@ -5015,10 +5042,15 @@ ${fields}
             matcher = `(ctx) => true`;
           }
 
+          const formattedHookLogic = preserveIndentation(
+            hook.hookLogic || '// Hook logic here',
+            '            '
+          );
+
           return `        {
           matcher: ${matcher},
           handler: createAuthMiddleware(async (ctx) => {
-            ${hook.hookLogic || '// Hook logic here'}
+${formattedHookLogic}
           }),
         }`;
         });
@@ -5040,20 +5072,30 @@ ${fields}
             matcher = `(ctx) => true`;
           }
 
+          const formattedHookLogic = preserveIndentation(
+            hook.hookLogic || '// Hook logic here',
+            '            '
+          );
+
           return `        {
           matcher: ${matcher},
           handler: createAuthMiddleware(async (ctx) => {
-            ${hook.hookLogic || '// Hook logic here'}
+${formattedHookLogic}
           }),
         }`;
         });
 
       const middlewareCode = middleware
         .map((mw: any) => {
+          const formattedMiddlewareLogic = preserveIndentation(
+            mw.middlewareLogic || '// Middleware logic here',
+            '          '
+          );
+
           return `      {
         path: "${mw.path}",
         middleware: createAuthMiddleware(async (ctx) => {
-          ${mw.middlewareLogic || '// Middleware logic here'}
+${formattedMiddlewareLogic}
         }),
       }`;
         })
@@ -5069,19 +5111,8 @@ ${fields}
                 const endpointPath = endpoint.path?.trim() || `/${camelCaseName}/${sanitizedName}`;
                 const handlerLogic =
                   endpoint.handlerLogic ||
-                  '// Endpoint handler logic here\n          return ctx.json({ success: true });';
-                const formattedHandlerLogic = handlerLogic
-                  .split('\n')
-                  .map((line: string) => {
-                    const trimmed = line.trim();
-                    if (!trimmed) return '';
-                    if (!line.startsWith('          ')) {
-                      return '          ' + trimmed;
-                    }
-                    return line;
-                  })
-                  .filter(Boolean)
-                  .join('\n');
+                  '// Endpoint handler logic here\nreturn ctx.json({ success: true });';
+                const formattedHandlerLogic = preserveIndentation(handlerLogic, '          ');
 
                 return `      ${sanitizedName}: createAuthEndpoint(
         "${endpointPath}",
@@ -5132,35 +5163,6 @@ ${formattedHandlerLogic}
           .trim();
       };
 
-      const formatCode = (code: string): string => {
-        try {
-          const tempFile = pathJoin(
-            tmpdir(),
-            `biome-format-${Date.now()}-${Math.random().toString(36).substring(7)}.ts`
-          );
-          writeFile(tempFile, code, 'utf-8');
-
-          try {
-            execSync(`npx @biomejs/biome format --write ${tempFile}`, {
-              stdio: 'pipe',
-              cwd: process.cwd(),
-            });
-
-            const formatted = readFile(tempFile, 'utf-8');
-            unlinkSync(tempFile);
-            return formatted;
-          } catch (formatError) {
-            try {
-              unlinkSync(tempFile);
-            } catch {
-              // Ignore cleanup errors
-            }
-            return code;
-          }
-        } catch (error) {
-          return code;
-        }
-      };
 
       const pluginParts: string[] = [];
 
@@ -5203,8 +5205,7 @@ ${formattedHandlerLogic}
           ? `    id: "${camelCaseName}",\n${pluginParts.join(',\n')}`
           : `    id: "${camelCaseName}"`;
 
-      const serverPluginCode = formatCode(
-        cleanCode(`import type { BetterAuthPlugin } from "@better-auth/core";
+      const serverPluginCode = cleanCode(`import type { BetterAuthPlugin } from "@better-auth/core";
 ${imports.join('\n')}
 
 ${description ? `/**\n * ${description.replace(/\n/g, '\n * ')}\n */` : ''}
@@ -5213,8 +5214,7 @@ export const ${camelCaseName} = (options?: Record<string, any>) => {
 ${serverPluginBody}
   } satisfies BetterAuthPlugin;
 };
-`)
-      );
+`);
 
       const pathMethods =
         endpoints.length > 0
@@ -5245,8 +5245,7 @@ ${serverPluginBody}
           ? `\n    atomListeners: [\n${sessionAffectingPaths.join(',\n')}\n    ],`
           : '';
 
-      const clientPluginCode = formatCode(
-        cleanCode(`import type { BetterAuthClientPlugin } from "@better-auth/core";
+      const clientPluginCode = cleanCode(`import type { BetterAuthClientPlugin } from "@better-auth/core";
 import type { ${camelCaseName} } from "..";
 
 export const ${camelCaseName}Client = () => {
@@ -5255,11 +5254,9 @@ export const ${camelCaseName}Client = () => {
     $InferServerPlugin: {} as ReturnType<typeof ${camelCaseName}>,${pathMethods ? `\n    pathMethods: {\n${pathMethods}\n    },` : ''}${atomListenersCode}
   } satisfies BetterAuthClientPlugin;
 };
-`)
-      );
+`);
 
-      const serverSetupCode = formatCode(
-        cleanCode(`import { betterAuth } from "@better-auth/core";
+      const serverSetupCode = cleanCode(`import { betterAuth } from "@better-auth/core";
 import { ${camelCaseName} } from "./plugin/${camelCaseName}";
 
 export const auth = betterAuth({
@@ -5268,8 +5265,7 @@ export const auth = betterAuth({
     ${camelCaseName}(),
   ],
 });
-`)
-      );
+`);
 
       const frameworkImportMap: Record<string, string> = {
         react: 'better-auth/react',
@@ -5289,8 +5285,7 @@ export const auth = betterAuth({
         baseURLMap[clientFramework] ||
         'process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"';
 
-      const clientSetupCode = formatCode(
-        cleanCode(`import { createAuthClient } from "${frameworkImport}";
+      const clientSetupCode = cleanCode(`import { createAuthClient } from "${frameworkImport}";
 import { ${camelCaseName}Client } from "./plugin/${camelCaseName}/client";
 
 export const authClient = createAuthClient({
@@ -5299,8 +5294,7 @@ export const authClient = createAuthClient({
     ${camelCaseName}Client(),
   ],
 });
-`)
-      );
+`);
 
       return res.json({
         success: true,
