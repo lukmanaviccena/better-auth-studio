@@ -1,16 +1,21 @@
+import { execSync } from 'node:child_process';
 import { createHmac, randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, sep as pathSep } from 'node:path';
+import {
+  existsSync,
+  readFileSync as readFile,
+  readFileSync,
+  unlinkSync,
+  writeFileSync as writeFile,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, join as pathJoin, sep as pathSep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 // @ts-expect-error
 import { hex } from '@better-auth/utils/hex';
 import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { type Request, type Response, Router } from 'express';
 import { createJiti } from 'jiti';
-import { execSync } from 'node:child_process';
-import { writeFileSync as writeFile, unlinkSync, readFileSync as readFile } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join as pathJoin } from 'node:path';
 import {
   createMockAccount,
   createMockSession,
@@ -4973,15 +4978,16 @@ export function createRoutes(
                       if (field.type === 'boolean') {
                         attrs.push('defaultValue: false');
                       }
-                      
+
                       const attrStr = attrs.join(',\n            ');
                       return `          ${field.name}: {\n            ${attrStr}\n          }`;
                     })
                     .join(',\n') || '';
 
-                const tableName = table.isExtending && table.extendedTableName 
-                  ? table.extendedTableName.trim() 
-                  : table.name.trim();
+                const tableName =
+                  table.isExtending && table.extendedTableName
+                    ? table.extendedTableName.trim()
+                    : table.name.trim();
 
                 return `      ${tableName}: {
         fields: {
@@ -5128,15 +5134,18 @@ ${formattedHandlerLogic}
 
       const formatCode = (code: string): string => {
         try {
-          const tempFile = pathJoin(tmpdir(), `biome-format-${Date.now()}-${Math.random().toString(36).substring(7)}.ts`);
+          const tempFile = pathJoin(
+            tmpdir(),
+            `biome-format-${Date.now()}-${Math.random().toString(36).substring(7)}.ts`
+          );
           writeFile(tempFile, code, 'utf-8');
-          
+
           try {
             execSync(`npx @biomejs/biome format --write ${tempFile}`, {
               stdio: 'pipe',
               cwd: process.cwd(),
             });
-            
+
             const formatted = readFile(tempFile, 'utf-8');
             unlinkSync(tempFile);
             return formatted;
@@ -5194,7 +5203,8 @@ ${formattedHandlerLogic}
           ? `    id: "${camelCaseName}",\n${pluginParts.join(',\n')}`
           : `    id: "${camelCaseName}"`;
 
-      const serverPluginCode = formatCode(cleanCode(`import type { BetterAuthPlugin } from "@better-auth/core";
+      const serverPluginCode = formatCode(
+        cleanCode(`import type { BetterAuthPlugin } from "@better-auth/core";
 ${imports.join('\n')}
 
 ${description ? `/**\n * ${description.replace(/\n/g, '\n * ')}\n */` : ''}
@@ -5203,7 +5213,8 @@ export const ${camelCaseName} = (options?: Record<string, any>) => {
 ${serverPluginBody}
   } satisfies BetterAuthPlugin;
 };
-`));
+`)
+      );
 
       const pathMethods =
         endpoints.length > 0
@@ -5247,7 +5258,8 @@ export const ${camelCaseName}Client = () => {
 `)
       );
 
-      const serverSetupCode = formatCode(cleanCode(`import { betterAuth } from "@better-auth/core";
+      const serverSetupCode = formatCode(
+        cleanCode(`import { betterAuth } from "@better-auth/core";
 import { ${camelCaseName} } from "./plugin/${camelCaseName}";
 
 export const auth = betterAuth({
@@ -5256,7 +5268,8 @@ export const auth = betterAuth({
     ${camelCaseName}(),
   ],
 });
-`));
+`)
+      );
 
       const frameworkImportMap: Record<string, string> = {
         react: 'better-auth/react',
@@ -5276,7 +5289,8 @@ export const auth = betterAuth({
         baseURLMap[clientFramework] ||
         'process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"';
 
-      const clientSetupCode = formatCode(cleanCode(`import { createAuthClient } from "${frameworkImport}";
+      const clientSetupCode = formatCode(
+        cleanCode(`import { createAuthClient } from "${frameworkImport}";
 import { ${camelCaseName}Client } from "./plugin/${camelCaseName}/client";
 
 export const authClient = createAuthClient({
@@ -5285,7 +5299,8 @@ export const authClient = createAuthClient({
     ${camelCaseName}Client(),
   ],
 });
-`));
+`)
+      );
 
       return res.json({
         success: true,

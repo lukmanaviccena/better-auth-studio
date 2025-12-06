@@ -28,7 +28,7 @@ export function CodeEditor({
   useEffect(() => {
     const textarea = textareaRef.current;
     const highlight = highlightRef.current;
-    
+
     if (textarea && highlight) {
       const syncScroll = () => {
         if (highlight) {
@@ -36,7 +36,7 @@ export function CodeEditor({
           highlight.scrollLeft = textarea.scrollLeft;
         }
       };
-      
+
       textarea.addEventListener('scroll', syncScroll);
       return () => textarea.removeEventListener('scroll', syncScroll);
     }
@@ -58,12 +58,14 @@ export function CodeEditor({
       background: 'transparent',
       fontSize: '12px',
       lineHeight: '1.5',
-      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      fontFamily:
+        'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
     },
   };
 
   const textareaStyle = {
-    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+    fontFamily:
+      'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
     fontSize: '12px',
     lineHeight: '1.5',
     padding: '0.75rem',
@@ -80,7 +82,9 @@ export function CodeEditor({
   };
 
   return (
-    <div className={`relative border border-dashed border-white/20 rounded-none focus-within:border-white/40 ${className}`}>
+    <div
+      className={`relative border border-dashed border-white/20 rounded-none focus-within:border-white/40 ${className}`}
+    >
       {/* Syntax highlighted background */}
       <div
         ref={highlightRef}
@@ -100,7 +104,8 @@ export function CodeEditor({
           }}
           codeTagProps={{
             style: {
-              fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+              fontFamily:
+                'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
               fontSize: '12px',
               lineHeight: '1.5',
             },
@@ -109,7 +114,7 @@ export function CodeEditor({
           {highlightCode}
         </SyntaxHighlighter>
       </div>
-      
+
       {/* Editable textarea */}
       <textarea
         ref={textareaRef}
@@ -123,4 +128,3 @@ export function CodeEditor({
     </div>
   );
 }
-
