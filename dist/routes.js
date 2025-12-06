@@ -4627,7 +4627,6 @@ export const authClient = createAuthClient({
                 return res.status(500).json({ success: false, error: 'Auth adapter not available' });
             }
             const exportData = {};
-            // Fetch data from each table
             for (const tableName of tables) {
                 try {
                     const data = await adapter.findMany({
@@ -4637,7 +4636,6 @@ export const authClient = createAuthClient({
                     exportData[tableName] = data || [];
                 }
                 catch (error) {
-                    // If table doesn't exist or can't be accessed, skip it
                     exportData[tableName] = [];
                 }
             }

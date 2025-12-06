@@ -1648,6 +1648,34 @@ export default function Tools() {
   };
 
   // Convert path to camelCase endpoint name (e.g., /sign-in/anonymous -> signInAnonymous)
+  const regenerateClientSetupCode = (framework: string) => {
+    if (!pluginResult) return;
+    
+    const frameworkImportMap: Record<string, string> = {
+      react: 'better-auth/react',
+      svelte: 'better-auth/svelte',
+      solid: 'better-auth/solid',
+      vue: 'better-auth/vue',
+      client: 'better-auth/client',
+    };
+    const frameworkImport = frameworkImportMap[framework] || 'better-auth/client';
+    
+    const camelCaseName = pluginResult.name.charAt(0).toLowerCase() + pluginResult.name.slice(1);
+    const hasEndpoints = pluginResult.server && pluginResult.server.includes('endpoints:');
+    
+    const clientSetupCode = `import { createAuthClient } from "${frameworkImport}";
+${hasEndpoints ? `import { ${camelCaseName}Client } from "./plugin/${camelCaseName}/client";` : ''}
+
+export const authClient = createAuthClient({
+  ${hasEndpoints ? `plugins: [\n    ${camelCaseName}Client(),\n    // ... other plugins\n  ],` : ''}
+});`;
+
+    setPluginResult({
+      ...pluginResult,
+      clientSetup: clientSetupCode,
+    });
+  };
+
   const pathToCamelCase = (path: string): string => {
     if (!path) return '';
     // Remove leading/trailing slashes and split by '/'
@@ -3218,27 +3246,6 @@ export default function Tools() {
               </div>
 
               <div>
-                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
-                  Client Framework
-                </Label>
-                <Select value={clientFramework} onValueChange={(value: any) => setClientFramework(value)}>
-                  <SelectTrigger className="bg-black border border-dashed border-white/20 text-white rounded-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="client">Generic (better-auth/client)</SelectItem>
-                    <SelectItem value="react">React (better-auth/react)</SelectItem>
-                    <SelectItem value="svelte">Svelte (better-auth/svelte)</SelectItem>
-                    <SelectItem value="solid">Solid (better-auth/solid)</SelectItem>
-                    <SelectItem value="vue">Vue (better-auth/vue)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-gray-500 mt-1 font-mono">
-                  Select the framework for client setup code
-                </p>
-              </div>
-
-              <div>
                 <div className="flex items-center justify-between mb-3">
                   <Label className="text-xs uppercase font-mono text-gray-400">
                     Tables (optional)
@@ -3333,7 +3340,7 @@ export default function Tools() {
                                             setPluginTables(newTables);
                                           }}
                                         >
-                                          <SelectTrigger className="h-full w-52 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1">
+                                          <SelectTrigger className="h-full w-56 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1">
                                             <SelectValue className='font-mono uppercase text-[10px] px-0 text-white/90' />
                                           </SelectTrigger>
                                           <SelectContent className='font-mono uppercase text-[10px]'>
@@ -4101,7 +4108,32 @@ export default function Tools() {
                 <div ref={codeGenerationRef} className="space-y-4 border border-dashed border-white/15 p-4">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-xs uppercase font-mono text-gray-400">Generated Code</p>
-                    <div className="flex space-x-2">
+                    <div className="flex items-center space-x-2">
+                      {activeCodeTab === 'clientSetup' && (
+                        <div className="flex items-center space-x-2 mr-2">
+                          <Label className="text-xs uppercase font-mono text-gray-400 whitespace-nowrap">
+                            Framework:
+                          </Label>
+                          <Select 
+                            value={clientFramework} 
+                            onValueChange={(value: any) => {
+                              setClientFramework(value);
+                              regenerateClientSetupCode(value);
+                            }}
+                          >
+                            <SelectTrigger className="bg-black border border-dashed border-white/20 text-white rounded-none w-[180px] h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="client">Generic (better-auth/client)</SelectItem>
+                              <SelectItem value="react">React (better-auth/react)</SelectItem>
+                              <SelectItem value="svelte">Svelte (better-auth/svelte)</SelectItem>
+                              <SelectItem value="solid">Solid (better-auth/solid)</SelectItem>
+                              <SelectItem value="vue">Vue (better-auth/vue)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"

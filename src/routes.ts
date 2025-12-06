@@ -5254,7 +5254,6 @@ export const authClient = createAuthClient({
 
       const exportData: Record<string, any[]> = {};
 
-      // Fetch data from each table
       for (const tableName of tables) {
         try {
           const data = await adapter.findMany({
@@ -5263,7 +5262,6 @@ export const authClient = createAuthClient({
           });
           exportData[tableName] = data || [];
         } catch (error) {
-          // If table doesn't exist or can't be accessed, skip it
           exportData[tableName] = [];
         }
       }
