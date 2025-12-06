@@ -4290,7 +4290,6 @@ export const authClient = createAuthClient({
               </div>
             </div>
 
-            {/* Results by Category */}
             <div className="space-y-4">
               {Object.entries(
                 configValidationResults.results.reduce(
@@ -4441,7 +4440,6 @@ export const authClient = createAuthClient({
                   );
                 }
 
-                // Regular rendering for other categories
                 return (
                   <div key={category} className="border border-dashed border-white/10 p-4">
                     <h4 className="text-white font-mono uppercase text-xs mb-4 text-left">

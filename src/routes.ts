@@ -5032,17 +5032,13 @@ ${fields}
 
       // Generate endpoints
       const endpointsCode = endpoints.length > 0 ? endpoints.map((endpoint: any) => {
-        // Use the camelCase name from frontend (e.g., signInAnonymous)
         const endpointName = endpoint.name?.trim() || `endpoint${endpoints.indexOf(endpoint) + 1}`;
-        // Ensure it's valid camelCase identifier (remove any invalid chars, keep camelCase)
         const sanitizedName = endpointName.replace(/[^a-zA-Z0-9]/g, '');
         const endpointPath = endpoint.path?.trim() || `/${camelCaseName}/${sanitizedName}`;
-        // Format handler logic with proper indentation (10 spaces for content inside async function)
         const handlerLogic = endpoint.handlerLogic || '// Endpoint handler logic here\n          return ctx.json({ success: true });';
         const formattedHandlerLogic = handlerLogic.split('\n').map((line: string) => {
           const trimmed = line.trim();
           if (!trimmed) return '';
-          // If line doesn't have proper indentation, add it (10 spaces for handler content)
           if (!line.startsWith('          ')) {
             return '          ' + trimmed;
           }
@@ -5061,7 +5057,6 @@ ${formattedHandlerLogic}
       ),`;
       }).join('\n') : '';
 
-      // Generate rate limit (single config object, not array)
       const rateLimitCode = rateLimit ? (() => {
         const rl = rateLimit as any;
         let pathMatcher = '';
@@ -5083,22 +5078,19 @@ ${formattedHandlerLogic}
       pathMatcher: ${pathMatcher}`;
       })() : '';
 
-      // Helper function to clean up code (remove empty lines, trim spaces)
       const cleanCode = (code: string): string => {
         return code
           .split('\n')
           .map(line => line.trimEnd())
           .filter((line, index, arr) => {
-            // Remove consecutive empty lines
             if (line === '' && arr[index + 1] === '') return false;
             return true;
           })
           .join('\n')
-          .replace(/\n{3,}/g, '\n\n') // Replace 3+ newlines with 2
+          .replace(/\n{3,}/g, '\n\n')
           .trim();
       };
 
-      // Build plugin object parts
       const pluginParts: string[] = [];
       
       if (schemaCode) {
