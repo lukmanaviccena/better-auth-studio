@@ -3457,9 +3457,9 @@ export const authClient = createAuthClient({
                                   setPluginTables(newTables);
                                 }}
                               >
-                                <SelectTrigger className="bg-black w-56 border border-dashed border-white/20 text-white text-xs rounded-none flex-1">
+                                <SelectTrigger className="bg-black w-60 border border-dashed border-white/20 text-white text-xs rounded-none flex-1">
                                   <SelectValue
-                                    className="sm:text-[11px] text-white/90 font-mono uppercase"
+                                    className="sm:text-[11px] w-full text-white/90 font-mono uppercase"
                                     placeholder="Select table to extend"
                                   />
                                 </SelectTrigger>
