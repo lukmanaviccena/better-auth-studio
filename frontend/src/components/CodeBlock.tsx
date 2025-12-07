@@ -27,7 +27,6 @@ export function CodeBlock({
     } catch (_err) {}
   };
 
-  // Custom darker style based on VS Code dark theme
   const customStyle = {
     ...vscDarkPlus,
     'pre[class*="language-"]': {

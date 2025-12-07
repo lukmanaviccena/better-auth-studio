@@ -1901,7 +1901,6 @@ export const authClient = createAuthClient({
       if (result.success) {
         setPluginResult(result.plugin);
         toast.success('Plugin generated successfully');
-        // Scroll to code generation component smoothly
         setTimeout(() => {
           codeGenerationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
@@ -3449,6 +3448,7 @@ export const authClient = createAuthClient({
                           {table.isExtending ? (
                             <>
                               <Select
+                                className='w-full'
                                 value={table.extendedTableName || ''}
                                 onValueChange={(value) => {
                                   const newTables = [...pluginTables];
@@ -3457,13 +3457,13 @@ export const authClient = createAuthClient({
                                   setPluginTables(newTables);
                                 }}
                               >
-                                <SelectTrigger className="bg-black w-60 border border-dashed border-white/20 text-white text-xs rounded-none flex-1">
+                                <SelectTrigger className="bg-black sm:w-60 border border-dashed border-white/20 text-white text-xs rounded-none flex-1">
                                   <SelectValue
                                     className="sm:text-[11px] w-full text-white/90 font-mono uppercase"
                                     placeholder="Select table to extend"
                                   />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className='w-full'>
                                   {availableTablesForExtension.map((t) => (
                                     <SelectItem
                                       className="sm:text-[11px] uppercase font-mono text-white/90 border-b border-dashed last:border-b-0"
