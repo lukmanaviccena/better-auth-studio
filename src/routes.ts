@@ -4961,7 +4961,24 @@ export function createRoutes(
                       attrs.push(`required: ${field.required ? 'true' : 'false'}`);
                       attrs.push(`unique: ${field.unique ? 'true' : 'false'}`);
                       attrs.push('input: false');
-                      if (field.type === 'boolean') {
+                      
+                      // Handle defaultValue
+                      if (field.defaultValue !== undefined && field.defaultValue !== null && field.defaultValue !== '') {
+                        if (field.type === 'string') {
+                          attrs.push(`defaultValue: "${field.defaultValue}"`);
+                        } else if (field.type === 'boolean') {
+                          attrs.push(`defaultValue: ${field.defaultValue === 'true' || field.defaultValue === true}`);
+                        } else if (field.type === 'number') {
+                          attrs.push(`defaultValue: ${field.defaultValue}`);
+                        } else if (field.type === 'date') {
+                          if (field.defaultValue === 'now()') {
+                            attrs.push('defaultValue: new Date()');
+                          } else {
+                            attrs.push(`defaultValue: new Date("${field.defaultValue}")`);
+                          }
+                        }
+                      } else if (field.type === 'boolean') {
+                        // Default to false for boolean if no defaultValue specified
                         attrs.push('defaultValue: false');
                       }
 

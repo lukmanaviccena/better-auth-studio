@@ -507,7 +507,7 @@ export default function Tools() {
       name: string;
       isExtending: boolean;
       extendedTableName?: string;
-      fields: Array<{ name: string; type: string; required: boolean; unique: boolean }>;
+      fields: Array<{ name: string; type: string; required: boolean; unique: boolean; defaultValue?: string }>;
     }>
   >([]);
   const [availableTablesForExtension, setAvailableTablesForExtension] = useState<
@@ -3580,6 +3580,124 @@ export const authClient = createAuthClient({
                                             </SelectItem>
                                           </SelectContent>
                                         </Select>
+                                        {field.required && (
+                                          <div className="flex items-center">
+                                            {field.type === 'string' && (
+                                              <Input
+                                                value={field.defaultValue || ''}
+                                                onChange={(e) => {
+                                                  const newTables = [...pluginTables];
+                                                  newTables[tableIndex].fields[fieldIndex].defaultValue =
+                                                    e.target.value;
+                                                  setPluginTables(newTables);
+                                                }}
+                                                placeholder="Default value"
+                                                className="sm:h-10 sm:w-56 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1 font-mono uppercase text-[10px]"
+                                              />
+                                            )}
+                                            {field.type === 'boolean' && (
+                                              <Select
+                                                value={field.defaultValue || ''}
+                                                onValueChange={(value: string) => {
+                                                  const newTables = [...pluginTables];
+                                                  newTables[tableIndex].fields[fieldIndex].defaultValue =
+                                                    value;
+                                                  setPluginTables(newTables);
+                                                }}
+                                              >
+                                                <SelectTrigger className="sm:h-10 sm:w-56 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1">
+                                                  <SelectValue className="font-mono uppercase text-[10px] px-0 text-white/90" placeholder="Default value" />
+                                                </SelectTrigger>
+                                                <SelectContent className="font-mono uppercase text-[10px]">
+                                                  <SelectItem
+                                                    className="sm:text-[11px] text-white/90 border-b border-dashed last:border-b-0"
+                                                    value="true"
+                                                  >
+                                                    true
+                                                  </SelectItem>
+                                                  <SelectItem
+                                                    className="sm:text-[11px] text-white/90 border-b border-dashed last:border-b-0"
+                                                    value="false"
+                                                  >
+                                                    false
+                                                  </SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            )}
+                                            {field.type === 'date' && (
+                                              <div className="flex items-center space-x-2">
+                                                <Select
+                                                  value={field.defaultValue === 'now()' ? 'now()' : field.defaultValue && field.defaultValue !== 'now()' ? 'custom' : ''}
+                                                  onValueChange={(value: string) => {
+                                                    const newTables = [...pluginTables];
+                                                    if (value === 'now()') {
+                                                      newTables[tableIndex].fields[fieldIndex].defaultValue = 'now()';
+                                                    } else if (value === 'custom') {
+                                                      // Set a default date if empty, or keep existing custom date
+                                                      if (!newTables[tableIndex].fields[fieldIndex].defaultValue || newTables[tableIndex].fields[fieldIndex].defaultValue === 'now()') {
+                                                        const now = new Date();
+                                                        const year = now.getFullYear();
+                                                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                                                        const day = String(now.getDate()).padStart(2, '0');
+                                                        const hours = String(now.getHours()).padStart(2, '0');
+                                                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                                                        newTables[tableIndex].fields[fieldIndex].defaultValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+                                                      }
+                                                    } else {
+                                                      newTables[tableIndex].fields[fieldIndex].defaultValue = undefined;
+                                                    }
+                                                    setPluginTables(newTables);
+                                                  }}
+                                                >
+                                                  <SelectTrigger className="sm:h-10 sm:w-40 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1">
+                                                    <SelectValue className="font-mono uppercase text-[10px] px-0 text-white/90" placeholder="Default" />
+                                                  </SelectTrigger>
+                                                  <SelectContent className="font-mono uppercase text-[10px]">
+                                                    <SelectItem
+                                                      className="sm:text-[11px] text-white/90 border-b border-dashed last:border-b-0"
+                                                      value="now()"
+                                                    >
+                                                      now()
+                                                    </SelectItem>
+                                                    <SelectItem
+                                                      className="sm:text-[11px] text-white/90 border-b border-dashed last:border-b-0"
+                                                      value="custom"
+                                                    >
+                                                      Custom
+                                                    </SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                                {field.defaultValue && field.defaultValue !== 'now()' && (
+                                                  <Input
+                                                    type="datetime-local"
+                                                    value={field.defaultValue}
+                                                    onChange={(e) => {
+                                                      const newTables = [...pluginTables];
+                                                      newTables[tableIndex].fields[fieldIndex].defaultValue =
+                                                        e.target.value;
+                                                      setPluginTables(newTables);
+                                                    }}
+                                                    className="sm:h-10 sm:w-40 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1 font-mono uppercase text-[10px]"
+                                                  />
+                                                )}
+                                              </div>
+                                            )}
+                                            {field.type === 'number' && (
+                                              <Input
+                                                type="number"
+                                                value={field.defaultValue || ''}
+                                                onChange={(e) => {
+                                                  const newTables = [...pluginTables];
+                                                  newTables[tableIndex].fields[fieldIndex].defaultValue =
+                                                    e.target.value;
+                                                  setPluginTables(newTables);
+                                                }}
+                                                placeholder="Default value"
+                                                className="sm:h-10 sm:w-56 border px-0 border-dashed border-white/20 text-white/90 text-xs rounded-none py-1 font-mono uppercase text-[10px]"
+                                              />
+                                            )}
+                                          </div>
+                                        )}
                                         <div className="h-8 flex items-end space-x-2">
                                           <Checkbox
                                             id={`required-${tableIndex}-${fieldIndex}`}
@@ -3588,6 +3706,9 @@ export const authClient = createAuthClient({
                                               const newTables = [...pluginTables];
                                               newTables[tableIndex].fields[fieldIndex].required =
                                                 checked === true;
+                                              if (checked === false) {
+                                                newTables[tableIndex].fields[fieldIndex].defaultValue = undefined;
+                                              }
                                               setPluginTables(newTables);
                                             }}
                                           />
@@ -3653,6 +3774,7 @@ export const authClient = createAuthClient({
                                         type: 'string',
                                         required: false,
                                         unique: false,
+                                        defaultValue: undefined,
                                       });
                                       setPluginTables(newTables);
                                     }}
@@ -3678,6 +3800,7 @@ export const authClient = createAuthClient({
                                   type: 'string',
                                   required: false,
                                   unique: false,
+                                  defaultValue: undefined,
                                 });
                                 setPluginTables(newTables);
                               }}

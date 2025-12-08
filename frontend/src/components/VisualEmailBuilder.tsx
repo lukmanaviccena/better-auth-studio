@@ -6,10 +6,12 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Eye,
   Image as ImageIcon,
   Italic,
   Minus,
   MousePointerClick,
+  Pencil,
   Strikethrough,
   Trash2,
   Type,
@@ -270,9 +272,11 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
   const [blocks, setBlocks] = useState<EmailBlock[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const editingRefs = useRef<Map<string, HTMLElement>>(new Map());
   const isInternalUpdateRef = useRef(false);
   const lastHtmlRef = useRef<string>('');
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (html && html !== lastHtmlRef.current && !isInternalUpdateRef.current) {
@@ -299,6 +303,52 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
       }, 100);
     }
   }, [blocks, onChange]);
+
+  useEffect(() => {
+    if (viewMode === 'preview' && previewIframeRef.current) {
+      const iframe = previewIframeRef.current;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (iframeDoc) {
+        const emailHtml = html || blocksToHtml(blocks);
+        iframeDoc.open();
+        iframeDoc.write(emailHtml);
+        iframeDoc.close();
+        
+        // Ensure links work by allowing navigation
+        iframe.onload = () => {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (doc) {
+            const links = doc.querySelectorAll('a');
+            links.forEach((link) => {
+              link.addEventListener('click', (event) => {
+                const href = link.getAttribute('href');
+                if (href && href !== '{{url}}' && !href.startsWith('#')) {
+                  // Open in new tab for external links
+                  if (href.startsWith('http://') || href.startsWith('https://')) {
+                    event.preventDefault();
+                    window.open(href, '_blank', 'noopener,noreferrer');
+                  }
+                }
+              });
+            });
+            
+            // Auto-resize iframe to content height
+            const body = doc.body;
+            if (body) {
+              const height = Math.max(
+                body.scrollHeight,
+                body.offsetHeight,
+                doc.documentElement.clientHeight,
+                doc.documentElement.scrollHeight,
+                doc.documentElement.offsetHeight
+              );
+              iframe.style.height = `${height}px`;
+            }
+          }
+        };
+      }
+    }
+  }, [viewMode, html, blocks]);
 
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId);
 
@@ -375,19 +425,64 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
     setSelectedBlockId(newBlock.id);
   };
 
-  const handleDoubleClick = (blockId: string) => {
+  const startEditing = (blockId: string, placeCursorAtEnd = false) => {
     setEditingBlockId(blockId);
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       const element = editingRefs.current.get(blockId);
       if (element) {
         element.focus();
-        const range = document.createRange();
-        range.selectNodeContents(element);
         const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
+        if (selection) {
+          const range = document.createRange();
+          if (placeCursorAtEnd) {
+            range.selectNodeContents(element);
+            range.collapse(false);
+          } else {
+            const clickPoint = selection.rangeCount > 0 ? selection.getRangeAt(0).startOffset : 0;
+            let textNode: Node | null = null;
+            
+            if (element.firstChild && element.firstChild.nodeType === Node.TEXT_NODE) {
+              textNode = element.firstChild;
+            } else {
+              const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+                null
+              );
+              textNode = walker.nextNode();
+            }
+            
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+              const maxPosition = textNode.textContent?.length || 0;
+              const safePosition = Math.min(clickPoint, maxPosition);
+              range.setStart(textNode, safePosition);
+              range.setEnd(textNode, safePosition);
+            } else {
+              range.selectNodeContents(element);
+              range.collapse(true);
+            }
+          }
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
       }
-    }, 0);
+    });
+  };
+
+  const handleDoubleClick = (blockId: string) => {
+    setSelectedBlockId(blockId);
+    startEditing(blockId, true);
+  };
+
+  const handleClick = (blockId: string, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.contentEditable === 'true') {
+      if (editingBlockId !== blockId) {
+        startEditing(blockId);
+      }
+    } else {
+      setSelectedBlockId(blockId);
+    }
   };
 
   const createBlurHandler = (blockId: string) => {
@@ -400,49 +495,82 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      setEditingBlockId(null);
-    }
     if (e.key === 'Escape') {
       setEditingBlockId(null);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
     }
+  };
+
+  const getAbsoluteCursorPosition = (element: HTMLElement): number => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 0;
+
+    const range = selection.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(element);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    return preCaretRange.toString().length;
+  };
+
+  const setAbsoluteCursorPosition = (element: HTMLElement, position: number): boolean => {
+    const selection = window.getSelection();
+    if (!selection) return false;
+
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    let currentPosition = 0;
+    let node: Node | null = null;
+
+    while ((node = walker.nextNode())) {
+      const nodeLength = node.textContent?.length || 0;
+      if (currentPosition + nodeLength >= position) {
+        const offset = position - currentPosition;
+        const range = document.createRange();
+        range.setStart(node, offset);
+        range.setEnd(node, offset);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return true;
+      }
+      currentPosition += nodeLength;
+    }
+
+    const lastNode = element.lastChild;
+    if (lastNode && lastNode.nodeType === Node.TEXT_NODE) {
+      const range = document.createRange();
+      range.setStart(lastNode, lastNode.textContent?.length || 0);
+      range.setEnd(lastNode, lastNode.textContent?.length || 0);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return true;
+    }
+
+    return false;
   };
 
   const handleInput = (blockId: string, newContent: string) => {
     const element = editingRefs.current.get(blockId);
     let cursorPosition = 0;
+    
     if (element) {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        cursorPosition = range.startOffset;
-      }
+      cursorPosition = getAbsoluteCursorPosition(element);
     }
 
     updateBlock(blockId, { content: newContent });
 
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       const updatedElement = editingRefs.current.get(blockId);
-      if (updatedElement && cursorPosition > 0) {
-        const range = document.createRange();
-        const selection = window.getSelection();
-
-        try {
-          if (updatedElement.firstChild) {
-            const textNode = updatedElement.firstChild;
-            const maxPosition = textNode.textContent?.length || 0;
-            const safePosition = Math.min(cursorPosition, maxPosition);
-            range.setStart(textNode, safePosition);
-            range.setEnd(textNode, safePosition);
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-          }
-        } catch (e) {
-          updatedElement.focus();
-        }
+      if (updatedElement) {
+        const maxPosition = updatedElement.textContent?.length || 0;
+        const safePosition = Math.min(cursorPosition, maxPosition);
+        setAbsoluteCursorPosition(updatedElement, safePosition);
       }
-    }, 0);
+    });
 
     if (selectedBlockId !== blockId) {
       setSelectedBlockId(blockId);
@@ -457,7 +585,29 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
       >
         <div className="p-4 border-y border-dashed border-white/10 bg-black/[93%]">
           <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase font-mono text-gray-400">Email Editor</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'edit' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('edit')}
+                className="h-7 px-3 text-xs rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                title="Edit Mode"
+              >
+                <Pencil className="w-3 h-3 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant={viewMode === 'preview' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('preview')}
+                className="h-7 px-3 text-xs rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                title="Preview Mode"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Preview
+              </Button>
+            </div>
+            {viewMode === 'edit' && (
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -509,9 +659,11 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                 <Minus className="w-3 h-3" />
               </Button>
             </div>
+            )}
           </div>
         </div>
 
+        {viewMode === 'edit' ? (
         <div
           className="flex-1 overflow-y-auto overflow-x-hidden p-8 bg-gray-50 min-h-0"
           style={{ overscrollBehavior: 'contain' }}
@@ -596,6 +748,7 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                         }}
                         contentEditable={isEditing}
                         suppressContentEditableWarning
+                        onClick={(e) => handleClick(block.id, e)}
                         onDoubleClick={() => {
                           setSelectedBlockId(block.id);
                           handleDoubleClick(block.id);
@@ -634,6 +787,7 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                         }}
                         contentEditable={isEditing}
                         suppressContentEditableWarning
+                        onClick={(e) => handleClick(block.id, e)}
                         onDoubleClick={() => {
                           setSelectedBlockId(block.id);
                           handleDoubleClick(block.id);
@@ -693,9 +847,7 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (!isEditing) {
-                              setSelectedBlockId(block.id);
-                            }
+                            handleClick(block.id, e);
                           }}
                           onBlur={createBlurHandler(block.id)}
                           onKeyDown={handleKeyDown}
@@ -765,9 +917,21 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
             )}
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 bg-gray-50 min-h-0" style={{ overscrollBehavior: 'contain' }}>
+          <div className="max-w-2xl mx-auto bg-white shadow-lg p-8" style={{ width: '100%', paddingBottom: '2rem' }}>
+            <iframe
+              ref={previewIframeRef}
+              className="w-full border-0"
+              title="Email Preview"
+              style={{ minHeight: '100%', display: 'block' }}
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+            />
+          </div>
+        </div>
+      )}
 
-      {selectedBlock && (
+      {selectedBlock && viewMode === 'edit' && (
         <div
           className="w-96 h-[calc(100vh-400px)] border-l border-dashed border-white/20 bg-black/40 flex flex-col flex-shrink-0 overflow-scroll"
           style={{ minWidth: '384px', maxWidth: '384px' }}
@@ -1289,6 +1453,530 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
           </div>
         </div>
       )}
+
+      {selectedBlock && viewMode === 'edit' && (
+        <div
+          className="w-96 h-[calc(100vh-400px)] border-l border-dashed border-white/20 bg-black/40 flex flex-col flex-shrink-0 overflow-scroll"
+          style={{ minWidth: '384px', maxWidth: '384px' }}
+        >
+          <div className="p-4 border-b border-dashed border-white/10 bg-black/40 z-10 flex-shrink-0">
+            <Label className="text-xs uppercase font-mono text-gray-400">
+              {selectedBlock.type.charAt(0).toUpperCase() + selectedBlock.type.slice(1)} Properties
+            </Label>
+          </div>
+
+          <div
+            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4"
+            style={{ overscrollBehavior: 'contain', minHeight: 0 }}
+          >
+            {selectedBlock.type !== 'divider' && selectedBlock.type !== 'image' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Content
+                </Label>
+                <Input
+                  value={selectedBlock.content}
+                  onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <p className="text-xs text-gray-500 mt-1">Double-click on canvas to edit inline</p>
+              </div>
+            )}
+            {(selectedBlock.type === 'heading' ||
+              selectedBlock.type === 'paragraph' ||
+              selectedBlock.type === 'button') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Text Formatting
+                </Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={selectedBlock.styles.fontWeight === 'bold' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() =>
+                      updateBlock(selectedBlock.id, {
+                        styles: {
+                          ...selectedBlock.styles,
+                          fontWeight:
+                            selectedBlock.styles.fontWeight === 'bold' ? 'normal' : 'bold',
+                        },
+                      })
+                    }
+                    className="h-8 w-8 p-0 rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                    title="Bold"
+                  >
+                    <Bold className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={selectedBlock.styles.fontStyle === 'italic' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() =>
+                      updateBlock(selectedBlock.id, {
+                        styles: {
+                          ...selectedBlock.styles,
+                          fontStyle:
+                            selectedBlock.styles.fontStyle === 'italic' ? 'normal' : 'italic',
+                        },
+                      })
+                    }
+                    className="h-8 w-8 p-0 rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                    title="Italic"
+                  >
+                    <Italic className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={
+                      selectedBlock.styles.textDecoration === 'underline' ? 'default' : 'ghost'
+                    }
+                    size="sm"
+                    onClick={() =>
+                      updateBlock(selectedBlock.id, {
+                        styles: {
+                          ...selectedBlock.styles,
+                          textDecoration:
+                            selectedBlock.styles.textDecoration === 'underline'
+                              ? 'none'
+                              : 'underline',
+                        },
+                      })
+                    }
+                    className="h-8 w-8 p-0 rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                    title="Underline"
+                  >
+                    <Underline className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={
+                      selectedBlock.styles.textDecoration === 'line-through' ? 'default' : 'ghost'
+                    }
+                    size="sm"
+                    onClick={() =>
+                      updateBlock(selectedBlock.id, {
+                        styles: {
+                          ...selectedBlock.styles,
+                          textDecoration:
+                            selectedBlock.styles.textDecoration === 'line-through'
+                              ? 'none'
+                              : 'line-through',
+                        },
+                      })
+                    }
+                    className="h-8 w-8 p-0 rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                    title="Strikethrough"
+                  >
+                    <Strikethrough className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {selectedBlock.type === 'button' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Link URL
+                </Label>
+                <Input
+                  value={selectedBlock.attributes?.href || ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      attributes: { ...selectedBlock.attributes, href: e.target.value },
+                    })
+                  }
+                  placeholder="{{url}}"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+              </div>
+            )}
+
+            {selectedBlock.type === 'image' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Image URL
+                </Label>
+                <Input
+                  value={selectedBlock.attributes?.src || ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      attributes: { ...selectedBlock.attributes, src: e.target.value },
+                    })
+                  }
+                  placeholder="https://example.com/image.jpg"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block mt-3">
+                  Alt Text
+                </Label>
+                <Input
+                  value={selectedBlock.attributes?.alt || ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      attributes: { ...selectedBlock.attributes, alt: e.target.value },
+                    })
+                  }
+                  placeholder="Image description"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <div className="mt-3">
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                    Alignment
+                  </Label>
+                  <div className="flex gap-2">
+                    {[
+                      { value: 'left' as const, icon: AlignLeft },
+                      { value: 'center' as const, icon: AlignCenter },
+                      { value: 'right' as const, icon: AlignRight },
+                    ].map(({ value: align, icon: Icon }) => (
+                      <Button
+                        key={align}
+                        variant={selectedBlock.styles.textAlign === align ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() =>
+                          updateBlock(selectedBlock.id, {
+                            styles: { ...selectedBlock.styles, textAlign: align },
+                          })
+                        }
+                        className="flex-1 rounded-none border border-dashed border-white/20 flex items-center justify-center"
+                        title={align.charAt(0).toUpperCase() + align.slice(1)}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(selectedBlock.type === 'heading' ||
+              selectedBlock.type === 'paragraph' ||
+              selectedBlock.type === 'button') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Font Family
+                </Label>
+                <select
+                  value={selectedBlock.styles.fontFamily || 'inherit'}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, fontFamily: e.target.value },
+                    })
+                  }
+                  className="w-full bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs p-2 focus:outline-none focus:border-white/40"
+                >
+                  <option value="inherit">System Default</option>
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                  <option value="'Times New Roman', serif">Times New Roman</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Courier New', monospace">Courier New</option>
+                  <option value="Verdana, sans-serif">Verdana</option>
+                  <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                  <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                </select>
+              </div>
+            )}
+
+            {(selectedBlock.type === 'heading' ||
+              selectedBlock.type === 'paragraph' ||
+              selectedBlock.type === 'button') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Font Size
+                </Label>
+                <Input
+                  value={selectedBlock.styles.fontSize ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, fontSize: e.target.value || undefined },
+                    })
+                  }
+                  placeholder="16px"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+              </div>
+            )}
+
+            {selectedBlock.type !== 'divider' && selectedBlock.type !== 'image' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Text Color
+                </Label>
+                <Input
+                  type="color"
+                  value={selectedBlock.styles.color || '#333333'}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, color: e.target.value },
+                    })
+                  }
+                  className="h-8 w-full bg-black border border-dashed border-white/20 rounded-none"
+                />
+              </div>
+            )}
+
+            {(selectedBlock.type === 'button' ||
+              selectedBlock.type === 'heading' ||
+              selectedBlock.type === 'paragraph') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Background Color
+                </Label>
+                <Input
+                  type="color"
+                  value={selectedBlock.styles.backgroundColor || '#ffffff'}
+                  onChange={(e) => {
+                    const newBackgroundColor = e.target.value;
+                    const currentPadding = selectedBlock.styles.padding;
+                    const hasBackgroundColor =
+                      newBackgroundColor && newBackgroundColor !== '#ffffff';
+                    // Auto-add padding if background color is set and no padding exists
+                    const shouldAddPadding =
+                      hasBackgroundColor && (!currentPadding || currentPadding === '0');
+
+                    updateBlock(selectedBlock.id, {
+                      styles: {
+                        ...selectedBlock.styles,
+                        backgroundColor: hasBackgroundColor ? newBackgroundColor : undefined,
+                        padding: shouldAddPadding
+                          ? '8px 12px'
+                          : hasBackgroundColor
+                            ? currentPadding || '8px 12px'
+                            : currentPadding === '8px 12px'
+                              ? '0'
+                              : currentPadding,
+                      },
+                    });
+                  }}
+                  className="h-8 w-full bg-black border border-dashed border-white/20 rounded-none"
+                />
+                {selectedBlock.styles.backgroundColor &&
+                  selectedBlock.styles.backgroundColor !== '#ffffff' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const currentPadding = selectedBlock.styles.padding;
+                        updateBlock(selectedBlock.id, {
+                          styles: {
+                            ...selectedBlock.styles,
+                            backgroundColor: undefined,
+                            padding: currentPadding === '8px 12px' ? '0' : currentPadding,
+                          },
+                        });
+                      }}
+                      className="text-xs text-gray-400 hover:text-white mt-1 rounded-none"
+                    >
+                      Clear Background
+                    </Button>
+                  )}
+              </div>
+            )}
+
+            {selectedBlock.type !== 'divider' && selectedBlock.type !== 'image' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Text Align
+                </Label>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'left' as const, icon: AlignLeft },
+                    { value: 'center' as const, icon: AlignCenter },
+                    { value: 'right' as const, icon: AlignRight },
+                  ].map(({ value: align, icon: Icon }) => (
+                    <Button
+                      key={align}
+                      variant={selectedBlock.styles.textAlign === align ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() =>
+                        updateBlock(selectedBlock.id, {
+                          styles: { ...selectedBlock.styles, textAlign: align },
+                        })
+                      }
+                      className="flex-1 rounded-none border border-dashed border-white/20 flex items-center justify-center"
+                      title={align}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(selectedBlock.type === 'heading' || selectedBlock.type === 'paragraph') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Line Height
+                </Label>
+                <Input
+                  value={selectedBlock.styles.lineHeight ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, lineHeight: e.target.value || undefined },
+                    })
+                  }
+                  placeholder="1.6"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+              </div>
+            )}
+
+            {(selectedBlock.type === 'heading' ||
+              selectedBlock.type === 'paragraph' ||
+              selectedBlock.type === 'button') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Letter Spacing
+                </Label>
+                <Input
+                  value={selectedBlock.styles.letterSpacing ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: {
+                        ...selectedBlock.styles,
+                        letterSpacing: e.target.value || undefined,
+                      },
+                    })
+                  }
+                  placeholder="0px"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+              </div>
+            )}
+
+            {selectedBlock.type !== 'divider' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Margin
+                </Label>
+                <Input
+                  value={selectedBlock.styles.margin ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, margin: e.target.value || undefined },
+                    })
+                  }
+                  placeholder="16px 0"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <p className="text-xs text-gray-500 mt-1">e.g., 16px 0 or 10px 20px 10px 20px</p>
+              </div>
+            )}
+
+            {(selectedBlock.type === 'button' || selectedBlock.type === 'heading') && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Padding
+                </Label>
+                <Input
+                  value={selectedBlock.styles.padding ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, padding: e.target.value || undefined },
+                    })
+                  }
+                  placeholder="12px 30px"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <p className="text-xs text-gray-500 mt-1">e.g., 12px 30px or 10px 20px 10px 20px</p>
+              </div>
+            )}
+
+            {selectedBlock.type === 'button' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Border Radius
+                </Label>
+                <Input
+                  value={selectedBlock.styles.borderRadius ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: {
+                        ...selectedBlock.styles,
+                        borderRadius: e.target.value || undefined,
+                      },
+                    })
+                  }
+                  placeholder="4px"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+              </div>
+            )}
+
+            {selectedBlock.type === 'button' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Border
+                </Label>
+                <Input
+                  value={selectedBlock.styles.border ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, border: e.target.value || undefined },
+                    })
+                  }
+                  placeholder="1px solid #000"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <p className="text-xs text-gray-500 mt-1">e.g., 1px solid #000 or none</p>
+              </div>
+            )}
+
+            {selectedBlock.type === 'image' && (
+              <>
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                    Width
+                  </Label>
+                  <Input
+                    value={selectedBlock.styles.width ?? ''}
+                    onChange={(e) =>
+                      updateBlock(selectedBlock.id, {
+                        styles: { ...selectedBlock.styles, width: e.target.value || undefined },
+                      })
+                    }
+                    placeholder="100%"
+                    className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                    Height
+                  </Label>
+                  <Input
+                    value={selectedBlock.styles.height ?? ''}
+                    onChange={(e) =>
+                      updateBlock(selectedBlock.id, {
+                        styles: { ...selectedBlock.styles, height: e.target.value || undefined },
+                      })
+                    }
+                    placeholder="auto"
+                    className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                  />
+                </div>
+              </>
+            )}
+
+            {selectedBlock.type === 'divider' && (
+              <div>
+                <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                  Border Style
+                </Label>
+                <Input
+                  value={selectedBlock.styles.border ?? ''}
+                  onChange={(e) =>
+                    updateBlock(selectedBlock.id, {
+                      styles: { ...selectedBlock.styles, border: e.target.value || undefined },
+                    })
+                  }
+                  placeholder="1px solid #eeeeee"
+                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                />
+                <p className="text-xs text-gray-500 mt-1">e.g., 2px dashed #ccc</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 }
