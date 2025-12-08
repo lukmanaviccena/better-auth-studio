@@ -1,5 +1,5 @@
 import { Code, Copy, Mail, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { CodeBlock } from '../components/CodeBlock';
 import { Button } from '../components/ui/button';
@@ -73,10 +73,6 @@ const emailTemplates: Record<string, EmailTemplate> = {
   <div style="margin-bottom: 30px;">
     <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
   </div>
-  <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
-    <h1 style="margin: 0; font-size: 24px; font-weight: 300;">Verify Your Email</h1>
-  </div>
-  
   <p>Hello {{user.name}},</p>
   
   <p>Thank you for signing up! Please verify your email address by clicking the button below:</p>
@@ -151,13 +147,13 @@ const emailTemplates: Record<string, EmailTemplate> = {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="margin-bottom: 30px;">
-    <img src="https://www.better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
+    <img src="https://better-auth.com/logo.png" alt="Better Auth" style="max-width: 70px; height: auto; display: block;">
   </div>
   <div style="background: #000; color: #fff; padding: 20px; text-align: center; margin-bottom: 30px;">
     <h1 style="margin: 0; font-size: 24px; font-weight: 300;">You've Been Invited</h1>
   </div>
   
-  <p>Hello,</p>
+  <p>Hello, </p>
   
   <p><strong>{{inviter.user.name}}</strong> has invited you to join <strong>{{organization.name}}</strong>.</p>
   
@@ -338,6 +334,9 @@ export default function EmailEditor() {
   const handleApplyFields = () => {
     setRenderedHtml(getSimulatedHtml(emailHtml));
   };
+
+  // Memoize the HTML prop to prevent unnecessary re-renders of VisualEmailBuilder
+  const memoizedHtml = useMemo(() => renderedHtml || emailHtml, [renderedHtml, emailHtml]);
 
   const generateCodeSnippet = (templateId: string) => {
     const template = emailTemplates[templateId];
@@ -717,7 +716,7 @@ export const auth = betterAuth({
 
                 <div className="flex-1 overflow-hidden">
                   <VisualEmailBuilder
-                    html={renderedHtml || emailHtml}
+                    html={memoizedHtml}
                     onChange={handleHtmlChange}
                   />
                 </div>

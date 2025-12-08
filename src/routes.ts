@@ -5834,16 +5834,13 @@ export const authClient = createAuthClient({
       const envPath = join(process.cwd(), '.env');
       const envLocalPath = join(process.cwd(), '.env.local');
 
-      // Try .env.local first, then .env
       const targetPath = existsSync(envLocalPath) ? envLocalPath : envPath;
       const envContent = existsSync(targetPath) ? readFileSync(targetPath, 'utf-8') : '';
 
-      // Generate environment variable names
       const providerUpper = provider.toUpperCase();
       const clientIdKey = `${providerUpper}_CLIENT_ID`;
       const clientSecretKey = `${providerUpper}_CLIENT_SECRET`;
 
-      // Parse existing .env file
       const envLines = envContent.split('\n');
       const existingCredentials: Record<string, string> = {};
 
