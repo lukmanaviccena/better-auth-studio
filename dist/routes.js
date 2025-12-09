@@ -5304,7 +5304,10 @@ export const authClient = createAuthClient({
             let fileContent = readFileSync(authPath, 'utf-8');
             // Escape backticks and ${ for template literals
             // First escape backslashes, then escape backticks and ${ to avoid double-escaping
-            const escapedSubject = subject.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\${/g, '\\${');
+            const escapedSubject = subject
+                .replace(/\\/g, '\\\\')
+                .replace(/`/g, '\\`')
+                .replace(/\${/g, '\\${');
             const escapedHtml = html.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\${/g, '\\${');
             if (!fileContent.includes("from 'resend'")) {
                 fileContent = `import { Resend } from 'resend';\n` + fileContent;
