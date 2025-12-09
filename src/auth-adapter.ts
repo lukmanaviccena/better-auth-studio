@@ -466,7 +466,6 @@ export async function createMockAccount(
     'zoom',
   ];
 
-  // Use provided providerId or select randomly
   const selectedProvider =
     providerId && providerId !== 'random'
       ? providerId

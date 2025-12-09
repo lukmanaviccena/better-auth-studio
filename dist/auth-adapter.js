@@ -414,7 +414,6 @@ export async function createMockAccount(adapter, userId, index, providerId) {
         'tiktok',
         'zoom',
     ];
-    // Use provided providerId or select randomly
     const selectedProvider = providerId && providerId !== 'random'
         ? providerId
         : providers[Math.floor(Math.random() * providers.length)];

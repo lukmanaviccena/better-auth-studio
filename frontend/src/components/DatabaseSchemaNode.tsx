@@ -8,6 +8,7 @@ import {
   Fingerprint,
   Hash,
   Key,
+  Focus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';
@@ -22,6 +23,8 @@ export type DatabaseSchemaNodeData = {
   displayName?: string;
   isForeign: boolean;
   plugin?: string;
+  isHighlighted?: boolean;
+  isConnected?: boolean;
   columns: {
     id: string;
     isPrimary: boolean;
@@ -99,12 +102,20 @@ const DatabaseSchemaNode = ({
     );
   }
 
+  const isHighlighted = data.isHighlighted || false;
+  const isConnected = data.isConnected || false;
+
   return (
     <div className="relative">
       <div
         className={cn(
-          'border border-gray-700 overflow-hidden shadow-xl bg-gray-900 rounded-lg',
-          'hover:border-gray-600 transition-colors duration-200'
+          'border overflow-hidden shadow-xl bg-gray-900 rounded-lg',
+          'transition-all duration-200',
+          isHighlighted
+            ? 'border-blue-500 shadow-blue-500/20 shadow-2xl ring-2 ring-blue-500/30'
+            : isConnected
+              ? 'border-blue-400/50 shadow-blue-400/10'
+              : 'border-gray-700 hover:border-gray-600'
         )}
         style={{ width: SCHEMA_NODE_WIDTH }}
         id={`${data.name}-schema-node`}
@@ -112,8 +123,13 @@ const DatabaseSchemaNode = ({
         {/* Header */}
         <div
           className={cn(
-            'px-4 py-3 bg-black border-b border-gray-700 flex items-center justify-between',
-            'cursor-pointer select-none'
+            'px-4 py-3 border-b flex items-center justify-between',
+            'cursor-pointer select-none transition-colors',
+            isHighlighted
+              ? 'bg-blue-500/10 border-blue-500/30'
+              : isConnected
+                ? 'bg-blue-500/5 border-blue-400/20'
+                : 'bg-black border-gray-700'
           )}
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
@@ -130,12 +146,31 @@ const DatabaseSchemaNode = ({
                 setShowDetails(!showDetails);
               }}
               className="p-1 hover:bg-gray-800 rounded transition-colors"
+              title={showDetails ? 'Hide field descriptions' : 'Show field descriptions'}
             >
               {showDetails ? (
                 <EyeOff size={12} className="text-gray-400" />
               ) : (
                 <Eye size={12} className="text-gray-400" />
               )}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                // Dispatch custom event to parent to handle highlighting
+                const event = new CustomEvent('highlightTable', {
+                  detail: { tableName: data.name },
+                  bubbles: true,
+                });
+                e.currentTarget.dispatchEvent(event);
+              }}
+              className={cn(
+                'p-1 hover:bg-gray-800 rounded transition-colors',
+                isHighlighted && 'bg-blue-500/20'
+              )}
+              title={isHighlighted ? 'Clear connection highlight' : 'Highlight connections'}
+            >
+              <Focus size={12} className={isHighlighted ? 'text-blue-400' : 'text-gray-400'} />
             </button>
             {isCollapsed ? (
               <ChevronRight size={14} className="text-gray-400" />

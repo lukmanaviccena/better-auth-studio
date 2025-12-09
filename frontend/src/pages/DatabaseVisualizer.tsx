@@ -75,8 +75,8 @@ export default function DatabaseVisualizer() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [highlightedTableName, setHighlightedTableName] = useState<string | null>(null);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (selectedTable) {
       document.body.style.overflow = 'hidden';
@@ -148,7 +148,6 @@ export default function DatabaseVisualizer() {
       };
     });
 
-    // Only show plugins that actually contribute to the schema
     setPluginContributions(contributions.filter((c) => c.tableCount > 0));
   }, [schema, enabledPlugins]);
 
@@ -156,7 +155,7 @@ export default function DatabaseVisualizer() {
     if (!schema) return;
 
     const newNodes: Node[] = [];
-    const newEdges: Edge[] = [];
+    const allEdges: Edge[] = [];
 
     schema.tables.forEach((table, index) => {
       const tableOrigin = table.origin || 'core';
@@ -202,7 +201,7 @@ export default function DatabaseVisualizer() {
           const relationshipLabel =
             rel.type === 'one-to-one' ? '1:1' : rel.type === 'many-to-one' ? 'N:1' : '1:N';
 
-          newEdges.push({
+          allEdges.push({
             id: `${sourceTable}-${targetTable}-${rel.field}`,
             source: sourceTable,
             target: targetTable,
@@ -235,14 +234,106 @@ export default function DatabaseVisualizer() {
       });
     });
 
-    setNodes(newNodes);
-    setEdges(newEdges);
-  }, [schema, setNodes, setEdges]);
+    if (highlightedTableName) {
+      const connectedTableNames = new Set<string>([highlightedTableName]);
+      
+      allEdges.forEach((edge) => {
+        if (edge.source === highlightedTableName) {
+          connectedTableNames.add(edge.target);
+        }
+        if (edge.target === highlightedTableName) {
+          connectedTableNames.add(edge.source);
+        }
+      });
+
+      newNodes.forEach((node) => {
+        const isConnected = connectedTableNames.has(node.id);
+        const isHighlighted = node.id === highlightedTableName;
+        
+        node.style = {
+          ...node.style,
+          opacity: isConnected ? 1 : 0.25,
+        };
+        
+        node.data = {
+          ...node.data,
+          isHighlighted,
+          isConnected: isConnected && !isHighlighted,
+        };
+      });
+
+      const filteredEdges = allEdges.filter(
+        (edge) =>
+          edge.source === highlightedTableName || edge.target === highlightedTableName
+      );
+
+      filteredEdges.forEach((edge) => {
+        edge.style = {
+          ...edge.style,
+          stroke: '#60a5fa',
+          strokeWidth: 3,
+        };
+        edge.labelStyle = {
+          ...edge.labelStyle,
+          fill: '#60a5fa',
+          fontWeight: '600',
+        };
+        edge.markerEnd = {
+          type: 'arrowclosed',
+          color: '#60a5fa',
+          width: 14,
+          height: 14,
+        };
+      });
+
+      setNodes(newNodes);
+      setEdges(filteredEdges);
+    } else {
+      newNodes.forEach((node) => {
+        node.style = {
+          ...node.style,
+          opacity: 1,
+        };
+        node.data = {
+          ...node.data,
+          isHighlighted: false,
+          isConnected: false,
+        };
+      });
+
+      setNodes(newNodes);
+      setEdges(allEdges);
+    }
+  }, [schema, setNodes, setEdges, highlightedTableName]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    if (highlightedTableName === node.id) {
+      setHighlightedTableName(null);
+    } else {
+      setHighlightedTableName(node.id);
+    }
+  }, [highlightedTableName]);
+
+  useEffect(() => {
+    const handleHighlightTable = (event: CustomEvent<{ tableName: string }>) => {
+      const tableName = event.detail.tableName;
+      if (highlightedTableName === tableName) {
+        setHighlightedTableName(null);
+      } else {
+        setHighlightedTableName(tableName);
+      }
+    };
+
+    window.addEventListener('highlightTable' as any, handleHighlightTable as EventListener);
+    return () => {
+      window.removeEventListener('highlightTable' as any, handleHighlightTable as EventListener);
+    };
+  }, [highlightedTableName]);
 
   // const handlePluginToggle = (pluginName: string, checked: boolean) => {
   //   if (checked) {
@@ -314,8 +405,28 @@ export default function DatabaseVisualizer() {
                   {schema.tables.map((table) => (
                     <button
                       key={table.name}
-                      onClick={() => setSelectedTable(table)}
-                      className="w-full text-left border border-white/10 p-3 rounded-none hover:border-white/20 hover:bg-white/5 transition-colors"
+                      onClick={() => {
+                        setSelectedTable(table);
+                        // Also highlight the table in the visualizer
+                        setHighlightedTableName(table.name);
+                      }}
+                      onMouseEnter={() => {
+                        // Only highlight on hover if nothing is currently selected
+                        if (!highlightedTableName) {
+                          setHighlightedTableName(table.name);
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        // Only clear hover highlight if it's not the clicked table
+                        if (highlightedTableName === table.name && (!selectedTable || selectedTable.name !== table.name)) {
+                          setHighlightedTableName(null);
+                        }
+                      }}
+                      className={`w-full text-left border p-3 rounded-none transition-colors ${
+                        highlightedTableName === table.name
+                          ? 'border-blue-500/50 bg-blue-500/10'
+                          : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                      }`}
                     >
                       <div className="flex items-center justify-between text-sm text-white">
                         <span>{table.displayName}</span>
@@ -412,13 +523,27 @@ export default function DatabaseVisualizer() {
         </div>
 
         <div className="col-span-3">
-          <div className="h-full bg-black border border-white/20 rounded-lg overflow-hidden shadow-xl">
+          <div className="h-full bg-black border border-white/20 rounded-lg overflow-hidden shadow-xl relative">
+            {highlightedTableName && (
+              <div className="absolute top-4 right-4 z-10">
+                <Button
+                  onClick={() => setHighlightedTableName(null)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/80 border-white/20 text-white hover:bg-white/10 rounded-none text-xs"
+                >
+                  Clear Selection
+                </Button>
+              </div>
+            )}
             <ReactFlow
               nodes={nodes}
               edges={edges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onNodeClick={handleNodeClick}
+              onPaneClick={() => setHighlightedTableName(null)}
               nodeTypes={nodeTypes}
               fitView
               fitViewOptions={{
