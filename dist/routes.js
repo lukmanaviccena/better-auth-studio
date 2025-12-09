@@ -5302,8 +5302,6 @@ export const authClient = createAuthClient({
                 return res.status(404).json({ success: false, message: 'auth.ts not found' });
             }
             let fileContent = readFileSync(authPath, 'utf-8');
-            // Escape backticks and ${ for template literals
-            // First escape backslashes, then escape backticks and ${ to avoid double-escaping
             const escapedSubject = subject
                 .replace(/\\/g, '\\\\')
                 .replace(/`/g, '\\`')
@@ -5480,6 +5478,77 @@ export const authClient = createAuthClient({
             res.status(500).json({
                 success: false,
                 message: error?.message || 'Failed to apply invitation template',
+            });
+        }
+    });
+    router.get('/api/tools/check-resend-api-key', async (_req, res) => {
+        try {
+            const apiKey = process.env.RESEND_API_KEY;
+            res.json({
+                success: true,
+                hasApiKey: !!apiKey && apiKey.trim().length > 0,
+            });
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                hasApiKey: false,
+                message: error?.message || 'Failed to check API key',
+            });
+        }
+    });
+    router.post('/api/tools/send-test-email', async (req, res) => {
+        try {
+            const { templateId, to, subject, html, fieldValues } = req.body || {};
+            if (!to || !subject || !html) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'to, subject, and html are required',
+                });
+            }
+            const apiKey = process.env.RESEND_API_KEY;
+            if (!apiKey || apiKey.trim().length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'RESEND_API_KEY not found in environment variables. Please add it to your .env file.',
+                });
+            }
+            let processedHtml = html;
+            let processedSubject = subject;
+            if (fieldValues) {
+                Object.entries(fieldValues).forEach(([key, value]) => {
+                    const placeholder = `{{${key}}}`;
+                    processedHtml = processedHtml.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+                    processedSubject = processedSubject.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+                });
+            }
+            processedHtml = processedHtml.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
+            processedSubject = processedSubject.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
+            // @ts-ignore - resend should be end user dep
+            const { Resend } = await import('resend');
+            const resend = new Resend(apiKey);
+            const emailResult = await resend.emails.send({
+                from: 'Better Auth Studio <onboarding@resend.dev>',
+                to: to,
+                subject: processedSubject,
+                html: processedHtml,
+            });
+            if (emailResult.error) {
+                return res.status(500).json({
+                    success: false,
+                    message: emailResult.error.message || 'Failed to send email via Resend',
+                });
+            }
+            res.json({
+                success: true,
+                message: 'Test email sent successfully',
+                emailId: emailResult.data?.id,
+            });
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                message: error?.message || 'Failed to send test email',
             });
         }
     });
