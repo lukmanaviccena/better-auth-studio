@@ -189,6 +189,10 @@ export default function DatabaseVisualizer() {
       });
     });
 
+    // Track unique table pairs to avoid duplicate edges
+    // Use a normalized key (sorted table names) to ensure only one edge per table pair
+    const edgeMap = new Map<string, { edge: Edge; relationshipType: string }>();
+    
     schema.tables.forEach((table) => {
       table.relationships.forEach((rel) => {
         const sourceTable = table.name;
@@ -198,41 +202,62 @@ export default function DatabaseVisualizer() {
         const targetNode = newNodes.find((n) => n.id === targetTable);
 
         if (sourceNode && targetNode) {
-          const relationshipLabel =
-            rel.type === 'one-to-one' ? '1:1' : rel.type === 'many-to-one' ? 'N:1' : '1:N';
+          // Create a normalized key that doesn't depend on direction
+          // Sort table names alphabetically to ensure consistent edge direction
+          const [table1, table2] = [sourceTable, targetTable].sort();
+          const edgeKey = `${table1}-${table2}`;
+          
+          // Only create edge if it doesn't already exist
+          if (!edgeMap.has(edgeKey)) {
+            // Determine the relationship label based on the relationship type
+            let relationshipLabel: string;
+            if (rel.type === 'one-to-one') {
+              relationshipLabel = '1:1';
+            } else if (rel.type === 'many-to-one') {
+              relationshipLabel = 'N:1';
+            } else {
+              relationshipLabel = '1:N';
+            }
 
-          allEdges.push({
-            id: `${sourceTable}-${targetTable}-${rel.field}`,
-            source: sourceTable,
-            target: targetTable,
-            type: 'smoothstep',
-            animated: false,
-            style: {
-              stroke: '#6b7280',
-              strokeWidth: 2,
-              strokeDasharray: '0',
-            },
-            label: relationshipLabel,
-            labelStyle: {
-              fontSize: '11px',
-              fill: '#9ca3af',
-              fontWeight: '500',
-            },
-            labelBgStyle: {
-              fill: 'rgba(0, 0, 0, 0.9)',
-              fillOpacity: 1,
-              borderRadius: 4,
-            },
-            markerEnd: {
-              type: 'arrowclosed',
-              color: '#6b7280',
-              width: 12,
-              height: 12,
-            },
-          });
+            // Always use the original source -> target direction for consistency
+            const edge: Edge = {
+              id: edgeKey,
+              source: sourceTable,
+              target: targetTable,
+              type: 'smoothstep',
+              animated: false,
+              style: {
+                stroke: '#6b7280',
+                strokeWidth: 2,
+                strokeDasharray: '0',
+              },
+              label: relationshipLabel,
+              labelStyle: {
+                fontSize: '11px',
+                fill: '#9ca3af',
+                fontWeight: '500',
+              },
+              labelBgStyle: {
+                fill: 'rgba(0, 0, 0, 0.9)',
+                fillOpacity: 1,
+                borderRadius: 4,
+              },
+              markerEnd: {
+                type: 'arrowclosed',
+                color: '#6b7280',
+                width: 12,
+                height: 12,
+              },
+            };
+
+            edgeMap.set(edgeKey, { edge, relationshipType: rel.type });
+          }
         }
       });
     });
+
+    // Convert map to array of edges
+    allEdges.push(...Array.from(edgeMap.values()).map(item => item.edge));
 
     if (highlightedTableName) {
       const connectedTableNames = new Set<string>([highlightedTableName]);
