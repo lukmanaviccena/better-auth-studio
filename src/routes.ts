@@ -2401,7 +2401,8 @@ export function createRoutes(
         return res.json({
           success: false,
           schema: null,
-          error: 'Failed to load schema from Better Auth context. Please ensure your auth configuration is properly set up.',
+          error:
+            'Failed to load schema from Better Auth context. Please ensure your auth configuration is properly set up.',
         });
       }
 

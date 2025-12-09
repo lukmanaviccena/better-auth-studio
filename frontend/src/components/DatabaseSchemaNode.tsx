@@ -6,9 +6,9 @@ import {
   Eye,
   EyeOff,
   Fingerprint,
+  Focus,
   Hash,
   Key,
-  Focus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../lib/utils';

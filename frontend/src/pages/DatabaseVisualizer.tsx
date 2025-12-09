@@ -189,10 +189,9 @@ export default function DatabaseVisualizer() {
       });
     });
 
-    // Track unique table pairs to avoid duplicate edges
     // Use a normalized key (sorted table names) to ensure only one edge per table pair
     const edgeMap = new Map<string, { edge: Edge; relationshipType: string }>();
-    
+
     schema.tables.forEach((table) => {
       table.relationships.forEach((rel) => {
         const sourceTable = table.name;
@@ -206,10 +205,8 @@ export default function DatabaseVisualizer() {
           // Sort table names alphabetically to ensure consistent edge direction
           const [table1, table2] = [sourceTable, targetTable].sort();
           const edgeKey = `${table1}-${table2}`;
-          
-          // Only create edge if it doesn't already exist
+
           if (!edgeMap.has(edgeKey)) {
-            // Determine the relationship label based on the relationship type
             let relationshipLabel: string;
             if (rel.type === 'one-to-one') {
               relationshipLabel = '1:1';
@@ -219,7 +216,6 @@ export default function DatabaseVisualizer() {
               relationshipLabel = '1:N';
             }
 
-            // Always use the original source -> target direction for consistency
             const edge: Edge = {
               id: edgeKey,
               source: sourceTable,
@@ -256,12 +252,11 @@ export default function DatabaseVisualizer() {
       });
     });
 
-    // Convert map to array of edges
-    allEdges.push(...Array.from(edgeMap.values()).map(item => item.edge));
+    allEdges.push(...Array.from(edgeMap.values()).map((item) => item.edge));
 
     if (highlightedTableName) {
       const connectedTableNames = new Set<string>([highlightedTableName]);
-      
+
       allEdges.forEach((edge) => {
         if (edge.source === highlightedTableName) {
           connectedTableNames.add(edge.target);
@@ -274,12 +269,12 @@ export default function DatabaseVisualizer() {
       newNodes.forEach((node) => {
         const isConnected = connectedTableNames.has(node.id);
         const isHighlighted = node.id === highlightedTableName;
-        
+
         node.style = {
           ...node.style,
           opacity: isConnected ? 1 : 0.25,
         };
-        
+
         node.data = {
           ...node.data,
           isHighlighted,
@@ -288,8 +283,7 @@ export default function DatabaseVisualizer() {
       });
 
       const filteredEdges = allEdges.filter(
-        (edge) =>
-          edge.source === highlightedTableName || edge.target === highlightedTableName
+        (edge) => edge.source === highlightedTableName || edge.target === highlightedTableName
       );
 
       filteredEdges.forEach((edge) => {
@@ -336,13 +330,16 @@ export default function DatabaseVisualizer() {
     [setEdges]
   );
 
-  const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    if (highlightedTableName === node.id) {
-      setHighlightedTableName(null);
-    } else {
-      setHighlightedTableName(node.id);
-    }
-  }, [highlightedTableName]);
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (highlightedTableName === node.id) {
+        setHighlightedTableName(null);
+      } else {
+        setHighlightedTableName(node.id);
+      }
+    },
+    [highlightedTableName]
+  );
 
   useEffect(() => {
     const handleHighlightTable = (event: CustomEvent<{ tableName: string }>) => {
@@ -443,7 +440,10 @@ export default function DatabaseVisualizer() {
                       }}
                       onMouseLeave={() => {
                         // Only clear hover highlight if it's not the clicked table
-                        if (highlightedTableName === table.name && (!selectedTable || selectedTable.name !== table.name)) {
+                        if (
+                          highlightedTableName === table.name &&
+                          (!selectedTable || selectedTable.name !== table.name)
+                        ) {
                           setHighlightedTableName(null);
                         }
                       }}
