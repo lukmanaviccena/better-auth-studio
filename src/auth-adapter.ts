@@ -248,9 +248,7 @@ async function hashPassword(password: string): Promise<string> {
 
 export async function createMockUser(adapter: AuthAdapter, index: number, role?: string) {
   const randomString = Math.random().toString(36).substring(2, 8);
-
-  const hashedPassword = await hashPassword('password123');
-
+  const hashedPassword = await hashPassword(randomString.toString());
   const userData: any = {
     email: `user${randomString}@example.com`,
     name: `User ${index}`,
