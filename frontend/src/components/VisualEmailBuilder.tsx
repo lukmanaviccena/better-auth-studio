@@ -685,22 +685,20 @@ export default function VisualEmailBuilder({ html, onChange }: VisualEmailBuilde
             <div className="flex items-center gap-2">
               <Button
                 variant={viewMode === 'edit' ? 'default' : 'ghost'}
-                size="sm"
                 onClick={() => setViewMode('edit')}
-                className="h-7 px-3 text-xs rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                className="h-7 px-3 text-xs rounded-none border border-dashed border-white/20"
                 title="Edit Mode"
               >
-                <Pencil className="w-3 h-3 mr-1" />
+                <Pencil className="w-2 h-2" />
                 Edit
               </Button>
               <Button
                 variant={viewMode === 'preview' ? 'default' : 'ghost'}
-                size="sm"
                 onClick={() => setViewMode('preview')}
-                className="h-7 px-3 text-xs rounded-none border border-dashed border-white/20 hover:bg-white/10"
+                className="h-7 px-3 text-xs rounded-none border border-dashed border-white/20"
                 title="Preview Mode"
               >
-                <Eye className="w-3 h-3 mr-1" />
+                <Eye className="w-2 h-2" />
                 Preview
               </Button>
             </div>
