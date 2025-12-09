@@ -868,7 +868,6 @@ export default function Dashboard() {
       return labels;
     }
 
-    // Fallback: generate labels dynamically based on current date
     const now = new Date();
     switch (period) {
       case '1D':
@@ -964,19 +963,19 @@ export default function Dashboard() {
         </p>
       </div> */}
         <div className="px-6 overflow-hidden">
-          <div className="flex items-center justify-between gap-8 py-4 px-6 bg-white/5 border border-white/10 rounded-none overflow-x-auto relative">
+          <div className="flex items-center justify-between gap-8 py-4 px-6 bg-gradient-to-b from-white/[4%] to-white/[2.5%]  border border-white/10 rounded-none overflow-x-auto relative">
             {/* Top-left corner */}
-            <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+            <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+            <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
             {/* Top-right corner */}
-            <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+            <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+            <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
             {/* Bottom-left corner */}
-            <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+            <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+            <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
             {/* Bottom-right corner */}
-            <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-            <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+            <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+            <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
 
             <div className="flex items-center gap-3 min-w-fit">
               <div className="w-10 h-10 rounded-none bg-white/5 border border-dashed border-white/10 flex items-center justify-center flex-shrink-0">
@@ -1127,19 +1126,19 @@ export default function Dashboard() {
         <div className="px-6 pb-10 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Total Users Card */}
-            <div className="bg-white/5 border border-white/10 p-6 relative">
+            <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 relative">
               {/* Top-left corner */}
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
               {/* Top-right corner */}
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
               {/* Bottom-left corner */}
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
               {/* Bottom-right corner */}
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm text-white uppercase font-light">TOTAL USER</h3>
                 <div className="flex items-center space-x-1 overflow-x-auto">
@@ -1158,47 +1157,92 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
-              <div className="flex justify-between items-end mb-6">
-                <p className="text-4xl text-white font-light">
-                  {loading ? '...' : formatCompactNumber(counts.users)}
-                </p>
-                <div className="flex items-center gap-1 px-2 py-1">
-                  <svg
-                    className={`w-3 h-3 ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
-                    viewBox="0 0 12 12"
-                    fill="currentColor"
-                  >
-                    <path d="M6 0 L12 12 L0 12 Z" />
-                  </svg>
-                  <span
-                    className={`text-xs font-medium ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                  >
-                    {Math.abs(totalUsersPercentage).toFixed(1)}%
-                  </span>
-                </div>
+              <div className="flex justify-between items-end mb-4">
+                {(() => {
+                  const chartData = getChartData(selectedUserPeriod, 'users');
+                  const rawData = totalUsersData.length > 0 
+                    ? totalUsersData.slice(0, chartData.length)
+                    : Array(chartData.length).fill(0);
+                  const periodTotal = rawData.reduce((sum, val) => sum + val, 0);
+                  
+                  return (
+                    <>
+                      <p className="text-4xl text-white font-light">
+                        {loading ? '...' : formatCompactNumber(periodTotal)}
+                      </p>
+                      <div className="flex items-center gap-1 px-2 py-1">
+                        <svg
+                          className={`w-3 h-3 ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`}
+                          viewBox="0 0 12 12"
+                          fill="currentColor"
+                        >
+                          <path d="M6 0 L12 12 L0 12 Z" />
+                        </svg>
+                        <span
+                          className={`text-xs font-medium ${totalUsersPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                        >
+                          {Math.abs(totalUsersPercentage).toFixed(1)}%
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
               <div className="space-y-2 relative">
-                <div className="h-32 relative">
-                  <svg
-                    className="w-full h-full absolute inset-0"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                  >
-                    <defs>
-                      <linearGradient id="usersBarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop
-                          offset="0%"
-                          style={{ stopColor: 'rgba(255, 255, 255, 0.3)', stopOpacity: 1 }}
-                        />
-                        <stop
-                          offset="100%"
-                          style={{ stopColor: 'rgba(255, 255, 255, 0.05)', stopOpacity: 1 }}
-                        />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="h-32 flex items-end justify-between space-x-1 relative z-10">
-                    {getChartData(selectedUserPeriod, 'users').map((height, i) => {
+                {(() => {
+                  const chartData = getChartData(selectedUserPeriod, 'users');
+                  const rawData = totalUsersData.length > 0 
+                    ? totalUsersData.slice(0, chartData.length)
+                    : Array(chartData.length).fill(0);
+                  const maxValue = Math.max(...rawData, 1);
+                  const yAxisLabels = Array.from({ length: 6 }, (_, i) => {
+                    const value = (maxValue / 5) * (5 - i);
+                    return value;
+                  });
+                  
+                  return (
+                    <div className="flex gap-2">
+                      {/* Y-axis labels */}
+                      <div className="flex flex-col justify-between h-48 text-xs text-gray-500 font-mono pt-0.5 pb-0.5">
+                        {yAxisLabels.map((value, i) => (
+                          <span key={i} className="leading-none">
+                            {formatCompactNumber(Math.round(value))}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      {/* Chart area */}
+                      <div className="flex-1 h-48 relative">
+                        {/* Horizontal grid lines */}
+                        <div className="absolute inset-0 flex flex-col justify-between z-0">
+                          {[0, 1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="w-full h-px bg-white/10"
+                              style={{ opacity: 0.3 }}
+                            />
+                          ))}
+                        </div>
+                        <svg
+                          className="w-full h-full absolute inset-0"
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                        >
+                          <defs>
+                            <linearGradient id="usersBarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop
+                                offset="0%"
+                                style={{ stopColor: 'rgba(255, 255, 255, 0.3)', stopOpacity: 1 }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: 'rgba(255, 255, 255, 0.05)', stopOpacity: 1 }}
+                              />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="h-48 flex items-end justify-between space-x-1 relative z-10">
+                          {chartData.map((height, i) => {
                       const isHovered = hoveredUsersAreaIndex === i;
 
                       return (
@@ -1235,40 +1279,43 @@ export default function Dashboard() {
                             className="w-full h-full"
                             style={{
                               background:
-                                'linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05))',
+                                'linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.285))',
                               opacity: isHovered ? 1 : 0.8,
                             }}
                           />
                         </div>
                       );
-                    })}
-                  </div>
+                        })}
+                        </div>
 
-                  {/* Tooltip */}
-                  {hoveredUsersAreaIndex !== null && hoveredUsersAreaPosition && (
-                    <div
-                      className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
-                      style={{
-                        left: `${hoveredUsersAreaPosition.x}px`,
-                        top: `${hoveredUsersAreaPosition.y}px`,
-                        transform: 'translate(-50%, -100%)',
-                        maxWidth: 'calc(100vw - 20px)',
-                      }}
-                    >
-                      <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
-                        <div className="text-xs text-gray-400 mb-1 font-mono uppercase">
-                          {getDetailedLabels(selectedUserPeriod, 'users')[hoveredUsersAreaIndex]}
-                        </div>
-                        <div className="text-sm text-white font-sans font-medium">
-                          {totalUsersData[hoveredUsersAreaIndex] !== undefined
-                            ? totalUsersData[hoveredUsersAreaIndex].toLocaleString()
-                            : '0'}{' '}
-                          <span className="font-mono text-xs text-gray-400">users</span>
-                        </div>
+                        {/* Tooltip */}
+                        {hoveredUsersAreaIndex !== null && hoveredUsersAreaPosition && (
+                          <div
+                            className="fixed z-50 pointer-events-none transition-all duration-200 ease-out animate-in fade-in"
+                            style={{
+                              left: `${hoveredUsersAreaPosition.x}px`,
+                              top: `${hoveredUsersAreaPosition.y}px`,
+                              transform: 'translate(-50%, -100%)',
+                              maxWidth: 'calc(100vw - 20px)',
+                            }}
+                          >
+                            <div className="bg-black border border-white/20 rounded-sm px-3 py-2 shadow-lg whitespace-nowrap">
+                              <div className="text-xs text-gray-400 mb-1 font-mono uppercase">
+                                {getDetailedLabels(selectedUserPeriod, 'users')[hoveredUsersAreaIndex]}
+                              </div>
+                              <div className="text-sm text-white font-sans font-medium">
+                                {totalUsersData[hoveredUsersAreaIndex] !== undefined
+                                  ? totalUsersData[hoveredUsersAreaIndex].toLocaleString()
+                                  : '0'}{' '}
+                                <span className="font-mono text-xs text-gray-400">users</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
                 <div
                   className={`flex justify-between ${selectedUserPeriod === '1M' ? 'text-[10px]' : 'text-xs'} text-gray-500 font-mono`}
                 >
@@ -1282,15 +1329,15 @@ export default function Dashboard() {
             </div>
 
             {/* Activity Hit Card */}
-            <div className="bg-white/5 border border-white/10 p-6 relative">
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+            <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 relative">
+              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
+              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
+              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
+              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm text-white uppercase font-light">Activity Hits</h3>
@@ -1420,19 +1467,19 @@ export default function Dashboard() {
             {/* Left Column - Two Small Cards */}
             <div className="space-y-4 overflow-x-hidden">
               {/* Active Users Daily */}
-              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+              <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 pb-2 relative">
                 {/* Top-left corner */}
-                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Top-right corner */}
-                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-left corner */}
-                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-right corner */}
-                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
                   <div className="relative">
                     <button
@@ -1541,19 +1588,19 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+              <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 pb-2 relative">
                 {/* Top-left corner */}
-                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Top-right corner */}
-                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-left corner */}
-                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-right corner */}
-                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
                   <div className="relative">
                     <button
@@ -1665,19 +1712,19 @@ export default function Dashboard() {
             {/* Middle Column - Organizations and Teams */}
             <div className="space-y-4 overflow-x-hidden">
               {/* Organizations */}
-              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+              <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 pb-2 relative">
                 {/* Top-left corner */}
-                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Top-right corner */}
-                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-left corner */}
-                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-right corner */}
-                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
                   <div className="relative">
                     <button
@@ -1787,19 +1834,19 @@ export default function Dashboard() {
               </div>
 
               {/* Teams */}
-              <div className="bg-white/5 border border-white/10 p-6 pb-2 relative">
+              <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 pb-2 relative">
                 {/* Top-left corner */}
-                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Top-right corner */}
-                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-left corner */}
-                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
                 {/* Bottom-right corner */}
-                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+                <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+                <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
                 <div className="flex items-center justify-between mb-2 relative -mt-2 pb-1">
                   <div className="relative">
                     <button
@@ -1902,15 +1949,15 @@ export default function Dashboard() {
             </div>
 
             {/* Right Column - Security Insights */}
-            <div className="bg-white/5 border border-white/10 p-6 pt-4 overflow-hidden relative rounded-none flex flex-col">
-              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/30" />
-              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/30" />
+            <div className="bg-gradient-to-b from-white/[4%] to-white/[2.5%] border border-white/10 rounded-none p-6 pt-4 overflow-hidden relative flex flex-col">
+              <div className="absolute top-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute top-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
+              <div className="absolute top-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute top-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
+              <div className="absolute bottom-0 left-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute bottom-0 left-0 w-[0.5px] h-[12px] bg-white/20" />
+              <div className="absolute bottom-0 right-0 w-[12px] h-[0.5px] bg-white/20" />
+              <div className="absolute bottom-0 right-0 w-[0.5px] h-[12px] bg-white/20" />
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-white/60" />
