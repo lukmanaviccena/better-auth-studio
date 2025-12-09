@@ -6038,8 +6038,6 @@ export const authClient = createAuthClient({
 
       let fileContent = readFileSync(authPath, 'utf-8');
 
-      // Escape backticks and ${ for template literals
-      // First escape backslashes, then escape backticks and ${ to avoid double-escaping
       const escapedSubject = subject
         .replace(/\\/g, '\\\\')
         .replace(/`/g, '\\`')
@@ -6226,6 +6224,190 @@ export const authClient = createAuthClient({
       res.status(500).json({
         success: false,
         message: error?.message || 'Failed to apply invitation template',
+      });
+    }
+  });
+
+  router.get('/api/tools/check-resend-api-key', async (_req: Request, res: Response) => {
+    try {
+      const apiKey = process.env.RESEND_API_KEY;
+      const hasApiKey = !!apiKey && apiKey.trim().length > 0;
+
+      if (!hasApiKey) {
+        return res.json({
+          success: true,
+          hasApiKey: false,
+        });
+      }
+
+      const verifiedSenders: string[] = [];
+      try {
+        const { createRequire } = await import('node:module');
+        const { resolve } = await import('node:path');
+        const { existsSync } = await import('node:fs');
+
+        const userRequire = createRequire(resolve(process.cwd(), 'package.json'));
+        let Resend: any;
+
+        try {
+          const resendPath = userRequire.resolve('resend');
+          const resendModule = await import(resendPath);
+          Resend = resendModule.Resend || resendModule.default?.Resend || resendModule.default;
+        } catch {
+          const userNodeModules = resolve(process.cwd(), 'node_modules', 'resend');
+          if (existsSync(userNodeModules)) {
+            const resendModule = await import(resolve(userNodeModules, 'index.js'));
+            Resend = resendModule.Resend || resendModule.default?.Resend || resendModule.default;
+          }
+        }
+
+        if (Resend) {
+          const resend = new Resend(apiKey);
+
+          try {
+            if (resend.domains && typeof resend.domains.list === 'function') {
+              const domainsResult = await resend.domains.list();
+              if (domainsResult && domainsResult.data && Array.isArray(domainsResult.data)) {
+                domainsResult.data.forEach((domain: any) => {
+                  if (domain && domain.name && domain.status === 'verified') {
+                    verifiedSenders.push(`noreply@${domain.name}`);
+                    verifiedSenders.push(`hello@${domain.name}`);
+                  }
+                });
+              }
+            }
+          } catch (_domainError) {
+            // Domains API might not be available or user doesn't have domains yet
+            // User can manually enter verified email
+          }
+        }
+      } catch (_error) {}
+
+      res.json({
+        success: true,
+        hasApiKey: true,
+        verifiedSenders: verifiedSenders.length > 0 ? verifiedSenders : undefined,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        hasApiKey: false,
+        message: error?.message || 'Failed to check API key',
+      });
+    }
+  });
+
+  router.post('/api/tools/send-test-email', async (req: Request, res: Response) => {
+    try {
+      const { templateId, to, subject, html, fieldValues, from } = req.body || {};
+
+      if (!to || !subject || !html) {
+        return res.status(400).json({
+          success: false,
+          message: 'to, subject, and html are required',
+        });
+      }
+
+      if (!from) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'from email address is required. Please use a verified domain/email from your Resend account.',
+        });
+      }
+
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey || apiKey.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'RESEND_API_KEY not found in environment variables. Please add it to your .env file.',
+        });
+      }
+
+      let processedHtml = html;
+      let processedSubject = subject;
+
+      if (fieldValues) {
+        Object.entries(fieldValues).forEach(([key, value]) => {
+          const placeholder = `{{${key}}}`;
+          processedHtml = processedHtml.replace(
+            new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+            String(value)
+          );
+          processedSubject = processedSubject.replace(
+            new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+            String(value)
+          );
+        });
+      }
+
+      processedHtml = processedHtml.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
+      processedSubject = processedSubject.replace(
+        /\{\{year\}\}/g,
+        new Date().getFullYear().toString()
+      );
+
+      let Resend: any;
+      try {
+        const { createRequire } = await import('node:module');
+        const { resolve } = await import('node:path');
+        const { existsSync } = await import('node:fs');
+
+        const userRequire = createRequire(resolve(process.cwd(), 'package.json'));
+
+        try {
+          const resendPath = userRequire.resolve('resend');
+          const resendModule = await import(resendPath);
+          Resend = resendModule.Resend || resendModule.default?.Resend || resendModule.default;
+        } catch (resolveError) {
+          const userNodeModules = resolve(process.cwd(), 'node_modules', 'resend');
+          if (!existsSync(userNodeModules)) {
+            throw new Error('Resend package not found in user project');
+          }
+          const resendModule = await import(resolve(userNodeModules, 'index.js'));
+          Resend = resendModule.Resend || resendModule.default?.Resend || resendModule.default;
+        }
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Resend package not found. Please install it in your project: npm install resend',
+        });
+      }
+
+      if (!Resend) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to load Resend. Please ensure resend is installed: npm install resend',
+        });
+      }
+
+      const resend = new Resend(apiKey);
+
+      const emailResult = await resend.emails.send({
+        from: from,
+        to: to,
+        subject: processedSubject,
+        html: processedHtml,
+      });
+
+      if (emailResult.error) {
+        return res.status(500).json({
+          success: false,
+          message: emailResult.error.message || 'Failed to send email via Resend',
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Test email sent successfully',
+        emailId: emailResult.data?.id,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: error?.message || 'Failed to send test email',
       });
     }
   });

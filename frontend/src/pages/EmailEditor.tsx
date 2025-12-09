@@ -1,4 +1,4 @@
-import { Code, Copy, Mail, X } from 'lucide-react';
+import { Code, Copy, Loader, Mail, Send, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Check } from '@/components/PixelIcons';
@@ -250,9 +250,19 @@ export default function EmailEditor() {
   const [isApplying, setIsApplying] = useState(false);
   const [showResendModal, setShowResendModal] = useState(false);
   const [commandCopied, setCommandCopied] = useState(false);
+  const [showTestEmailModal, setShowTestEmailModal] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [testFieldValues, setTestFieldValues] = useState<Record<string, string>>({});
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [resendApiKeyStatus, setResendApiKeyStatus] = useState<
+    'checking' | 'found' | 'missing' | null
+  >(null);
+  const [verifiedSenders, setVerifiedSenders] = useState<string[]>([]);
+  const [fromEmail, setFromEmail] = useState('');
+  const [testSubject, setTestSubject] = useState('');
 
   useEffect(() => {
-    if (showCodeModal || showResendModal) {
+    if (showCodeModal || showResendModal || showTestEmailModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -260,7 +270,87 @@ export default function EmailEditor() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showCodeModal, showResendModal]);
+  }, [showCodeModal, showResendModal, showTestEmailModal]);
+
+  useEffect(() => {
+    if (showTestEmailModal && selectedTemplate) {
+      const template = emailTemplates[selectedTemplate];
+      if (template) {
+        const initialValues: Record<string, string> = {};
+        template.fields.forEach((field) => {
+          initialValues[field] = fieldValues[field] || '';
+        });
+        setTestFieldValues(initialValues);
+        setTestSubject(emailSubject || template.subject || '');
+        checkResendApiKey();
+      }
+    }
+  }, [showTestEmailModal, selectedTemplate, emailSubject]);
+
+  const checkResendApiKey = async () => {
+    setResendApiKeyStatus('checking');
+    try {
+      const response = await fetch('/api/tools/check-resend-api-key');
+      const data = await response.json();
+      if (data.hasApiKey) {
+        setResendApiKeyStatus('found');
+        if (data.verifiedSenders && data.verifiedSenders.length > 0) {
+          setVerifiedSenders(data.verifiedSenders);
+          setFromEmail(data.verifiedSenders[0]);
+        }
+      } else {
+        setResendApiKeyStatus('missing');
+        setVerifiedSenders([]);
+        setFromEmail('');
+      }
+    } catch (error) {
+      setResendApiKeyStatus('missing');
+      setVerifiedSenders([]);
+      setFromEmail('');
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress || !selectedTemplate || !testSubject) return;
+
+    setIsSendingTestEmail(true);
+    try {
+      const template = emailTemplates[selectedTemplate];
+      const baseHtml = emailHtml || template?.html || '';
+      const baseSubject = testSubject || template?.subject || 'Test Email';
+
+      if (!fromEmail) {
+        toast.error('Please select or enter a verified sender email address');
+        return;
+      }
+
+      const response = await fetch('/api/tools/send-test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateId: selectedTemplate,
+          to: testEmailAddress,
+          from: fromEmail,
+          subject: baseSubject,
+          html: baseHtml,
+          fieldValues: testFieldValues,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to send test email');
+      }
+      toast.success('Test email sent successfully!');
+      setShowTestEmailModal(false);
+      setTestEmailAddress('');
+      setTestSubject('');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send test email');
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
 
   // If a template is preselected externally, you can set it here; otherwise remains null until user selects
 
@@ -623,6 +713,14 @@ export const auth = betterAuth({
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
+                    onClick={() => setShowTestEmailModal(true)}
+                    className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Test Email
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       const code = generateCodeSnippet(selectedTemplate);
                       if (code) {
@@ -894,6 +992,198 @@ export const auth = betterAuth({
                 className="bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase text-xs px-6 py-2"
               >
                 {isApplying ? 'Applying...' : 'Continue'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTestEmailModal && selectedTemplate && (
+        <div
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 overflow-hidden"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowTestEmailModal(false);
+            }
+          }}
+        >
+          <div
+            className="bg-black border border-white/15 rounded-none p-0 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-white/15 border-b bg-black/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-normal uppercase text-white tracking-tight">
+                    Test Email
+                  </h1>
+                  <p className="text-gray-300 mt-2 uppercase font-mono font-light text-xs">
+                    Send a test email with dynamic values
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTestEmailModal(false)}
+                className="text-gray-400 hover:text-white rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-8 bg-black">
+              <div className="space-y-6">
+                {resendApiKeyStatus === 'checking' && (
+                  <div className="bg-black/90 flex border p-4 rounded-none border-dashed border-white/20">
+                    <p className="text-white text-sm font-sans flex items-center gap-2 leading-relaxed">
+                      <Loader className="w-4 h-4 animate-spin mr-1" /> Checking for
+                      RESEND_API_KEY...
+                    </p>
+                  </div>
+                )}
+
+                {resendApiKeyStatus === 'missing' && (
+                  <div className="bg-red-900/20 border border-red-500/30 border-dashed p-4 rounded-none">
+                    <p className="text-red-200 text-sm font-sans leading-relaxed mb-2">
+                      <strong className="font-normal uppercase font-mono">
+                        RESEND_API_KEY not found
+                      </strong>
+                    </p>
+                    <p className="text-red-200 text-sm font-sans leading-relaxed">
+                      Please add{' '}
+                      <code className="bg-black/50 px-1 py-0.5 rounded font-mono text-xs">
+                        RESEND_API_KEY
+                      </code>{' '}
+                      to your{' '}
+                      <code className="bg-black/50 px-1 py-0.5 rounded font-mono text-xs">
+                        .env
+                      </code>{' '}
+                      file.
+                    </p>
+                  </div>
+                )}
+
+                {resendApiKeyStatus === 'found' && (
+                  <>
+                    <div>
+                      <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                        From Email (Verified Sender) *
+                      </Label>
+                      {verifiedSenders.length > 0 ? (
+                        <select
+                          value={fromEmail}
+                          onChange={(e) => setFromEmail(e.target.value)}
+                          className="w-full bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs p-2 focus:outline-none focus:border-white/40"
+                        >
+                          {verifiedSenders.map((sender) => (
+                            <option key={sender} value={sender}>
+                              {sender}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input
+                          type="email"
+                          value={fromEmail}
+                          onChange={(e) => setFromEmail(e.target.value)}
+                          placeholder="noreply@yourdomain.com"
+                          className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                        />
+                      )}
+                      <p className="text-xs text-gray-500 mt-1 font-sans">
+                        {verifiedSenders.length > 0
+                          ? 'Select a verified sender email from your Resend account'
+                          : 'Enter a verified sender email address from your Resend account'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                        Subject *
+                      </Label>
+                      <Input
+                        type="text"
+                        value={testSubject}
+                        onChange={(e) => setTestSubject(e.target.value)}
+                        placeholder="Email subject"
+                        className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 font-sans">
+                        Email subject line (supports dynamic placeholders)
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                        To Email Address *
+                      </Label>
+                      <Input
+                        type="email"
+                        value={testEmailAddress}
+                        onChange={(e) => setTestEmailAddress(e.target.value)}
+                        placeholder="recipient@example.com"
+                        className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 font-sans">
+                        Any email address to receive the test email
+                      </p>
+                    </div>
+
+                    {emailTemplates[selectedTemplate]?.fields &&
+                      emailTemplates[selectedTemplate].fields.length > 0 && (
+                        <div>
+                          <Label className="text-xs uppercase font-mono text-gray-400 mb-3 block">
+                            Dynamic Values
+                          </Label>
+                          <div className="space-y-3">
+                            {emailTemplates[selectedTemplate].fields.map((field) => (
+                              <div key={field}>
+                                <Label className="text-xs uppercase font-mono text-gray-500 mb-1 block">
+                                  {field}
+                                </Label>
+                                <Input
+                                  value={testFieldValues[field] || ''}
+                                  onChange={(e) =>
+                                    setTestFieldValues({
+                                      ...testFieldValues,
+                                      [field]: e.target.value,
+                                    })
+                                  }
+                                  placeholder={`Enter ${field}`}
+                                  className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-white/15 bg-black/50">
+              <Button
+                variant="ghost"
+                onClick={() => setShowTestEmailModal(false)}
+                className="text-gray-400 hover:text-white rounded-none font-mono uppercase text-xs px-6 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendTestEmail}
+                disabled={
+                  isSendingTestEmail ||
+                  resendApiKeyStatus !== 'found' ||
+                  !testEmailAddress ||
+                  !fromEmail ||
+                  !testSubject
+                }
+                className="bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase text-xs px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSendingTestEmail ? 'Sending...' : 'Send Test Email'}
               </Button>
             </div>
           </div>
