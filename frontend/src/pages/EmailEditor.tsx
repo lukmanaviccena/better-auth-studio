@@ -257,6 +257,7 @@ export default function EmailEditor() {
   const [resendApiKeyStatus, setResendApiKeyStatus] = useState<'checking' | 'found' | 'missing' | null>(null);
   const [verifiedSenders, setVerifiedSenders] = useState<string[]>([]);
   const [fromEmail, setFromEmail] = useState('');
+  const [testSubject, setTestSubject] = useState('');
 
   useEffect(() => {
     if (showCodeModal || showResendModal || showTestEmailModal) {
@@ -278,10 +279,11 @@ export default function EmailEditor() {
           initialValues[field] = fieldValues[field] || '';
         });
         setTestFieldValues(initialValues);
+        setTestSubject(emailSubject || template.subject || '');
         checkResendApiKey();
       }
     }
-  }, [showTestEmailModal, selectedTemplate]);
+  }, [showTestEmailModal, selectedTemplate, emailSubject]);
 
   const checkResendApiKey = async () => {
     setResendApiKeyStatus('checking');
@@ -307,25 +309,13 @@ export default function EmailEditor() {
   };
 
   const handleSendTestEmail = async () => {
-    if (!testEmailAddress || !selectedTemplate) return;
+    if (!testEmailAddress || !selectedTemplate || !testSubject) return;
 
     setIsSendingTestEmail(true);
     try {
       const template = emailTemplates[selectedTemplate];
       const baseHtml = emailHtml || template?.html || '';
-      const baseSubject = emailSubject || template?.subject || 'Test Email';
-
-      let processedHtml = baseHtml;
-      let processedSubject = baseSubject;
-
-      Object.entries(testFieldValues).forEach(([field, value]) => {
-        const placeholder = `{{${field}}}`;
-        processedHtml = processedHtml.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
-        processedSubject = processedSubject.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
-      });
-
-      processedHtml = processedHtml.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
-      processedSubject = processedSubject.replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
+      const baseSubject = testSubject || template?.subject || 'Test Email';
 
       if (!fromEmail) {
         toast.error('Please select or enter a verified sender email address');
@@ -339,8 +329,9 @@ export default function EmailEditor() {
           templateId: selectedTemplate,
           to: testEmailAddress,
           from: fromEmail,
-          subject: processedSubject,
-          html: processedHtml,
+          subject: baseSubject,
+          html: baseHtml,
+          fieldValues: testFieldValues,
         }),
       });
 
@@ -351,6 +342,7 @@ export default function EmailEditor() {
       toast.success('Test email sent successfully!');
       setShowTestEmailModal(false);
       setTestEmailAddress('');
+      setTestSubject('');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to send test email');
     } finally {
@@ -1096,6 +1088,22 @@ export const auth = betterAuth({
 
                     <div>
                       <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
+                        Subject *
+                      </Label>
+                      <Input
+                        type="text"
+                        value={testSubject}
+                        onChange={(e) => setTestSubject(e.target.value)}
+                        placeholder="Email subject"
+                        className="bg-black border border-dashed border-white/20 text-white rounded-none font-mono text-xs"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 font-sans">
+                        Email subject line (supports dynamic placeholders)
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase font-mono text-gray-400 mb-2 block">
                         To Email Address *
                       </Label>
                       <Input
@@ -1152,7 +1160,7 @@ export const auth = betterAuth({
               </Button>
               <Button
                 onClick={handleSendTestEmail}
-                disabled={isSendingTestEmail || resendApiKeyStatus !== 'found' || !testEmailAddress || !fromEmail}
+                disabled={isSendingTestEmail || resendApiKeyStatus !== 'found' || !testEmailAddress || !fromEmail || !testSubject}
                 className="bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase text-xs px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSendingTestEmail ? 'Sending...' : 'Send Test Email'}
