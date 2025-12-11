@@ -189,7 +189,7 @@ export default function Settings() {
         return (
           <Badge
             variant="secondary"
-            className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+            className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
           >
             <CheckCircle className="w-3 h-3" />
             Connected
@@ -199,7 +199,7 @@ export default function Settings() {
         return (
           <Badge
             variant="secondary"
-            className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+            className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
           >
             <CheckCircle className="w-3 h-3" />
             Connected
@@ -209,7 +209,7 @@ export default function Settings() {
         return (
           <Badge
             variant="secondary"
-            className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+            className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
           >
             <Info className="w-3 h-3" />
             Local
@@ -219,7 +219,7 @@ export default function Settings() {
         return (
           <Badge
             variant="secondary"
-            className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+            className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
           >
             <AlertTriangle className="w-3 h-3" />
             Unknown
@@ -441,7 +441,7 @@ export default function Settings() {
                 </div>
                 <Badge
                   variant="secondary"
-                  className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                  className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
                 >
                   <CheckCircle className="w-3 h-3" />
                   Configured
@@ -483,7 +483,7 @@ export default function Settings() {
                 </div>
                 <Badge
                   variant="secondary"
-                  className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                  className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
                 >
                   {config.database.debugLogs ? (
                     <>
@@ -512,7 +512,7 @@ export default function Settings() {
                 </div>
                 <Badge
                   variant="secondary"
-                  className="text-xs bg-yellow-900/50 border border-yellow-500/30 text-yellow-400 rounded-sm"
+                  className="text-xs font-mono uppercase font-light bg-yellow-900/50 border border-yellow-500/30 text-yellow-400 rounded-sm"
                 >
                   Unknown
                 </Badge>
@@ -565,7 +565,7 @@ export default function Settings() {
                   </div>
                   <Badge
                     variant="secondary"
-                    className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                    className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
                   >
                     {provider.clientId ? (
                       <>
@@ -627,7 +627,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.emailAndPassword?.enabled ? (
                   <>
@@ -657,7 +657,7 @@ export default function Settings() {
                   </div>
                   <Badge
                     variant="secondary"
-                    className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                    className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
                   >
                     {config?.emailAndPassword?.disableSignUp ? (
                       <>
@@ -685,7 +685,7 @@ export default function Settings() {
                   </div>
                   <Badge
                     variant="secondary"
-                    className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                    className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
                   >
                     {config?.emailAndPassword?.requireEmailVerification ? (
                       <>
@@ -731,7 +731,7 @@ export default function Settings() {
                   </div>
                   <Badge
                     variant="secondary"
-                    className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                    className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
                   >
                     {config?.emailAndPassword?.autoSignIn ? (
                       <>
@@ -827,7 +827,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.session?.disableSessionRefresh ? (
                   <>
@@ -855,7 +855,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.session?.storeSessionInDatabase ? (
                   <>
@@ -910,7 +910,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.rateLimit?.enabled ? (
                   <>
@@ -1016,7 +1016,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.advanced?.useSecureCookies ? (
                   <>
@@ -1044,7 +1044,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.advanced?.disableCSRFCheck ? (
                   <>
@@ -1072,7 +1072,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.advanced?.ipAddress?.disableIpTracking ? (
                   <>
@@ -1100,7 +1100,7 @@ export default function Settings() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-xs group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
+                className="text-xs font-mono uppercase font-light text-gray-400 group-hover:bg-white group-hover:border-black group-hover:text-black bg-black/70 border border-white/15 rounded-none border-dashed flex items-center gap-1"
               >
                 {config?.telemetry?.enabled ? (
                   <>
@@ -1246,7 +1246,7 @@ export default function Settings() {
                     <div className="text-right flex items-center space-x-2">
                       <Badge
                         variant="secondary"
-                        className="text-xs bg-green-900/50 border border-dashed rounded-none border-green-500/30 text-green-400 flex items-center gap-1"
+                        className="text-xs font-mono uppercase font-light text-gray-400 bg-green-900/50 border border-dashed rounded-none border-green-500/30 text-green-400 flex items-center gap-1"
                       >
                         <CheckCircle className="w-3 h-3" />
                         Enabled
@@ -1278,7 +1278,7 @@ export default function Settings() {
                 </div>
                 <Badge
                   variant="secondary"
-                  className="text-xs bg-yellow-900/50 border border-yellow-500/30 text-yellow-400 rounded-sm"
+                  className="text-xs font-mono uppercase font-light bg-yellow-900/50 border border-yellow-500/30 text-yellow-400 rounded-sm"
                 >
                   None
                 </Badge>
