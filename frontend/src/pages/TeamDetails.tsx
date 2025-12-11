@@ -327,20 +327,22 @@ export default function TeamDetails() {
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab('details')}
-            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${activeTab === 'details'
-              ? 'border-white text-white'
-              : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
-              }`}
+            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
+              activeTab === 'details'
+                ? 'border-white text-white'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+            }`}
           >
             <Users className="w-4 h-4" />
             <span className="font-mono uppercase text-xs font-normal">Details</span>
           </button>
           <button
             onClick={() => setActiveTab('members')}
-            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${activeTab === 'members'
-              ? 'border-white text-white'
-              : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
-              }`}
+            className={`flex items-center space-x-2 px-3 py-4 text-sm font-medium border-b-2 transition-all duration-200 ${
+              activeTab === 'members'
+                ? 'border-white text-white'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+            }`}
           >
             <Users className="w-4 h-4" />
             <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -603,8 +605,9 @@ export default function TeamDetails() {
                     {filteredUsers.map((user) => (
                       <div
                         key={user.id}
-                        className={`flex items-center space-x-3 p-4 cursor-pointer hover:bg-white/5 ${selectedUsers.includes(user.id) ? 'bg-blue-900/20' : ''
-                          }`}
+                        className={`flex items-center space-x-3 p-4 cursor-pointer hover:bg-white/5 ${
+                          selectedUsers.includes(user.id) ? 'bg-blue-900/20' : ''
+                        }`}
                         onClick={() => toggleUserSelection(user.id)}
                       >
                         <input
@@ -682,7 +685,8 @@ export default function TeamDetails() {
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-white inline-flex font-light">{team.name}
+                  <div className="text-white inline-flex font-light">
+                    {team.name}
                     <CopyableId id={team.id} variant="subscript" nonSliced={true} />
                   </div>
                   <div className="text-sm text-gray-400">{team.organization?.name}</div>

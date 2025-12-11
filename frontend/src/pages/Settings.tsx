@@ -24,6 +24,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWebSocket } from '../hooks/useWebSocket';
+
 interface AuthConfig {
   appName?: string;
   baseURL?: string;
@@ -48,7 +49,7 @@ interface AuthConfig {
     clientSecret?: string;
     redirectUri?: string;
   }>;
-  user?: BetterAuthOptions['user']
+  user?: BetterAuthOptions['user'];
   session?: BetterAuthOptions['session'];
   account?: BetterAuthOptions['account'];
   verification?: BetterAuthOptions['verification'];

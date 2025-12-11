@@ -835,10 +835,11 @@ export default function OrganizationDetails() {
           <nav className="flex space-x-8 px-6">
             <button
               onClick={() => setActiveTab('details')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'details'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'details'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Building2 className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -856,10 +857,11 @@ export default function OrganizationDetails() {
             </button>
             <button
               onClick={() => setActiveTab('members')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'members'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'members'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Users className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -877,10 +879,11 @@ export default function OrganizationDetails() {
             </button>
             <button
               onClick={() => setActiveTab('invitations')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'invitations'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'invitations'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Mail className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -898,10 +901,11 @@ export default function OrganizationDetails() {
             </button>
             <button
               onClick={() => setActiveTab('teams')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'teams'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'teams'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Users className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -1410,12 +1414,13 @@ export default function OrganizationDetails() {
                             <td className="py-4 px-4">
                               <Badge
                                 variant="secondary"
-                                className={`text-xs font-normal rounded-none border-dashed flex items-center gap-1 w-fit ${invitation.status === 'pending'
-                                  ? 'bg-yellow-900/10 border border-yellow-500/30 text-yellow-400/70'
-                                  : invitation.status === 'accepted'
-                                    ? 'bg-green-900/10 border border-green-500/30 text-green-400/70'
-                                    : 'bg-red-900/10 border border-red-500/30 text-red-400/70'
-                                  }`}
+                                className={`text-xs font-normal rounded-none border-dashed flex items-center gap-1 w-fit ${
+                                  invitation.status === 'pending'
+                                    ? 'bg-yellow-900/10 border border-yellow-500/30 text-yellow-400/70'
+                                    : invitation.status === 'accepted'
+                                      ? 'bg-green-900/10 border border-green-500/30 text-green-400/70'
+                                      : 'bg-red-900/10 border border-red-500/30 text-red-400/70'
+                                }`}
                               >
                                 {invitation.status === 'pending' && <Clock className="w-3 h-3" />}
                                 {invitation.status === 'accepted' && (
@@ -1658,7 +1663,8 @@ export default function OrganizationDetails() {
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-white font-light">{selectedTeam.name}
+                  <div className="text-white font-light">
+                    {selectedTeam.name}
                     <CopyableId id={selectedTeam.id} variant="subscript" nonSliced={true} />
                   </div>
                 </div>
