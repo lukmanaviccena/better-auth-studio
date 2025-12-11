@@ -1725,7 +1725,8 @@ export default function OrganizationDetails() {
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-white inline-flex font-light">{selectedTeam.name}
+                  <div className="text-white inline-flex font-light">
+                    {selectedTeam.name}
                     <CopyableId id={selectedTeam.id} variant="subscript" nonSliced={true} />
                   </div>
                   <CopyableId id={selectedTeam.id} label="Team ID" variant="detail" />

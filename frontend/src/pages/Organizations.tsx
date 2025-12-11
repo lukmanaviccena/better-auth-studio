@@ -1084,7 +1084,8 @@ export default function Organizations() {
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-white inline-flex font-light">{selectedOrganization.name}
+                  <div className="text-white inline-flex font-light">
+                    {selectedOrganization.name}
                     <CopyableId id={selectedOrganization.id} variant="subscript" nonSliced={true} />
                   </div>
                   <div className="text-sm text-gray-400">{selectedOrganization.slug}</div>
@@ -1161,7 +1162,8 @@ export default function Organizations() {
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-white inline-flex font-light">{selectedOrganization.name}
+                  <div className="text-white inline-flex font-light">
+                    {selectedOrganization.name}
                     <CopyableId id={selectedOrganization.id} variant="subscript" nonSliced={true} />
                   </div>
                   <div className="text-sm text-gray-400">{selectedOrganization.slug}</div>
