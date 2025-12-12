@@ -314,7 +314,7 @@ export default function TeamDetails() {
         <div>
           <h1 className="text-2xl text-white font-light inline-flex items-center">
             {team.name}
-            {teamId && <CopyableId id={teamId} variant="subscript" />}
+            <CopyableId id={teamId!} variant="subscript" nonSliced={true} />
           </h1>
           <div className="flex items-center space-x-2 mt-1">
             {team.organization && (
