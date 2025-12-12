@@ -501,14 +501,14 @@ export const auth = betterAuth({
                 <p className="text-sm font-light tracking-tight text-white/70 mb-2">
                   Build the project:
                 </p>
-                <CodeBlock code="pnpm run build" />
+                <CodeBlock code="pnpm build" />
               </div>
               
               <div>
                 <p className="text-sm font-light tracking-tight text-white/70 mb-2">
                   Start development server:
                 </p>
-                <CodeBlock code="pnpm run dev" />
+                <CodeBlock code="pnpm dev" />
               </div>
             </div>
           </PixelCard>
