@@ -12,11 +12,8 @@ export const possibleConfigFiles = [
     'lib/auth.ts',
     'utils/auth.ts',
     'utils/auth.js',
-    'utils/auth.tsx',
-    'utils/auth.jsx',
     'utils/auth.server.ts',
     'utils/auth.server.js',
-    'utils/auth.server.tsx',
     'utils/lib/auth.ts',
     'utils/lib/auth.js',
     'utils/lib/auth.server.ts',
@@ -24,10 +21,7 @@ export const possibleConfigFiles = [
     'lib/auth.js',
     'better-auth.config.ts',
     'better-auth.config.js',
-    'better-auth.config.json',
     'auth.config.ts',
     'auth.config.js',
-    'auth.config.json',
-    'studio-config.json',
 ];
 //# sourceMappingURL=utils.js.map
