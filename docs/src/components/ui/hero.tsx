@@ -1,10 +1,11 @@
 // @ts-nocheck
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber";
 import { Geometry, Base, Subtraction } from '@react-three/csg'
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { Bloom, N8AO, SMAA, EffectComposer } from '@react-three/postprocessing'
+import { OrbitControls } from '@react-three/drei';
 import { useEffect, useRef, useState } from "react";
 import { Mesh } from "three";
 import { KernelSize } from "postprocessing";
@@ -12,29 +13,56 @@ import { LineShadowText } from "../LineShadow";
 function Shape() {
   const meshRef = useRef<Mesh>(null);
   const innerSphereRef = useRef<Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(true);
 
   useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta * 0.5;
-      meshRef.current.rotation.y += delta * 0.3;
-      meshRef.current.rotation.z += delta * 0.2;
-    }
-    if (innerSphereRef.current) {
-      innerSphereRef.current.rotation.x += delta * 0.3;
-      innerSphereRef.current.rotation.y += delta * 0.5;
-      innerSphereRef.current.rotation.z += delta * 0.1;
+    if (autoRotate) {
+      if (meshRef.current) {
+        meshRef.current.rotation.x += delta * 0.5;
+        meshRef.current.rotation.y += delta * 0.3;
+        meshRef.current.rotation.z += delta * 0.2;
+      }
+      if (innerSphereRef.current) {
+        innerSphereRef.current.rotation.x += delta * 0.3;
+        innerSphereRef.current.rotation.y += delta * 0.5;
+        innerSphereRef.current.rotation.z += delta * 0.1;
+      }
     }
   });
 
+  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    setHovered(true);
+    document.body.style.cursor = 'pointer';
+  };
+
+  const handlePointerOut = () => {
+    setHovered(false);
+    document.body.style.cursor = 'auto';
+  };
+
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    setClicked(!clicked);
+    setAutoRotate(!autoRotate);
+  };
+
   return (
     <>
-      <mesh ref={meshRef}>
+      <mesh 
+        ref={meshRef}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        onClick={handleClick}
+      >
         <meshPhysicalMaterial
           roughness={0}
           metalness={0.95}
           clearcoat={1}
           clearcoatRoughness={0.1}
-          color="#000000"
+          color={hovered ? "#1a1a1a" : "#000000"}
         />
 
         <Geometry>
@@ -50,12 +78,17 @@ function Shape() {
         </Geometry>
       </mesh>
 
-      <mesh ref={innerSphereRef}>
+      <mesh 
+        ref={innerSphereRef}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        onClick={handleClick}
+      >
         <sphereGeometry args={[0.8, 32, 32]} />
         <meshPhysicalMaterial
           color="#ffffff"
           emissive={"white"}
-          emissiveIntensity={1}
+          emissiveIntensity={clicked ? 1.5 : 1}
         />
       </mesh>
     </>
@@ -107,10 +140,20 @@ function Scene() {
   return (
     <Canvas
       className="w-full h-full"
-      camera={{ position: [5, 5, 5], fov: 50 }}
+      camera={{ position: [4.5, 4.5, 4.5], fov: 46 }}
     >
       <Environment />
       <Shape />
+      <OrbitControls
+        enableDamping
+        dampingFactor={0.05}
+        rotateSpeed={0.5}
+        enableZoom={true}
+        enablePan={false}
+        minDistance={3}
+        maxDistance={15}
+        makeDefault
+      />
       <EffectComposer multisampling={0}>
         <N8AO halfRes color="black" aoRadius={2} intensity={1} aoSamples={6} denoiseSamples={4} />
         <Bloom
@@ -226,6 +269,7 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
   const [typedTerminalCommand, setTypedTerminalCommand] = useState("");
   const [terminalLogs, setTerminalLogs] = useState<TerminalLine[]>([]);
   const [terminalHeight, setTerminalHeight] = useState<number>(110);
+  const [showZoomHint, setShowZoomHint] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const terminalLogsRef = useRef<TerminalLine[]>([]);
@@ -238,6 +282,14 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
   useEffect(() => {
     animateSequence();
     return () => cleanup();
+  }, []);
+
+  useEffect(() => {
+    const handleWheel = () => {
+      setShowZoomHint(false);
+    };
+    window.addEventListener('wheel', handleWheel, { once: true });
+    return () => window.removeEventListener('wheel', handleWheel);
   }, []);
 
   const scrollToBottom = () => {
@@ -321,6 +373,15 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
         <Navbar links={links} />
         <div className="absolute inset-0">
           <Scene />
+          
+          {showZoomHint && (
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3 pointer-events-none transition-opacity duration-500">
+              <span className="text-[11px] uppercase tracking-[0.3em] text-white/40 font-mono">
+               Zoom 
+              </span>
+              <div className="w-[1px] h-12 bg-white/30 animate-scroll-line"></div>
+            </div>
+          )}
         </div>
         <div className="absolute bottom-4 left-4 md:bottom-10 md:left-10 z-20 max-w-md">
 
@@ -469,6 +530,20 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
       }
       .animate-cursor {
         animation: cursor-blink 0.8s steps(1) infinite;
+      }
+      .animate-scroll-line {
+        animation: scroll-line 2s ease-in-out infinite;
+      }
+      @keyframes scroll-line {
+        0%, 100% {
+          opacity: 0.3;
+          transform: scaleY(1);
+        }
+        50% {
+          opacity: 0.6;
+          transform: scaleY(0.8);
+          transform-origin: top;
+        }
       }
     `}</style>
     </>
