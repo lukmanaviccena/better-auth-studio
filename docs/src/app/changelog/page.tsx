@@ -137,7 +137,7 @@ export default function Changelog() {
                       fill="currentColor"
                     />
                   </svg>
-                  v1.0.70 <span className="text-white/50 ml-2">/ 2025-01-31</span>
+                  v1.0.70 <span className="text-white/50 ml-2">/ 2025-12-12</span>
                 </span>
               </h3>
             </div>
