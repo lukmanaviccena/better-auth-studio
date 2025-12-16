@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Better Auth Studio",
-  description: "A powerful admin dashboard for Better Auth. Manage users, sessions, organizations, and more with an intuitive interface.",
+  description: "An admin dashboard for Better Auth. Manage users, sessions, organizations, and more with an intuitive interface.",
   openGraph: {
     title: "Better Auth Studio",
-    description: "A powerful admin dashboard for Better Auth. Manage users, sessions, organizations, and more with an intuitive interface.",
+    description: "An admin dashboard for Better Auth. Manage users, sessions, organizations, and more with an intuitive interface.",
     images: [
       {
         url: "/og.png",
