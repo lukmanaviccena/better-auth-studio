@@ -85,8 +85,16 @@ const ArrowRightIcon = () => (
 );
 
 const ChevronIcon = () => (
-  <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 mr-3 text-white/50 flex-shrink-0">
-    <path d="M10 8h2v2h-2V8zm2 2h2v2h-2v-2zm0 2v2h-2v-2h2z" fill="currentColor" />
+  <svg
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className="w-3 h-3 mr-2 text-white/50"
+  >
+    <path
+      d="M8 5v2h2V5H8zm4 4V7h-2v2h2zm2 2V9h-2v2h2zm0 2h2v-2h-2v2zm-2 2v-2h2v2h-2zm0 0h-2v2h2v-2zm-4 4v-2h2v2H8z"
+      fill="currentColor"
+    />
   </svg>
 );
 
@@ -139,21 +147,21 @@ export default function Changelog() {
             <div className="space-y-3">
               <h4 className="font-light tracking-tight text-white flex items-center"><ZapIcon />New Features</h4>
               <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                <li className="flex items-start">
+                <li className="flex items-center">
                   <ChevronIcon />
                   <strong className="pr-2">Email Editor</strong> with code export modal and syntax highlighting
                 </li>
-                <li className="flex items-start">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="pr-2">Database Highlight Visualizer</strong> for interactive schema exploration and relationship mapping
+                </li>
+                <li className="flex items-center">
                   <ChevronIcon />
                   <strong className="pr-2">Field Simulator</strong> for real-time preview of email templates with dynamic placeholders
                 </li>
-                <li className="flex items-start">
+                <li className="flex items-center">
                   <ChevronIcon />
                   <strong className="pr-2">Password Strength Checker</strong> tool with comprehensive validation and visual indicators
-                </li>
-                <li className="flex items-start">
-                  <ChevronIcon />
-                  <strong className="pr-2">Navigation Enhancements</strong> with dynamic count badges for Database, Emails, and Tools
                 </li>
               </ul>
             </div>
@@ -186,24 +194,24 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><MailIcon />Advanced Email Editor</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Visual drag-and-drop email builder with real-time preview and customization
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Template testing functionality with dynamic placeholder replacement and Resend integration
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Code export with syntax highlighting and one-click auth config application
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Field simulator for testing email templates with custom values before deployment along with Resend in
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Resend API key verification based on your api key
                   </li>
                 </ul>
@@ -212,20 +220,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><DatabaseIcon />Advanced Database Visualization</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Interactive schema visualizer with table highlighting and relationship mapping
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Focus mode for isolating table connections and exploring database relationships
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Dynamic schema loading from Better Auth context with plugin-aware table detection
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Collapsible field lists with preserved node positioning for optimal workflow
                   </li>
                 </ul>
@@ -256,12 +264,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><MailIcon />Email Editor Improvements</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Code export modal with syntax highlighting.
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Field simulator for real-time preview of email templates with dynamic placeholders
                   </li>
                 </ul>
@@ -270,20 +278,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><ShieldIcon />Password Strength Checker</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     New utility tool for validating passwords against Better Auth configuration
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Comprehensive strength scoring (1-5) with visual indicators
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Checks for length, uppercase, lowercase, numbers, special characters, and common patterns
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Validates against configured min/max password length requirements
                   </li>
                 </ul>
@@ -292,12 +300,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><TrendingIcon />Navigation Enhancements</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Dynamic count badges for Database (schema count), Emails (template count), and Tools (total tools)
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Real-time schema count fetching from database API
                   </li>
                 </ul>
@@ -329,12 +337,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><AnalyticsIcon />Dashboard Enhancements</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Period controls wired to analytics endpoints for organizations, teams, and subscriptions with custom range support
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Refined stat cards with live percentages, hover tooltips, and constraint-aware chart tooltips
                   </li>
                 </ul>
@@ -343,16 +351,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><CommandIcon />Tools Command Center</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Test OAuth flow with provider selection modal, Better Auth state validation, popup orchestration, and account polling
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Run Migration dialog featuring Clerk blueprint, syntax-highlighted custom editor, and Coming Soon placeholders
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Test Database connectivity via `/api/database/test` with inline sample row preview and concise terminal logs
                   </li>
                 </ul>
@@ -384,12 +392,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><LayoutIcon />Shadcn UI Components</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Calendar component with react-day-picker v9 integration and dual-month view
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     DateRangePicker component for advanced date filtering with auto-close functionality
                   </li>
                 </ul>
@@ -397,20 +405,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><ShieldIcon />Admin Functionality</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Comprehensive user banning/unbanning system with admin plugin detection
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Ban reason and expiration date support for temporary and permanent bans
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Visual ban indicators with warning banners and status badges
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     API endpoints for ban-user, unban-user, and admin status checking
                   </li>
                 </ul>
@@ -419,8 +427,8 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><SearchIcon />Advanced Filtering</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Dynamic filter system with Email Verified, Banned Status, Created Date, and Role filters
                   </li>
                 </ul>
@@ -452,8 +460,8 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><ShieldIcon />Session Seeding</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     User-specific session seeding with customizable count (1-50 sessions)
                   </li>
                 </ul>
@@ -462,12 +470,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><AnalyticsIcon />Session Display</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Session ID, status, IP address, and expiration date display
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Individual session revocation functionality
                   </li>
                 </ul>
@@ -499,16 +507,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><DatabaseIcon />Interactive Schema Visualization</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     ReactFlow-powered interactive database schema diagrams
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Drag-and-drop table positioning with zoom and pan controls
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Mini-map navigation for large schema overviews
                   </li>
                 </ul>
@@ -517,12 +525,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">🔌 Plugin-Based Configuration</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Dynamic plugin selection (Organization, Teams, Two Factor, API Key, Passkey)
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Schema statistics showing table count, relationships, and active plugins
                   </li>
                 </ul>
@@ -554,20 +562,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><GlobeIcon />Geolocation Resolution</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     MaxMind GeoLite2-City database integration for accurate IP geolocation
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Fallback to comprehensive default IP database covering 12 countries
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Country flag emoji display next to location information
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Real-time IP resolution with city, country, and region data
                   </li>
                 </ul>
@@ -576,16 +584,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><SettingsIcon />CLI Integration</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     --geo-db CLI option for custom MaxMind database path
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Default MMDB file included in package distribution
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Backend API endpoint for IP geolocation resolution
                   </li>
                 </ul>
@@ -617,20 +625,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><SettingsIcon />Modern Tooling</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Biome integration for fast linting and formatting
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Comprehensive linting rules with appropriate warning levels
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Automatic code formatting with consistent style
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     TypeScript and JavaScript support with modern configurations
                   </li>
                 </ul>
@@ -639,20 +647,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><RocketIcon />CI/CD Pipeline</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     GitHub Actions workflow for automated testing and building
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     pnpm package manager integration for consistent dependency management
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Automated security auditing and vulnerability scanning
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Build artifact verification and deployment readiness checks
                   </li>
                 </ul>
@@ -683,20 +691,20 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><DatabaseIcon />Data Export</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Added CSV export functionality for Users page with ID, name, email, verification status, and timestamps
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Added CSV export functionality for Organizations page with ID, name, slug, and timestamps
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Automatic timestamped filename generation (e.g., users-export-2025-01-27.csv)
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Proper CSV formatting with quoted fields and UTF-8 encoding for compatibility
                   </li>
                 </ul>
@@ -705,16 +713,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><TrendingIcon />User Experience</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Export buttons positioned next to "Add User" and "Add Organization" buttons
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Success toast notifications showing number of records exported
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Error handling for empty datasets with appropriate user feedback
                   </li>
                 </ul>
@@ -746,16 +754,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><SettingsIcon />Fixed Issues</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Resolved "organization not found" errors with improved API response consistency
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Fixed "team not found" errors with better routing structure
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Improved database query performance with targeted WHERE clauses
                   </li>
                 </ul>
@@ -764,12 +772,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">⚡ Performance</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Optimized database queries to use limits instead of fetching all records
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Enhanced frontend routing for better organization structure
                   </li>
                 </ul>
@@ -802,12 +810,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><LayoutIcon />Design System</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Unified black and white color scheme across all pages
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Integrated Geist Mono font for consistent typography
                   </li>
                 </ul>
@@ -816,12 +824,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">📱 Responsive Design</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Mobile-first responsive navigation system
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Optimized layouts for all screen sizes
                   </li>
                 </ul>
@@ -854,16 +862,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">📚 Content</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Complete README.md integration for installation guide
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Added comprehensive changelog with version tracking
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Enhanced code examples with syntax highlighting
                   </li>
                 </ul>
@@ -872,12 +880,12 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white flex items-center"><SettingsIcon />Developer Experience</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Added TypeScript syntax highlighting for code blocks
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Improved code readability with proper formatting
                   </li>
                 </ul>
@@ -902,16 +910,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">v1.1.0 - Enhanced Analytics</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     User activity dashboards with real-time metrics
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Session analytics and usage patterns
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Advanced export formats (JSON, Excel) and filtering options
                   </li>
                 </ul>
@@ -920,16 +928,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">v1.2.0 - Advanced Security</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Role-based access control (RBAC) management
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Security audit logs and monitoring
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Two-factor authentication management
                   </li>
                 </ul>
@@ -938,16 +946,16 @@ export default function Changelog() {
               <div>
                 <h4 className="font-light tracking-tight mb-2 text-white">v2.0.0 - Plugin System</h4>
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Extensible plugin architecture
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Custom dashboard widgets
                   </li>
-                  <li className="flex items-start">
-                    <ChevronIcon />
+                <li className="flex items-center">
+                  <ChevronIcon />
                     Third-party integrations marketplace
                   </li>
                 </ul>
