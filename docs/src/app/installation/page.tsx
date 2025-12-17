@@ -2,6 +2,16 @@ import PixelLayout from "@/components/PixelLayout";
 import PixelCard from "@/components/PixelCard";
 import CodeHighlighter from "@/components/SyntaxHighlighter";
 import CodeBlock from "@/components/CodeBlock";
+import {
+  HostedIcon,
+  BetaIcon,
+  DownloadIcon,
+  InstallIcon,
+  BasicUsageIcon,
+  PrerequisitesIcon,
+  DataLayersIcon,
+  DocumentIcon,
+} from "@/components/icons";
 export default function Installation() {
   return (
     <PixelLayout
@@ -16,17 +26,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 4c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4zm0 6c1.38 0 2.5-1.12 2.5-2.5S13.38 11.5 12 11.5 9.5 12.62 9.5 14 10.62 16.5 12 16.5z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <HostedIcon />
                   Hosted Version
                 </span>
               </h3>
@@ -44,17 +44,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M12 2h2v2h-2V2zm-2 4h6v2h-2v6h-2V8H8V6zm-4 8h12v2H4v-2zm0 4h12v2H4v-2z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <BetaIcon />
                   Beta Version Notice
                 </span>
               </h3>
@@ -74,17 +64,7 @@ export default function Installation() {
                   <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                     <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                     <span className="relative z-10 inline-flex gap-[2px] items-center">
-                      <svg
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        className="w-3 rotate-180 h-3 inline-flex mr-1 text-white/50 hover:text-white transition-colors"
-                      >
-                        <path
-                          d="M16 5v2h-2V5h2zm-4 4V7h2v2h-2zm-2 2V9h2v2h-2zm0 2H8v-2h2v2zm2 2v-2h-2v2h2zm0 0h2v2h-2v-2zm4 4v-2h-2v2h2z"
-                          fill="currentColor"
-                        />
-                      </svg>
+                      <DownloadIcon />
                       Try the Beta Version
                     </span>
                   </h3>
@@ -128,17 +108,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M11 4h2v12h2v2h-2v2h-2v-2H9v-2h2V4zM7 14v2h2v-2H7zm0 0v-2H5v2h2zm10 0v2h-2v-2h2zm0 0v-2h2v2h-2z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <InstallIcon />
                   Installation
                 </span>
               </h3>
@@ -179,17 +149,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M4 2H2v8h2V2zm16 0h2v8h-2V2zm-6 6h-4V2H4v2h4v4H4v2h4v4H4v2h4v4H4v2h6v-6h4v6h2v-6h4v-2h-4v-4h4V8h-4V2h-2v6zm-4 6v-4h4v4h-4zM20 2h-4v2h4V2zM2 14h2v8H2v-8zm14 6h4v2h-4v-2zm6-6h-2v8h2v-8z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <BasicUsageIcon />
                   Basic Usage
                 </span>
               </h3>
@@ -242,17 +202,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M18 6h2v2h-2V6zm-2 4V8h2v2h-2zm-2 2v-2h2v2h-2zm-2 2h2v-2h-2v2zm-2 2h2v-2h-2v2zm-2 0v2h2v-2H8zm-2-2h2v2H6v-2zm0 0H4v-2h2v2z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <PrerequisitesIcon />
                   Prerequisites
                 </span>
               </h3>
@@ -285,17 +235,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M2 4h20v4H2V4zm18 2v2H4V6h16zm0 6H2v4h18v-4zm-2 2v2H4v-2h14zM2 16h20v4H2v-4zm18 2v2H4v-2h16z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <DataLayersIcon />
                   Supported Database Adapters
                 </span>
               </h3>
@@ -332,17 +272,7 @@ export default function Installation() {
               <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
                 <span className="relative z-10 inline-flex gap-[2px] items-center">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="w-3 h-3 inline-flex mr-1 text-white/50"
-                  >
-                    <path
-                      d="M3 3h14v2h2v2h2v14H3V3zm2 2v14h14V7h-2V5H5zm2 2h8v2H7V7zm0 4h10v2H7v-2zm0 4h10v2H7v-2z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <DocumentIcon />
                   Example Configuration Files
                 </span>
               </h3>
