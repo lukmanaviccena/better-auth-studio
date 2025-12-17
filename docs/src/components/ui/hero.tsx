@@ -383,23 +383,23 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
             </div>
           )}
         </div>
-        <div className="absolute bottom-4 left-4 md:bottom-10 md:left-10 z-20 max-w-md">
+        <div className="absolute bottom-4 left-4 right-4 md:bottom-10 md:left-10 md:right-auto z-20 w-[calc(100vw-2rem)] md:w-auto max-w-full md:max-w-md">
 
-          <h1 className="text-2xl w-[1000px] flex uppercase font-mono md:text-3xl font-light tracking-tight mb-3 text-white">
+          <h1 className="w-full md:w-[1000px] text-2xl md:text-3xl flex flex-nowrap uppercase font-mono font-light tracking-tight mb-3 text-white whitespace-nowrap overflow-x-auto scrollbar-hide md:overflow-visible md:whitespace-normal">
             {title.split("Studio")[0]}{" "}
             <LineShadowText className="font-normal ml-2" shadowColor="white">
               Studio
             </LineShadowText>
             {version && (
-              <div className="inline-flex group gap-x-1 text-[13px] ml-2 font-mono">
+              <div className="inline-flex group gap-x-1 text-[10px] md:text-[13px] ml-2 font-mono">
                 <span className="text-white/50 group-hover:text-white transition-colors">[</span>
-                <span className="text-white/70 text-[14px] lowercase">v {version}</span>
+                <span className="text-white/70 text-[9px] md:text-[14px] lowercase">v {version}</span>
                 <span className="text-white/50 group-hover:text-white transition-colors">]</span>
               </div>
             )}
-            <div className="inline-flex group gap-x-1 text-[13px] ml-2 font-mono">
+            <div className="inline-flex group gap-x-1 text-[10px] md:text-[13px] ml-2 font-mono">
               <span className="text-white/50 group-hover:text-white transition-colors">[</span>
-              <span className="text-white/70 text-[14px]">PUBLIC BETA</span>
+              <span className="text-white/70 text-[9px] md:text-[14px]">PUBLIC BETA</span>
               <span className="text-white/50 group-hover:text-white transition-colors">]</span>
             </div>
           </h1>
@@ -407,7 +407,7 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
           <p className="font-mono uppercase text-[12.5px] text-white/50 mb-6">
             {description}
           </p>
-          <div className="bg-black/20 backdrop-blur-sm border border-white/15 hover:border-white/20 transition-all duration-300 border-dashed rounded-none p-4 font-mono text-xs">
+          <div className="bg-black/20 backdrop-blur-sm border border-white/15 hover:border-white/20 transition-all duration-300 border-dashed rounded-none p-4 font-mono text-xs overflow-hidden">
             <div className="text-white/70 flex items-center text-[10px] uppercase font-mono mb-2">
               <svg
                 fill="none"
@@ -421,9 +421,9 @@ export const Hero: React.FC<HeroProps> = ({ title, description, links, version }
                 />
               </svg>
               Install Better Auth Studio</div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
               <span className="text-white/80">$</span>
-              <code className="text-white text-xs">pnpx better-auth-studio@latest start</code>
+              <code className="text-white text-xs whitespace-nowrap">pnpx better-auth-studio@latest start</code>
               <button
                 onClick={() => {
                   setCopied(true)
