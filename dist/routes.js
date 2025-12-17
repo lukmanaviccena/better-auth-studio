@@ -1219,10 +1219,16 @@ export function createRoutes(authConfig, configPath, geoDbPath) {
             }
             if (script) {
                 // TODO: use more of sandbox environment to execute the script for security reasons
-                const result = eval(script);
+                try {
+                    const result = eval(script);
+                }
+                catch (error) {
+                    return res
+                        .status(500)
+                        .json({ success: false, error: 'Failed to execute migration script' });
+                }
                 return res.json({
                     success: true,
-                    result: result,
                 });
             }
             else {

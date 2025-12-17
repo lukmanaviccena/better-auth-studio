@@ -1353,9 +1353,11 @@ export function createRoutes(
       if (script) {
         // TODO: use more of sandbox environment to execute the script for security reasons
         try {
-        const result = eval(script);
+          const result = eval(script);
         } catch (error) {
-          return res.status(500).json({ success: false, error: 'Failed to execute migration script' });
+          return res
+            .status(500)
+            .json({ success: false, error: 'Failed to execute migration script' });
         }
         return res.json({
           success: true,
