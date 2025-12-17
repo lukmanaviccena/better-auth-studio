@@ -297,7 +297,8 @@ export default function Dashboard() {
     //   status: 'pending',
     // });
 
-    return patches;
+    // Only return unpatched (pending) security issues
+    return patches.filter(patch => patch.status !== 'applied');
   };
 
   const securityPatches = getSecurityPatches();
