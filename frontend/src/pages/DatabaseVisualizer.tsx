@@ -376,14 +376,6 @@ export default function DatabaseVisualizer() {
     };
   }, [highlightedTableName]);
 
-  // const handlePluginToggle = (pluginName: string, checked: boolean) => {
-  //   if (checked) {
-  //     setSelectedPlugins((prev) => [...prev, pluginName]);
-  //   } else {
-  //     setSelectedPlugins((prev) => prev.filter((p) => p !== pluginName));
-  //   }
-  // };
-
   if (loading) {
     return (
       <div className="p-6">
