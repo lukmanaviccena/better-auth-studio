@@ -31,16 +31,19 @@ async function createStudioConfig(framework: string): Promise<string> {
         ? '@/lib/auth'
         : './src/auth';
 
-    const configContent = `import { auth } from '${authImportPath}';
+    const configContent = `import type { StudioConfig } from 'better-auth-studio';
+import { auth } from '${authImportPath}';
 
-export default {
+const config: StudioConfig = {
   auth,
   basePath: '/api/studio',
   metadata: {
     title: 'Admin Dashboard',
-    theme: 'dark' as const,
+    theme: 'dark',
   },
 };
+
+export default config;
 `;
 
     writeFileSync(configPath, configContent, 'utf-8');

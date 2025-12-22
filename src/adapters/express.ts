@@ -9,16 +9,12 @@ import type { StudioConfig, UniversalRequest, UniversalResponse } from '../types
 export function betterAuthStudio(config: StudioConfig): ExpressRouter {
   const router = Router();
 
-  // Catch all requests
   router.all('*', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Convert Express → Universal
       const universalReq = convertExpressToUniversal(req);
 
-      // Handle request
       const universalRes = await handleStudioRequest(universalReq, config);
 
-      // Convert Universal → Express
       sendExpressResponse(res, universalRes);
     } catch (error) {
       next(error);

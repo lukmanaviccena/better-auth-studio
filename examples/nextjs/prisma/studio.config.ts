@@ -1,12 +1,13 @@
-import { defineStudioConfig } from 'better-auth-studio';
-import { auth } from './lib/auth';
+import type { StudioConfig } from 'better-auth-studio';
+import { auth } from '@/lib/auth';
 
-export default defineStudioConfig({
+const config: StudioConfig = {
   auth,
   basePath: '/api/studio',
-  // Access control temporarily disabled for testing
-  // Uncomment and customize after initial setup:
-  // allowAccess: async (session) => {
-  //   return session?.user?.role === 'admin';
-  // },
-});
+  metadata: {
+    title: 'Admin Dashboard',
+    theme: 'dark',
+  },
+};
+
+export default config;

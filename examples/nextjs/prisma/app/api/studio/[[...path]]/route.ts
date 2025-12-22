@@ -1,11 +1,8 @@
 import { createStudioHandler } from 'better-auth-studio/nextjs';
-import { auth } from '@/lib/auth';
+import studioConfig from '@/studio.config';
 
-const handler = createStudioHandler({
-  auth,
-  basePath: '/api/studio',
-});
-// Export for all HTTP methods
+const handler = createStudioHandler(studioConfig);
+
 export {
   handler as GET,
   handler as POST,
