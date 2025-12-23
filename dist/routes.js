@@ -1513,13 +1513,22 @@ preloadedAuthOptions // Optional auth options for self-hosted (avoids reloading 
                 addResult('Database', 'Connection String', 'pass', 'Database connection string is configured');
             }
             // 3. OAuth/Social Providers
-            const socialProviders = authConfig.socialProviders || [];
-            if (socialProviders.length === 0) {
+            const socialProvidersRaw = (preloadedAuthOptions || authConfig || {}).socialProviders || {};
+            const effectiveSocialProviders = Array.isArray(socialProvidersRaw)
+                ? socialProvidersRaw
+                : Object.entries(socialProvidersRaw).map(([id, p]) => ({
+                    id,
+                    type: id,
+                    name: id,
+                    ...p,
+                    enabled: !!(p.clientId && p.clientSecret),
+                }));
+            if (effectiveSocialProviders.length === 0) {
                 addResult('OAuth Providers', 'Providers', 'warning', 'No OAuth providers configured', 'This is optional. Add social providers if you need OAuth authentication', 'info');
             }
             else {
-                addResult('OAuth Providers', 'Providers', 'pass', `${socialProviders.length} OAuth provider(s) configured`);
-                socialProviders.forEach((provider) => {
+                addResult('OAuth Providers', 'Providers', 'pass', `${effectiveSocialProviders.length} OAuth provider(s) configured`);
+                effectiveSocialProviders.forEach((provider) => {
                     if (provider.enabled) {
                         if (!provider.clientId) {
                             addResult('OAuth Providers', `${provider.name} - Client ID`, 'fail', `${provider.name} is enabled but clientId is missing`, `Add clientId for ${provider.name} in your auth config`, 'error');
@@ -3138,7 +3147,18 @@ preloadedAuthOptions // Optional auth options for self-hosted (avoids reloading 
     });
     router.get('/api/tools/oauth/providers', async (_req, res) => {
         try {
-            const providers = authConfig.socialProviders || [];
+            const effectiveConfig = preloadedAuthOptions || authConfig || {};
+            const socialProviders = effectiveConfig.socialProviders || {};
+            // Handle both object format (from Better Auth options) and array format
+            const providers = Array.isArray(socialProviders)
+                ? socialProviders
+                : Object.entries(socialProviders).map(([id, provider]) => ({
+                    id,
+                    name: provider.name || id,
+                    type: id,
+                    enabled: !!(provider.clientId && provider.clientSecret),
+                    ...provider,
+                }));
             res.json({
                 success: true,
                 providers: providers.map((provider) => ({
@@ -3149,7 +3169,8 @@ preloadedAuthOptions // Optional auth options for self-hosted (avoids reloading 
                 })),
             });
         }
-        catch (_error) {
+        catch (error) {
+            console.error('Failed to fetch OAuth providers:', error);
             res.status(500).json({ success: false, error: 'Failed to fetch OAuth providers' });
         }
     });
@@ -3159,7 +3180,16 @@ preloadedAuthOptions // Optional auth options for self-hosted (avoids reloading 
             if (!provider) {
                 return res.status(400).json({ success: false, error: 'Provider is required' });
             }
-            const providers = authConfig.socialProviders || [];
+            const effectiveConfig = preloadedAuthOptions || authConfig || {};
+            const socialProviders = effectiveConfig.socialProviders || {};
+            // Handle both object format and array format
+            const providers = Array.isArray(socialProviders)
+                ? socialProviders
+                : Object.entries(socialProviders).map(([id, p]) => ({
+                    id,
+                    type: id,
+                    ...p,
+                }));
             const selectedProvider = providers.find((p) => (p.id || p.type) === provider);
             if (!selectedProvider) {
                 return res.status(404).json({ success: false, error: 'Provider not found' });

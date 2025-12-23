@@ -1738,8 +1738,17 @@ export function createRoutes(
       }
 
       // 3. OAuth/Social Providers
-      const socialProviders = authConfig.socialProviders || [];
-      if (socialProviders.length === 0) {
+      const socialProvidersRaw = (preloadedAuthOptions || authConfig || {}).socialProviders || {};
+      const effectiveSocialProviders = Array.isArray(socialProvidersRaw)
+        ? socialProvidersRaw
+        : Object.entries(socialProvidersRaw).map(([id, p]: [string, any]) => ({
+            id,
+            type: id,
+            name: id,
+            ...p,
+            enabled: !!(p.clientId && p.clientSecret),
+          }));
+      if (effectiveSocialProviders.length === 0) {
         addResult(
           'OAuth Providers',
           'Providers',
@@ -1753,10 +1762,10 @@ export function createRoutes(
           'OAuth Providers',
           'Providers',
           'pass',
-          `${socialProviders.length} OAuth provider(s) configured`
+          `${effectiveSocialProviders.length} OAuth provider(s) configured`
         );
 
-        socialProviders.forEach((provider) => {
+        effectiveSocialProviders.forEach((provider: any) => {
           if (provider.enabled) {
             if (!provider.clientId) {
               addResult(
@@ -3634,7 +3643,19 @@ export function createRoutes(
 
   router.get('/api/tools/oauth/providers', async (_req: Request, res: Response) => {
     try {
-      const providers = authConfig.socialProviders || [];
+      const effectiveConfig = preloadedAuthOptions || authConfig || {};
+      const socialProviders = effectiveConfig.socialProviders || {};
+      
+      const providers = Array.isArray(socialProviders)
+        ? socialProviders
+        : Object.entries(socialProviders).map(([id, provider]: [string, any]) => ({
+            id,
+            name: provider.name || id,
+            type: id,
+            enabled: !!(provider.clientId && provider.clientSecret),
+            ...provider,
+          }));
+      
       res.json({
         success: true,
         providers: providers.map((provider: any) => ({
@@ -3644,7 +3665,8 @@ export function createRoutes(
           enabled: provider.enabled !== false,
         })),
       });
-    } catch (_error) {
+    } catch (error) {
+      console.error('Failed to fetch OAuth providers:', error);
       res.status(500).json({ success: false, error: 'Failed to fetch OAuth providers' });
     }
   });
@@ -3656,7 +3678,17 @@ export function createRoutes(
         return res.status(400).json({ success: false, error: 'Provider is required' });
       }
 
-      const providers = authConfig.socialProviders || [];
+      const effectiveConfig = preloadedAuthOptions || authConfig || {};
+      const socialProviders = effectiveConfig.socialProviders || {};
+      
+      const providers = Array.isArray(socialProviders)
+        ? socialProviders
+        : Object.entries(socialProviders).map(([id, p]: [string, any]) => ({
+            id,
+            type: id,
+            ...p,
+          }));
+      
       const selectedProvider = providers.find((p: any) => (p.id || p.type) === provider);
 
       if (!selectedProvider) {
