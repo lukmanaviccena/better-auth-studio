@@ -1320,7 +1320,11 @@ export default function Users() {
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
                   {selectedUser.image ? (
-                    <img src={selectedUser.image} alt={selectedUser.name} className="w-14 h-14 object-cover" />
+                    <img
+                      src={selectedUser.image}
+                      alt={selectedUser.name}
+                      className="w-14 h-14 object-cover"
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}

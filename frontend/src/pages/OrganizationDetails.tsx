@@ -1944,7 +1944,9 @@ export default function OrganizationDetails() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg text-white font-light uppercase font-mono">Edit Organization</h3>
+              <h3 className="text-lg text-white font-light uppercase font-mono">
+                Edit Organization
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
