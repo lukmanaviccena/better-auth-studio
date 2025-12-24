@@ -73,7 +73,7 @@ export default function LoginPage() {
               <img
                 src={assetPath('/logo.png')}
                 alt="Logo"
-                className="absolute w-32 h-20 -left-12 -top-8"
+                className="absolute w-14 h-16 -left-10 pb-2"
               />
               <span className="flex w-full text-right justify-end items-end text-white text-xs font-mono uppercase tracking-wider">
                 better auth studio

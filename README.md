@@ -278,6 +278,92 @@ pnpx better-auth-studio --version
 # Show help
 pnpx better-auth-studio --help
 ```
+
+## 🏠 Self-Hosting (Beta)
+
+> ⚠️ **Beta Feature**: Self-hosting is currently in beta. Please report any issues on GitHub.
+
+Deploy Better Auth Studio alongside your application for production use.
+
+### Setup
+
+**Step 1: Initialize configuration**
+```bash
+pnpx better-auth-studio init
+```
+
+This creates a `studio.config.ts` file:
+```typescript
+import type { StudioConfig } from "better-auth-studio";
+import { auth } from "./lib/auth";
+
+const config: StudioConfig = {
+  auth,
+  basePath: "/api/studio",
+  metadata: {
+    title: "Admin Dashboard",
+    theme: "dark",
+  },
+  access: {
+    roles: ["admin"],
+    allowEmails: ["admin@example.com"],
+  },
+};
+
+export default config;
+```
+
+### Next.js (App Router)
+
+The init command automatically creates `app/api/studio/[[...path]]/route.ts`:
+```typescript
+import { createStudioHandler } from "better-auth-studio/nextjs";
+import studioConfig from "@/studio.config";
+
+const handler = createStudioHandler(studioConfig);
+
+export {
+  handler as GET,
+  handler as POST,
+  handler as PUT,
+  handler as DELETE,
+  handler as PATCH,
+};
+```
+
+Access at `http://localhost:3000/api/studio`
+
+### Express
+
+Add the studio handler to your server:
+```typescript
+import express from "express";
+import { toNodeHandler } from "better-auth/node";
+import { betterAuthStudio } from "better-auth-studio/express";
+import { auth } from "./auth";
+import studioConfig from "./studio.config";
+
+const app = express();
+
+app.use(express.json());
+app.use("/api/studio", betterAuthStudio(studioConfig));
+app.all("/api/auth/*", toNodeHandler(auth));
+
+app.listen(3000);
+```
+
+Access at `http://localhost:3000/api/studio`
+
+### Configuration Options
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `auth` | Yes | Your Better Auth instance |
+| `basePath` | Yes | URL path where studio is mounted |
+| `access.allowEmails` | No | Array of admin email addresses |
+| `access.roles` | No | Array of allowed user roles |
+| `metadata` | No | Custom branding (title, theme) |
+
 ## 📝 Development
 
 ### Running from Source

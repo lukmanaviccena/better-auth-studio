@@ -146,3 +146,33 @@ export const CalendarIcon = ({ className = "w-3 h-3 inline-flex mr-1 text-white/
   </svg>
 );
 
+export const ServerIcon = ({ className = "w-3 h-3 inline-flex mr-1 text-white/50" }: IconProps) => (
+  <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+    <path d="M2 3h20v6H2V3zm18 2H4v2h16V5zM2 11h20v6H2v-6zm18 2H4v2h16v-2zM2 19h20v2H2v-2z" fill="currentColor" />
+  </svg>
+);
+
+export const NextJsIcon = ({ className = "w-3 h-3 inline-flex mr-1 text-white/50" }: IconProps) => (
+  <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.41 8-8 8zm-2-13v8l6-4-6-4z" fill="currentColor" />
+  </svg>
+);
+
+export const ExpressIcon = ({ className = "w-3 h-3 inline-flex mr-1 text-white/50" }: IconProps) => (
+  <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+    <path d="M2 4h20v2H2V4zm0 7h12v2H2v-2zm0 7h20v2H2v-2zm16-7h4v2h-4v-2z" fill="currentColor" />
+  </svg>
+);
+
+export const ConfigIcon = ({ className = "w-3 h-3 inline-flex mr-1 text-white/50" }: IconProps) => (
+  <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+    <path d="M3 3h18v2H3V3zm0 4h14v2H3V7zm0 4h18v2H3v-2zm0 4h14v2H3v-2zm0 4h18v2H3v-2z" fill="currentColor" />
+  </svg>
+);
+
+export const WarningIcon = ({ className = "w-3 h-3 inline-flex mr-1 text-white/50" }: IconProps) => (
+  <svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+    <path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6zm-1 5v4h2v-4h-2zm0 6v2h2v-2h-2z" fill="currentColor" />
+  </svg>
+);
+
