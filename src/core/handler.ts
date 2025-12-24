@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'fs';
+import { existsSync, readFileSync, realpathSync, statSync } from 'fs';
 import { dirname, extname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import type {
@@ -13,17 +13,18 @@ import { decryptSession, isSessionValid, STUDIO_COOKIE_NAME } from '../utils/ses
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+// Resolve real path in case of symlinks (important for pnpm on Vercel)
+const __realdir = (() => {
+  try {
+    return realpathSync(__dirname);
+  } catch {
+    return __dirname;
+  }
+})();
 
 /**
  * Main handler - processes all studio requests (framework-agnostic)
  *
- * Route mapping:
- * - CLI studio: basePath = ''
- *   - /api/users → API route /api/users
- *   - /users → SPA route (serves index.html)
- * - Self-hosted: basePath = '/api/studio'
- *   - /api/studio/users (JSON request) → API route /api/users
- *   - /api/studio/users (HTML request) → SPA route (serves index.html)
  */
 export async function handleStudioRequest(
   request: UniversalRequest,
@@ -205,26 +206,57 @@ async function handleApiRoute(
 }
 
 function findPublicDir(): string | null {
-  const candidates = [
-    resolve(__dirname, '../public'),
-    resolve(__dirname, '../../public'),
-    resolve(__dirname, '../../dist/public'),
-    resolve(__dirname, '../../../public'),
-    resolve(__dirname, '../../../dist/public'),
-  ];
+  // When built and deployed (e.g., on Vercel), the structure is:
+  // node_modules/better-auth-studio/dist/core/handler.js
+  // node_modules/better-auth-studio/dist/public/
+  // So from __dirname (dist/core), we need to go up one level (../public)
+  
+  // Use both __dirname and __realdir to handle symlinks (pnpm on Vercel)
+  const baseDirs = [__dirname, __realdir];
+  const candidates: string[] = [];
+  
+  for (const baseDir of baseDirs) {
+    candidates.push(
+      resolve(baseDir, '../public'),           // dist/core -> dist/public (production)
+      resolve(baseDir, '../../public'),        // dist/core -> root/public (development)
+      resolve(baseDir, '../../../public'),     // nested node_modules
+      resolve(baseDir, '../../dist/public'),   // alternative build structure
+      resolve(baseDir, '../../../dist/public') // deeply nested
+    );
+  }
 
+  // First, try to find a directory with index.html
   for (const candidate of candidates) {
-    if (existsSync(candidate) && existsSync(join(candidate, 'index.html'))) {
-      return candidate;
+    try {
+      if (existsSync(candidate)) {
+        const indexPath = join(candidate, 'index.html');
+        if (existsSync(indexPath)) {
+          console.log(`[Studio] Found public directory at: ${candidate}`);
+          return candidate;
+        }
+      }
+    } catch (error) {
+      // Continue to next candidate if there's an error
+      continue;
     }
   }
 
+  // Fallback: return the first existing directory
   for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
+    try {
+      if (existsSync(candidate)) {
+        console.warn(`[Studio] Found public directory without index.html at: ${candidate}`);
+        return candidate;
+      }
+    } catch (error) {
+      continue;
     }
   }
 
+  console.error('[Studio] Could not find public directory');
+  console.error('[Studio] __dirname:', __dirname);
+  console.error('[Studio] __realdir:', __realdir);
+  console.error('[Studio] Tried candidates:', candidates);
   return null;
 }
 
@@ -236,16 +268,33 @@ function handleStaticFile(path: string, config: StudioConfig): UniversalResponse
   }
 
   if (!cachedPublicDir) {
-    const candidates = [
-      resolve(__dirname, '../public'),
-      resolve(__dirname, '../../public'),
-      resolve(__dirname, '../../dist/public'),
-    ];
+    const baseDirs = [__dirname, __realdir];
+    const candidates: string[] = [];
+    
+    for (const baseDir of baseDirs) {
+      candidates.push(
+        resolve(baseDir, '../public'),
+        resolve(baseDir, '../../public'),
+        resolve(baseDir, '../../../public'),
+        resolve(baseDir, '../../dist/public'),
+        resolve(baseDir, '../../../dist/public')
+      );
+    }
+    
+    // Check which paths exist and which have index.html
+    const diagnostics = candidates.map(candidate => ({
+      path: candidate,
+      exists: existsSync(candidate),
+      hasIndex: existsSync(candidate) ? existsSync(join(candidate, 'index.html')) : false,
+    }));
+    
     return jsonResponse(500, {
       error: 'Public directory not found',
       paths: {
         tried: candidates,
         dirname: __dirname,
+        realdir: __realdir,
+        diagnostics,
       },
     });
   }

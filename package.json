@@ -14,8 +14,9 @@
     "./config": "./dist/types/handler.js"
   },
   "scripts": {
-    "build": "tsc && pnpm run frontend:build && pnpm run copy:public",
+    "build": "tsc && pnpm run frontend:build && pnpm run copy:public && pnpm run verify:public",
     "copy:public": "cp -r public dist/",
+    "verify:public": "test -f dist/public/index.html && echo '✓ Public directory copied successfully' || (echo '✗ ERROR: Public directory not copied!' && exit 1)",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "studio": "tsx src/cli.ts",
@@ -90,10 +91,7 @@
   },
   "files": [
     "dist/",
-    "frontend/dist/",
-    "public/",
     "data/",
-    "README.md",
-    "package.json"
+    "README.md"
   ]
 }
