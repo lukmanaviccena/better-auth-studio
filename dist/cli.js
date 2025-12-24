@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import chokidar from 'chokidar';
 import { Command } from 'commander';
 import { WebSocket } from 'ws';
+import { initCommand } from './cli/commands/init.js';
 import { findAuthConfig } from './config.js';
 import { startStudio } from './studio.js';
 import { detectDatabaseWithDialect } from './utils/database-detection.js';
@@ -346,6 +347,18 @@ program
         }
     }
     catch (_error) {
+        process.exit(1);
+    }
+});
+program
+    .command('init')
+    .description('Initialize Better Auth Studio for self-hosting')
+    .action(async () => {
+    try {
+        await initCommand();
+    }
+    catch (error) {
+        console.error(chalk.red('Error initializing studio:'), error);
         process.exit(1);
     }
 });

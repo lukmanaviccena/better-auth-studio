@@ -27,6 +27,15 @@ import { possiblePaths } from './config.js';
 import { getAuthData } from './data.js';
 import { initializeGeoService, resolveIPLocation, setGeoDbPath } from './geo-service.js';
 import { detectDatabaseWithDialect } from './utils/database-detection.js';
+import type { StudioAccessConfig } from './utils/html-injector.js';
+import {
+  createStudioSession,
+  decryptSession,
+  encryptSession,
+  isSessionValid,
+  STUDIO_COOKIE_NAME,
+  type StudioSession,
+} from './utils/session.js';
 
 const config = {
   N: 16384,
@@ -42,6 +51,30 @@ async function generateKey(password: string, salt: string) {
     dkLen: config.dkLen,
     maxmem: 128 * config.N * config.r * 2,
   });
+}
+
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  if (!storedHash || typeof storedHash !== 'string') {
+    return false;
+  }
+
+  const parts = storedHash.split(':');
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const [salt, storedKey] = parts;
+  if (!salt || !storedKey) {
+    return false;
+  }
+
+  try {
+    const key = await generateKey(password, salt);
+    const keyHex = hex.encode(key);
+    return keyHex === storedKey;
+  } catch {
+    return false;
+  }
 }
 
 function getStudioVersion(): string {
@@ -284,8 +317,35 @@ async function findAuthConfigPath(): Promise<string | null> {
 export function createRoutes(
   authConfig: AuthConfig,
   configPath?: string,
-  geoDbPath?: string
+  geoDbPath?: string,
+  preloadedAdapter?: any,
+  preloadedAuthOptions?: any,
+  accessConfig?: StudioAccessConfig,
+  authInstance?: any
 ): Router {
+  const isSelfHosted = !!preloadedAdapter;
+
+  const getAuthConfigSafe = async (): Promise<any | null> => {
+    if (isSelfHosted && preloadedAuthOptions) {
+      return preloadedAuthOptions;
+    }
+    try {
+      const authConfigPath = configPath || (await findAuthConfigPath());
+      if (authConfigPath) {
+        const { getConfig } = await import('./config.js');
+        return await getConfig({
+          cwd: process.cwd(),
+          configPath: authConfigPath,
+          shouldThrowOnError: false,
+          noCache: true,
+        });
+      }
+    } catch (_error) {
+      // Ignors errors
+    }
+    return null;
+  };
+
   const router = Router();
   const base64UrlEncode = (value: Buffer | string) =>
     Buffer.from(value)
@@ -314,7 +374,107 @@ export function createRoutes(
 
   initializeGeoService().catch(console.error);
 
-  const getAuthAdapterWithConfig = () => getAuthAdapter(configPath);
+  // Use preloaded adapter if available (self-hosted), otherwise load from config file (CLI)
+  const getAuthAdapterWithConfig = async () => {
+    if (preloadedAdapter) {
+      // For self-hosted studio, wrap the preloaded adapter to match expected interface
+      return {
+        ...preloadedAdapter,
+        findMany: preloadedAdapter.findMany?.bind(preloadedAdapter),
+        create: preloadedAdapter.create?.bind(preloadedAdapter),
+        update: preloadedAdapter.update?.bind(preloadedAdapter),
+        delete: preloadedAdapter.delete?.bind(preloadedAdapter),
+        createUser: async (data: any) => {
+          return await preloadedAdapter.create({
+            model: 'user',
+            data: {
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              emailVerified: false,
+              name: data.name,
+              email: data.email?.toLowerCase(),
+              role: data.role || null,
+              image: data.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email}`,
+            },
+          });
+        },
+        createSession: async (data: any) => {
+          return await preloadedAdapter.create({
+            model: 'session',
+            data: { createdAt: new Date(), updatedAt: new Date(), ...data },
+          });
+        },
+        createAccount: async (data: any) => {
+          return await preloadedAdapter.create({
+            model: 'account',
+            data: { createdAt: new Date(), updatedAt: new Date(), ...data },
+          });
+        },
+        createVerification: async (data: any) => {
+          return await preloadedAdapter.create({
+            model: 'verification',
+            data: { createdAt: new Date(), updatedAt: new Date(), ...data },
+          });
+        },
+        createOrganization: async (data: any) => {
+          return await preloadedAdapter.create({
+            model: 'organization',
+            data: { createdAt: new Date(), updatedAt: new Date(), ...data },
+          });
+        },
+        getUsers: async () => {
+          try {
+            if (typeof preloadedAdapter.findMany === 'function') {
+              return (await preloadedAdapter.findMany({ model: 'user' })) || [];
+            }
+            return [];
+          } catch {
+            return [];
+          }
+        },
+        getSessions: async () => {
+          try {
+            if (typeof preloadedAdapter.findMany === 'function') {
+              return (await preloadedAdapter.findMany({ model: 'session' })) || [];
+            }
+            return [];
+          } catch {
+            return [];
+          }
+        },
+      };
+    }
+    return getAuthAdapter(configPath);
+  };
+
+  if (isSelfHosted) {
+    router.use((req: Request, res: Response, next) => {
+      const path = req.path;
+      const publicPaths = [
+        '/api/auth/sign-in',
+        '/api/auth/session',
+        '/api/auth/logout',
+        '/api/auth/verify',
+        '/api/auth/oauth',
+        '/api/health',
+      ];
+
+      const isPublic = publicPaths.some((p) => path.startsWith(p));
+      if (isPublic) {
+        return next();
+      }
+
+      if (path.startsWith('/api/')) {
+        const result = verifyStudioSession(req);
+        if (!result.valid) {
+          return res.status(401).json({ error: 'Unauthorized', message: result.error });
+        }
+        (req as any).studioSession = result.session;
+      }
+
+      next();
+    });
+  }
 
   router.get('/api/health', (_req: Request, res: Response) => {
     const uptime = process.uptime();
@@ -340,6 +500,344 @@ export function createRoutes(
         cwd: process.cwd(),
       },
     });
+  });
+
+  const getSessionSecret = (): string => {
+    return (
+      accessConfig?.secret ||
+      preloadedAuthOptions?.secret ||
+      process.env.BETTER_AUTH_SECRET ||
+      'studio-default-secret'
+    );
+  };
+
+  const getAllowedRoles = (): string[] => {
+    return accessConfig?.roles || ['admin'];
+  };
+
+  const getSessionDuration = (): number => {
+    return (accessConfig?.sessionDuration || 7 * 24 * 60 * 60) * 1000;
+  };
+
+  const getAllowedEmails = (): string[] | null => {
+    return accessConfig?.allowEmails && accessConfig.allowEmails.length > 0
+      ? accessConfig.allowEmails.map((e) => e.toLowerCase())
+      : null;
+  };
+
+  const isEmailAllowed = (email: string): boolean => {
+    const allowedEmails = getAllowedEmails();
+    if (!allowedEmails) return true;
+    return allowedEmails.includes(email.toLowerCase());
+  };
+
+  const verifyStudioSession = (req: Request): { valid: boolean; session?: any; error?: string } => {
+    if (!isSelfHosted) {
+      return { valid: true };
+    }
+
+    const sessionCookie = req.cookies?.[STUDIO_COOKIE_NAME];
+    if (!sessionCookie) {
+      return { valid: false, error: 'No session cookie' };
+    }
+
+    const session = decryptSession(sessionCookie, getSessionSecret());
+    if (!isSessionValid(session)) {
+      return { valid: false, error: 'Session expired' };
+    }
+
+    return { valid: true, session };
+  };
+
+  const requireAuth = (req: Request, res: Response, next: () => void) => {
+    if (!isSelfHosted) {
+      return next();
+    }
+
+    const result = verifyStudioSession(req);
+    if (!result.valid) {
+      return res.status(401).json({ error: 'Unauthorized', message: result.error });
+    }
+
+    (req as any).studioSession = result.session;
+    next();
+  };
+
+  router.post('/api/auth/sign-in', async (req: Request, res: Response) => {
+    try {
+      if (!authInstance) {
+        return res.status(500).json({ success: false, message: 'Auth not configured' });
+      }
+
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email and password required' });
+      }
+
+      const adapter = await getAuthAdapter();
+
+      let signInResult: any = null;
+      let signInError: string | null = null;
+
+      try {
+        signInResult = await authInstance.api.signInEmail({
+          body: { email, password },
+        });
+      } catch (err: any) {
+        signInError = err?.message || 'Sign-in failed';
+      }
+
+      if (!signInResult || signInResult.error || signInError) {
+        const errorMessage = signInError || signInResult?.error?.message || 'Invalid credentials';
+
+        if (errorMessage.includes('Invalid password hash') && adapter?.findMany) {
+          const users = await adapter.findMany({
+            model: 'user',
+            where: [{ field: 'email', value: email }],
+            limit: 1,
+          });
+
+          if (!users || users.length === 0) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+          }
+
+          const userId = users[0].id;
+          const accounts = await adapter.findMany({
+            model: 'account',
+            where: [{ field: 'userId', value: userId }],
+            limit: 10,
+          });
+
+          const credentialAccount = accounts?.find(
+            (acc: any) => acc.providerId === 'credential' || acc.providerId === 'email'
+          );
+
+          if (!credentialAccount) {
+            return res.status(401).json({
+              success: false,
+              message:
+                'No password set for this account. Please use social login or reset your password.',
+            });
+          }
+
+          if (!credentialAccount.password) {
+            return res.status(401).json({
+              success: false,
+              message: 'Password not configured. Please reset your password.',
+            });
+          }
+
+          const isValidPassword = await verifyPassword(password, credentialAccount.password);
+          if (!isValidPassword) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+          }
+
+          const userRole = users[0].role;
+          const user = { id: userId, email: users[0].email, name: users[0].name, role: userRole };
+          const allowedRoles = getAllowedRoles();
+
+          if (!allowedRoles.includes(user.role)) {
+            return res.status(403).json({
+              success: false,
+              message: `Access denied. Required role: ${allowedRoles.join(' or ')}`,
+              userRole: user.role || 'none',
+            });
+          }
+
+          if (!isEmailAllowed(user.email)) {
+            return res.status(403).json({
+              success: false,
+              message: 'Access denied. Your email is not authorized to access this dashboard.',
+            });
+          }
+
+          const studioSession = createStudioSession(user, getSessionDuration());
+          const encryptedSession = encryptSession(studioSession, getSessionSecret());
+
+          res.cookie(STUDIO_COOKIE_NAME, encryptedSession, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: getSessionDuration(),
+            path: '/',
+          });
+
+          return res.json({
+            success: true,
+            user: { id: user.id, email: user.email, name: user.name, role: user.role },
+          });
+        }
+
+        return res.status(401).json({
+          success: false,
+          message: errorMessage,
+        });
+      }
+
+      const userId = signInResult.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      }
+
+      let userRole: string | null = null;
+      if (adapter?.findMany) {
+        const users = await adapter.findMany({
+          model: 'user',
+          where: [{ field: 'id', value: userId }],
+          limit: 1,
+        });
+        if (users && users.length > 0) {
+          userRole = users[0].role;
+        }
+      }
+
+      const user = { ...signInResult.user, role: userRole };
+      const allowedRoles = getAllowedRoles();
+
+      if (!allowedRoles.includes(user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied. Required role: ${allowedRoles.join(' or ')}`,
+          userRole: user.role || 'none',
+        });
+      }
+
+      if (!isEmailAllowed(user.email)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Your email is not authorized to access this dashboard.',
+        });
+      }
+
+      const studioSession = createStudioSession(user, getSessionDuration());
+      const encryptedSession = encryptSession(studioSession, getSessionSecret());
+
+      res.cookie(STUDIO_COOKIE_NAME, encryptedSession, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: getSessionDuration(),
+        path: '/',
+      });
+
+      return res.json({
+        success: true,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      });
+    } catch (error: any) {
+      console.error('Sign-in error:', error);
+      return res.status(401).json({
+        success: false,
+        message: error?.message || 'Invalid credentials',
+      });
+    }
+  });
+
+  router.get('/api/auth/oauth/:provider', async (req: Request, res: Response) => {
+    try {
+      if (!authInstance) {
+        return res.status(500).json({ success: false, message: 'Auth not configured' });
+      }
+
+      const provider = req.params.provider;
+      const callbackURL = req.query.callbackURL as string;
+      const authBasePath = authInstance.options?.basePath || '/api/auth';
+
+      const oauthUrl = `${authBasePath}/sign-in/${provider}?callbackURL=${encodeURIComponent(callbackURL || '/')}`;
+      return res.redirect(oauthUrl);
+    } catch (error) {
+      console.error('OAuth redirect error:', error);
+      return res.status(500).json({ success: false, message: 'OAuth redirect failed' });
+    }
+  });
+
+  router.post('/api/auth/verify', async (req: Request, res: Response) => {
+    try {
+      if (!authInstance) {
+        return res.status(500).json({ success: false, message: 'Auth not configured' });
+      }
+
+      const session = await authInstance.api.getSession({ headers: req.headers });
+
+      if (!session?.user) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+      }
+
+      const user = session.user;
+      const allowedRoles = getAllowedRoles();
+
+      if (!allowedRoles.includes(user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied. Required role: ${allowedRoles.join(' or ')}`,
+          userRole: user.role || 'none',
+        });
+      }
+
+      if (!isEmailAllowed(user.email)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Your email is not authorized to access this dashboard.',
+        });
+      }
+
+      const studioSession = createStudioSession(user, getSessionDuration());
+      const encryptedSession = encryptSession(studioSession, getSessionSecret());
+
+      res.cookie(STUDIO_COOKIE_NAME, encryptedSession, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: getSessionDuration(),
+        path: '/',
+      });
+
+      return res.json({
+        success: true,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      });
+    } catch (error) {
+      console.error('Auth verify error:', error);
+      return res.status(500).json({ success: false, message: 'Failed to verify session' });
+    }
+  });
+
+  router.get('/api/auth/session', (req: Request, res: Response) => {
+    const sessionCookie = req.cookies?.[STUDIO_COOKIE_NAME];
+
+    if (!sessionCookie) {
+      return res.json({ authenticated: false });
+    }
+
+    const session = decryptSession(sessionCookie, getSessionSecret());
+
+    if (!isSessionValid(session)) {
+      return res.json({ authenticated: false, reason: 'expired' });
+    }
+
+    return res.json({
+      authenticated: true,
+      user: {
+        id: session!.userId,
+        email: session!.email,
+        name: session!.name,
+        role: session!.role,
+        image: session!.image,
+      },
+    });
+  });
+
+  router.get('/api/auth/logout', (_req: Request, res: Response) => {
+    res.cookie(STUDIO_COOKIE_NAME, '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    return res.json({ success: true, message: 'Logged out' });
   });
 
   router.get('/api/version-check', async (_req: Request, res: Response) => {
@@ -433,6 +931,8 @@ export function createRoutes(
   });
 
   router.get('/api/config', async (_req: Request, res: Response) => {
+    const effectiveConfig = preloadedAuthOptions || authConfig;
+
     let databaseType = 'unknown';
     let databaseDialect = 'unknown';
     let databaseAdapter = 'unknown';
@@ -457,75 +957,81 @@ export function createRoutes(
       }
     } catch (_error) {}
 
-    if (databaseType === 'unknown') {
-      const configPath = await findAuthConfigPath();
-      if (configPath) {
-        const content = readFileSync(configPath, 'utf-8');
-        if (content.includes('drizzleAdapter')) {
-          databaseType = 'Drizzle';
-        } else if (content.includes('prismaAdapter')) {
-          databaseType = 'Prisma';
-        } else if (content.includes('better-sqlite3') || content.includes('new Database(')) {
-          databaseType = 'SQLite';
-        }
+    if (databaseType === 'unknown' && !isSelfHosted) {
+      const authConfigPath = configPath || (await findAuthConfigPath());
+      if (authConfigPath) {
+        try {
+          const content = readFileSync(authConfigPath, 'utf-8');
+          if (content.includes('drizzleAdapter')) {
+            databaseType = 'Drizzle';
+          } else if (content.includes('prismaAdapter')) {
+            databaseType = 'Prisma';
+          } else if (content.includes('better-sqlite3') || content.includes('new Database(')) {
+            databaseType = 'SQLite';
+          }
+        } catch (_error) {}
       }
 
       if (databaseType === 'unknown') {
-        let type = authConfig.database?.type || authConfig.database?.adapter || 'unknown';
+        let type = effectiveConfig.database?.type || effectiveConfig.database?.adapter || 'unknown';
         if (type && type !== 'unknown') {
           type = type.charAt(0).toUpperCase() + type.slice(1);
         }
         databaseType = type;
       }
     }
+
     const config = {
-      appName: authConfig.appName || 'Better Auth',
-      baseURL: authConfig.baseURL || process.env.BETTER_AUTH_URL,
-      basePath: authConfig.basePath || '/api/auth',
-      secret: authConfig.secret ? 'Configured' : 'Not set',
+      appName: effectiveConfig.appName || 'Better Auth',
+      baseURL: effectiveConfig.baseURL || process.env.BETTER_AUTH_URL,
+      basePath: effectiveConfig.basePath || '/api/auth',
+      secret: effectiveConfig.secret ? 'Configured' : 'Not set',
       database: {
         type: databaseType,
-        adapter: authConfig.database?.adapter || databaseAdapter,
+        adapter: effectiveConfig.database?.adapter || databaseAdapter,
         version: databaseVersion,
-        casing: authConfig.database?.casing || 'camel',
-        debugLogs: authConfig.database?.debugLogs || false,
-        url: authConfig.database?.url,
+        casing: effectiveConfig.database?.casing || 'camel',
+        debugLogs: effectiveConfig.database?.debugLogs || false,
+        url: effectiveConfig.database?.url,
         adapterConfig: adapterConfig,
         dialect: adapterProvider,
       },
-      emailVerification: authConfig.emailVerification,
-      emailAndPassword: authConfig.emailAndPassword,
-      socialProviders: authConfig.socialProviders
-        ? authConfig.socialProviders.map((provider: any) => ({
-            type: provider.id,
+      emailVerification: effectiveConfig.emailVerification,
+      emailAndPassword: effectiveConfig.emailAndPassword,
+      socialProviders: effectiveConfig.socialProviders
+        ? Object.entries(effectiveConfig.socialProviders).map(([id, provider]: [string, any]) => ({
+            type: id,
             clientId: provider.clientId,
             clientSecret: provider.clientSecret,
-            redirectUri: provider.redirectUri,
+            id: id,
+            name: id,
+            redirectURI: provider.redirectURI,
+            enabled: !!(provider.clientId && provider.clientSecret),
             ...provider,
           }))
-        : authConfig.providers || [],
+        : [],
 
       user: {
-        modelName: authConfig.user?.modelName || 'user',
+        modelName: effectiveConfig.user?.modelName || 'user',
         changeEmail: {
-          enabled: authConfig.user?.changeEmail?.enabled || false,
+          enabled: effectiveConfig.user?.changeEmail?.enabled || false,
         },
         deleteUser: {
-          enabled: authConfig.user?.deleteUser?.enabled || false,
-          deleteTokenExpiresIn: authConfig.user?.deleteUser?.deleteTokenExpiresIn || 86400,
+          enabled: effectiveConfig.user?.deleteUser?.enabled || false,
+          deleteTokenExpiresIn: effectiveConfig.user?.deleteUser?.deleteTokenExpiresIn || 86400,
         },
       },
-      session: authConfig.session,
-      account: authConfig.account,
+      session: effectiveConfig.session,
+      account: effectiveConfig.account,
       verification: {
-        modelName: authConfig.verification?.modelName || 'verification',
-        disableCleanup: authConfig.verification?.disableCleanup || false,
+        modelName: effectiveConfig.verification?.modelName || 'verification',
+        disableCleanup: effectiveConfig.verification?.disableCleanup || false,
       },
-      trustedOrigins: authConfig.trustedOrigins,
-      rateLimit: authConfig.rateLimit,
-      advanced: authConfig.advanced,
-      disabledPaths: authConfig.disabledPaths || [],
-      telemetry: authConfig.telemetry,
+      trustedOrigins: effectiveConfig.trustedOrigins,
+      rateLimit: effectiveConfig.rateLimit,
+      advanced: effectiveConfig.advanced,
+      disabledPaths: effectiveConfig.disabledPaths || [],
+      telemetry: effectiveConfig.telemetry,
       studio: {
         version: getStudioVersion(),
         nodeVersion: process.version,
@@ -577,24 +1083,28 @@ export function createRoutes(
       let teamsPluginEnabled = false;
 
       try {
-        const authConfigPath = configPath || (await findAuthConfigPath());
-        if (authConfigPath) {
-          const { getConfig } = await import('./config.js');
-          const betterAuthConfig = await getConfig({
-            cwd: process.cwd(),
-            configPath: authConfigPath,
-            shouldThrowOnError: false,
-            noCache: true, // Disable cache for real-time plugin checks
-          });
+        let betterAuthConfig = preloadedAuthOptions;
 
-          if (betterAuthConfig) {
-            const plugins = betterAuthConfig.plugins || [];
-            const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
-            organizationPluginEnabled = !!organizationPlugin;
-            teamsPluginEnabled = !!organizationPlugin?.options?.teams?.enabled;
-            if (organizationPlugin) {
-              teamsPluginEnabled = organizationPlugin.options?.teams?.enabled === true;
-            }
+        if (!betterAuthConfig && !isSelfHosted) {
+          const authConfigPath = configPath || (await findAuthConfigPath());
+          if (authConfigPath) {
+            const { getConfig } = await import('./config.js');
+            betterAuthConfig = await getConfig({
+              cwd: process.cwd(),
+              configPath: authConfigPath,
+              shouldThrowOnError: false,
+              noCache: true, // Disable cache for real-time plugin checks
+            });
+          }
+        }
+
+        if (betterAuthConfig) {
+          const plugins = betterAuthConfig.plugins || [];
+          const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
+          organizationPluginEnabled = !!organizationPlugin;
+          teamsPluginEnabled = !!organizationPlugin?.options?.teams?.enabled;
+          if (organizationPlugin) {
+            teamsPluginEnabled = organizationPlugin.options?.teams?.enabled === true;
           }
         }
       } catch (_error) {
@@ -1237,7 +1747,6 @@ export function createRoutes(
         try {
           authModule = await safeImportAuthConfig(authConfigPath, true); // Disable cache for real-time plugin checks
         } catch (_importError) {
-          // Fallback: read file content directly
           const content = readFileSync(authConfigPath, 'utf-8');
 
           authModule = {
@@ -1631,8 +2140,17 @@ export function createRoutes(
       }
 
       // 3. OAuth/Social Providers
-      const socialProviders = authConfig.socialProviders || [];
-      if (socialProviders.length === 0) {
+      const socialProvidersRaw = (preloadedAuthOptions || authConfig || {}).socialProviders || {};
+      const effectiveSocialProviders = Array.isArray(socialProvidersRaw)
+        ? socialProvidersRaw
+        : Object.entries(socialProvidersRaw).map(([id, p]: [string, any]) => ({
+            id,
+            type: id,
+            name: id,
+            ...p,
+            enabled: !!(p.clientId && p.clientSecret),
+          }));
+      if (effectiveSocialProviders.length === 0) {
         addResult(
           'OAuth Providers',
           'Providers',
@@ -1646,10 +2164,10 @@ export function createRoutes(
           'OAuth Providers',
           'Providers',
           'pass',
-          `${socialProviders.length} OAuth provider(s) configured`
+          `${effectiveSocialProviders.length} OAuth provider(s) configured`
         );
 
-        socialProviders.forEach((provider) => {
+        effectiveSocialProviders.forEach((provider: any) => {
           if (provider.enabled) {
             if (!provider.clientId) {
               addResult(
@@ -1966,25 +2484,11 @@ export function createRoutes(
 
   router.post('/api/admin/ban-user', async (req: Request, res: Response) => {
     try {
-      const authConfigPath = configPath || (await findAuthConfigPath());
-      if (!authConfigPath) {
-        return res.status(400).json({
-          success: false,
-          error: 'No auth config found',
-        });
-      }
-
-      const { getConfig } = await import('./config.js');
-      const auth = await getConfig({
-        cwd: process.cwd(),
-        configPath: authConfigPath,
-        shouldThrowOnError: false,
-      });
-
+      const auth = await getAuthConfigSafe();
       if (!auth) {
         return res.status(400).json({
           success: false,
-          error: 'Failed to load auth config',
+          error: 'No auth config found',
         });
       }
 
@@ -2023,25 +2527,11 @@ export function createRoutes(
 
   router.post('/api/admin/unban-user', async (req: Request, res: Response) => {
     try {
-      const authConfigPath = configPath || (await findAuthConfigPath());
-      if (!authConfigPath) {
-        return res.status(400).json({
-          success: false,
-          error: 'No auth config found',
-        });
-      }
-
-      const { getConfig } = await import('./config.js');
-      const auth = await getConfig({
-        cwd: process.cwd(),
-        configPath: authConfigPath,
-        shouldThrowOnError: false,
-      });
-
+      const auth = await getAuthConfigSafe();
       if (!auth) {
         return res.status(400).json({
           success: false,
-          error: 'Failed to load auth config',
+          error: 'No auth config found',
         });
       }
 
@@ -2079,27 +2569,12 @@ export function createRoutes(
 
   router.get('/api/admin/status', async (_req: Request, res: Response) => {
     try {
-      const authConfigPath = configPath || (await findAuthConfigPath());
-      if (!authConfigPath) {
+      const betterAuthConfig = await getAuthConfigSafe();
+      if (!betterAuthConfig) {
         return res.json({
           enabled: false,
           error: 'No auth config found',
           configPath: null,
-        });
-      }
-
-      const { getConfig } = await import('./config.js');
-      const betterAuthConfig = await getConfig({
-        cwd: process.cwd(),
-        configPath: authConfigPath,
-        shouldThrowOnError: false,
-      });
-
-      if (!betterAuthConfig) {
-        return res.json({
-          enabled: false,
-          error: 'Failed to load auth config',
-          configPath: authConfigPath,
         });
       }
 
@@ -2108,7 +2583,7 @@ export function createRoutes(
 
       res.json({
         enabled: !!adminPlugin,
-        configPath: authConfigPath,
+        configPath: configPath || null,
         adminPlugin: adminPlugin || null,
       });
     } catch (error) {
@@ -2354,8 +2829,8 @@ export function createRoutes(
 
   router.get('/api/plugins/teams/status', async (_req: Request, res: Response) => {
     try {
-      const authConfigPath = configPath || (await findAuthConfigPath());
-      if (!authConfigPath) {
+      const betterAuthConfig = await getAuthConfigSafe();
+      if (!betterAuthConfig) {
         return res.json({
           enabled: false,
           error: 'No auth config found',
@@ -2363,41 +2838,23 @@ export function createRoutes(
         });
       }
 
-      try {
-        const { getConfig } = await import('./config.js');
-        const betterAuthConfig = await getConfig({
-          cwd: process.cwd(),
-          configPath: authConfigPath,
-          shouldThrowOnError: false,
-          noCache: true, // Disable cache for real-time plugin status checks
-        });
-        if (betterAuthConfig) {
-          const plugins = betterAuthConfig.plugins || [];
-          const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
+      const plugins = betterAuthConfig.plugins || [];
+      const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
 
-          if (organizationPlugin) {
-            const teamsEnabled = organizationPlugin.options?.teams?.enabled === true;
-            return res.json({
-              enabled: teamsEnabled,
-              configPath: authConfigPath,
-              organizationPlugin: organizationPlugin || null,
-            });
-          } else {
-            return res.json({
-              enabled: false,
-              configPath: authConfigPath,
-              organizationPlugin: null,
-              error: 'Organization plugin not found',
-            });
-          }
-        }
-        res.json({
-          enabled: false,
-          error: 'Failed to load auth config - getConfig failed and regex extraction unavailable',
-          configPath: authConfigPath,
+      if (organizationPlugin) {
+        const teamsEnabled = organizationPlugin.options?.teams?.enabled === true;
+        return res.json({
+          enabled: teamsEnabled,
+          configPath: configPath || null,
+          organizationPlugin: organizationPlugin || null,
         });
-      } catch (_error) {
-        res.status(500).json({ error: 'Failed to check teams status' });
+      } else {
+        return res.json({
+          enabled: false,
+          configPath: configPath || null,
+          organizationPlugin: null,
+          error: 'Organization plugin not found',
+        });
       }
     } catch (_error) {
       res.status(500).json({ error: 'Failed to check teams status' });
@@ -3059,8 +3516,8 @@ export function createRoutes(
 
   router.get('/api/plugins/organization/status', async (_req: Request, res: Response) => {
     try {
-      const authConfigPath = configPath || (await findAuthConfigPath());
-      if (!authConfigPath) {
+      const betterAuthConfig = await getAuthConfigSafe();
+      if (!betterAuthConfig) {
         return res.json({
           enabled: false,
           error: 'No auth config found',
@@ -3068,34 +3525,15 @@ export function createRoutes(
         });
       }
 
-      try {
-        const { getConfig } = await import('./config.js');
-        const betterAuthConfig = await getConfig({
-          cwd: process.cwd(),
-          configPath: authConfigPath,
-          shouldThrowOnError: false,
-          noCache: true,
-        });
+      const plugins = betterAuthConfig?.plugins || [];
+      const hasOrganizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
 
-        if (betterAuthConfig) {
-          const plugins = betterAuthConfig?.plugins || [];
-          const hasOrganizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
-
-          return res.json({
-            enabled: !!hasOrganizationPlugin,
-            configPath: authConfigPath,
-            availablePlugins: plugins.map((p: any) => p.id) || [],
-            organizationPlugin: hasOrganizationPlugin || null,
-          });
-        }
-        res.json({
-          enabled: false,
-          error: 'Failed to load auth config - getConfig failed and regex extraction unavailable',
-          configPath: authConfigPath,
-        });
-      } catch (_error) {
-        res.status(500).json({ error: 'Failed to check plugin status' });
-      }
+      return res.json({
+        enabled: !!hasOrganizationPlugin,
+        configPath: configPath || null,
+        availablePlugins: plugins.map((p: any) => p.id) || [],
+        organizationPlugin: hasOrganizationPlugin || null,
+      });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to check plugin status' });
     }
@@ -3334,8 +3772,7 @@ export function createRoutes(
       if (!adapter) {
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
-      // @ts-expect-error
-      const user = await adapter.findOne({
+      const user = await (adapter as any).findOne({
         model: 'user',
         where: [{ field: 'id', value: userId }],
       });
@@ -3391,8 +3828,7 @@ export function createRoutes(
       if (!adapter) {
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
-      // @ts-expect-error
-      const user = await adapter.findOne({
+      const user = await (adapter as any).findOne({
         model: 'user',
         where: [{ field: 'id', value: userId }],
       });
@@ -3609,7 +4045,19 @@ export function createRoutes(
 
   router.get('/api/tools/oauth/providers', async (_req: Request, res: Response) => {
     try {
-      const providers = authConfig.socialProviders || [];
+      const effectiveConfig = preloadedAuthOptions || authConfig || {};
+      const socialProviders = effectiveConfig.socialProviders || {};
+
+      const providers = Array.isArray(socialProviders)
+        ? socialProviders
+        : Object.entries(socialProviders).map(([id, provider]: [string, any]) => ({
+            id,
+            name: provider.name || id,
+            type: id,
+            enabled: !!(provider.clientId && provider.clientSecret),
+            ...provider,
+          }));
+
       res.json({
         success: true,
         providers: providers.map((provider: any) => ({
@@ -3619,7 +4067,8 @@ export function createRoutes(
           enabled: provider.enabled !== false,
         })),
       });
-    } catch (_error) {
+    } catch (error) {
+      console.error('Failed to fetch OAuth providers:', error);
       res.status(500).json({ success: false, error: 'Failed to fetch OAuth providers' });
     }
   });
@@ -3631,7 +4080,17 @@ export function createRoutes(
         return res.status(400).json({ success: false, error: 'Provider is required' });
       }
 
-      const providers = authConfig.socialProviders || [];
+      const effectiveConfig = preloadedAuthOptions || authConfig || {};
+      const socialProviders = effectiveConfig.socialProviders || {};
+
+      const providers = Array.isArray(socialProviders)
+        ? socialProviders
+        : Object.entries(socialProviders).map(([id, p]: [string, any]) => ({
+            id,
+            type: id,
+            ...p,
+          }));
+
       const selectedProvider = providers.find((p: any) => (p.id || p.type) === provider);
 
       if (!selectedProvider) {
@@ -4000,8 +4459,8 @@ export function createRoutes(
               account.createdAt || account.created_at || account.updatedAt || account.updated_at
             ),
           }))
-          .filter((entry) => entry.created >= threshold)
-          .sort((a, b) => b.created - a.created)[0];
+          .filter((entry: any) => entry.created >= threshold)
+          .sort((a: any, b: any) => b.created - a.created)[0];
 
         recentAccount = accountCandidate?.account ?? null;
       } catch (_accountError) {}
@@ -4022,8 +4481,8 @@ export function createRoutes(
                 sessionItem.updated_at
             ),
           }))
-          .filter((entry) => entry.created >= threshold)
-          .sort((a, b) => b.created - a.created)[0];
+          .filter((entry: any) => entry.created >= threshold)
+          .sort((a: any, b: any) => b.created - a.created)[0];
 
         recentSession = sessionCandidate?.session ?? null;
       } catch (_sessionError) {}
@@ -5747,4 +6206,165 @@ export const authClient = createAuthClient({
   });
 
   return router;
+}
+
+export async function handleStudioApiRequest(ctx: {
+  path: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: any;
+  auth: any;
+  basePath?: string;
+  configPath?: string;
+  accessConfig?: StudioAccessConfig;
+}): Promise<{
+  status: number;
+  data: any;
+  cookies?: Array<{ name: string; value: string; options: any }>;
+}> {
+  let preloadedAdapter: any = null;
+  if (ctx.auth) {
+    try {
+      const context = await ctx.auth.$context;
+      if (context?.adapter) {
+        preloadedAdapter = context.adapter;
+      }
+    } catch {}
+  }
+
+  const authOptions = ctx.auth?.options || null;
+  const router = createRoutes(
+    ctx.auth as any,
+    ctx.configPath || '',
+    undefined,
+    preloadedAdapter,
+    authOptions,
+    ctx.accessConfig,
+    ctx.auth
+  );
+
+  const [pathname, queryString] = ctx.path.split('?');
+  const query: Record<string, string> = {};
+  if (queryString) {
+    queryString.split('&').forEach((param) => {
+      const [key, value] = param.split('=');
+      if (key) query[key] = decodeURIComponent(value || '');
+    });
+  }
+
+  try {
+    const route = findMatchingRoute(router, pathname, ctx.method);
+    if (!route) {
+      return { status: 404, data: { error: 'Not found', path: pathname } };
+    }
+
+    const cookies: Array<{ name: string; value: string; options: any }> = [];
+
+    const parseCookies = (cookieHeader: string): Record<string, string> => {
+      const result: Record<string, string> = {};
+      if (cookieHeader) {
+        cookieHeader.split(';').forEach((cookie) => {
+          const [key, ...rest] = cookie.split('=');
+          if (key) result[key.trim()] = rest.join('=').trim();
+        });
+      }
+      return result;
+    };
+
+    const mockReq: any = {
+      method: ctx.method,
+      url: ctx.path,
+      path: pathname,
+      originalUrl: ctx.path,
+      headers: ctx.headers,
+      body: ctx.body,
+      query: query,
+      params: route.params,
+      cookies: parseCookies(ctx.headers['cookie'] || ctx.headers['Cookie'] || ''),
+    };
+
+    let responseStatus = 200;
+    let responseData: any = {};
+
+    const mockRes: any = {
+      status: (code: number) => {
+        responseStatus = code;
+        return mockRes;
+      },
+      json: (data: any) => {
+        responseData = data;
+        return mockRes;
+      },
+      send: (data: any) => {
+        responseData = data;
+        return mockRes;
+      },
+      cookie: (name: string, value: string, options: any) => {
+        cookies.push({ name, value, options });
+        return mockRes;
+      },
+      redirect: (url: string) => {
+        responseStatus = 302;
+        responseData = { redirect: url };
+        return mockRes;
+      },
+    };
+
+    await route.handler(mockReq, mockRes);
+    return { status: responseStatus, data: responseData, cookies };
+  } catch (error) {
+    console.error('Studio API error:', error);
+    return { status: 500, data: { error: 'Internal server error' } };
+  }
+}
+
+function findMatchingRoute(
+  router: any,
+  path: string,
+  method: string
+): { handler: Function; params: Record<string, string> } | null {
+  const routes = router.stack || [];
+
+  for (const layer of routes) {
+    if (layer.route) {
+      const routePath = layer.route.path;
+      const routeMethods = Object.keys(layer.route.methods);
+
+      if (routeMethods.includes(method.toLowerCase())) {
+        const params = extractParams(routePath, path);
+        if (params !== null) {
+          return {
+            handler: layer.route.stack[0].handle,
+            params,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractParams(routePath: string, requestPath: string): Record<string, string> | null {
+  if (routePath === requestPath) return {};
+
+  const paramNames: string[] = [];
+  const routeRegex = routePath
+    .replace(/:([^/]+)/g, (_, paramName) => {
+      paramNames.push(paramName);
+      return '([^/]+)';
+    })
+    .replace(/\*/g, '.*');
+
+  const regex = new RegExp(`^${routeRegex}$`);
+  const match = requestPath.match(regex);
+
+  if (!match) return null;
+
+  const params: Record<string, string> = {};
+  paramNames.forEach((name, index) => {
+    params[name] = match[index + 1];
+  });
+
+  return params;
 }

@@ -2,18 +2,38 @@ import {
   Building2,
   Database,
   LayoutDashboard,
+  LogOut,
   Mail,
   RefreshCw,
   Search,
   Settings,
+  User,
   Users,
   Wrench,
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { assetPath } from '@/lib/utils';
 import { useCounts } from '../contexts/CountsContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import CommandPalette from './CommandPalette';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  role?: string;
+}
+
+function getStudioConfig() {
+  return (window as any).__STUDIO_CONFIG__ || {};
+}
+
+function checkIsSelfHosted(): boolean {
+  const cfg = getStudioConfig();
+  return !!cfg.basePath;
+}
 
 interface LayoutProps {
   children: ReactNode;
@@ -110,6 +130,15 @@ export default function Layout({ children }: LayoutProps) {
   const refreshRecoveryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingHardRefreshRef = useRef(false);
 
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSelfHosted, setIsSelfHosted] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsSelfHosted(checkIsSelfHosted());
+  }, []);
+
   const clearRecoveryTimeout = () => {
     if (refreshRecoveryTimeoutRef.current) {
       clearTimeout(refreshRecoveryTimeoutRef.current);
@@ -140,6 +169,63 @@ export default function Layout({ children }: LayoutProps) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!isSelfHosted) return;
+
+    const fetchUserProfile = async () => {
+      try {
+        const basePath = getStudioConfig().basePath || '';
+        const response = await fetch(`${basePath}/auth/session`, { credentials: 'include' });
+        const data = await response.json();
+        if (data.authenticated && data.user) {
+          setUserProfile(data.user);
+        }
+      } catch {
+        setUserProfile(null);
+      }
+    };
+
+    fetchUserProfile();
+  }, [isSelfHosted]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileOpen]);
+
+  const handleLogout = async () => {
+    try {
+      const basePath = getStudioConfig().basePath || '';
+      await fetch(`${basePath}/auth/logout`, { method: 'GET', credentials: 'include' });
+      navigate('/login');
+    } catch {
+      navigate('/login');
+    }
+  };
+
+  const getInitials = (name?: string, email?: string): string => {
+    if (name) {
+      return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (email) {
+      return email[0].toUpperCase();
+    }
+    return '?';
+  };
 
   useEffect(() => {
     const fetchVersion = async () => {
@@ -321,10 +407,8 @@ export default function Layout({ children }: LayoutProps) {
       <div className="bg-black/70 border-b border-white/15">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <div className="flex items-end justify-end space-x-2">
-              <div className="w-7 h-7 border border-dashed border-white/20 rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-md">⚡</span>
-              </div>
+            <div className="flex items-center justify-end space-x-2">
+              <img src={assetPath('/logo.png')} alt="Logo" className="w-10 h-10 object-contain" />
               <div className="mb-0 cursor-pointer" onClick={() => navigate('/')}>
                 <h1 className="text-md inline-flex mb-0 items-start font-light font-mono uppercase text-white gap-2">
                   Better-Auth Studio
@@ -363,19 +447,6 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search..."
-                onClick={() => setIsCommandPaletteOpen(true)}
-                className="pl-10 pr-4 py-2  bg-black border rounded-none border-gray-600 text-white border-dashed border-white/20 focus:ring-2 focus:ring-white focus:border-transparent transition-colors placeholder-gray-400 cursor-pointer"
-                readOnly
-              />
-              <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 border border-dashed border-white/10 rounded-sm px-1.5 py-0.5">
-                ⌘ K
-              </kbd>
-            </div>
             <a
               href="https://better-auth-studio.vercel.app/docs"
               target="_blank"
@@ -404,6 +475,99 @@ export default function Layout({ children }: LayoutProps) {
                 ]
               </span>
             </a>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search..."
+                onClick={() => setIsCommandPaletteOpen(true)}
+                className="pl-10 pr-4 py-2  bg-black border rounded-none border-gray-600 text-white border-dashed border-white/20 focus:ring-2 focus:ring-white focus:border-transparent transition-colors placeholder-gray-400 cursor-pointer"
+                readOnly
+              />
+              <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 border border-dashed border-white/10 rounded-sm px-1.5 py-0.5">
+                ⌘ K
+              </kbd>
+            </div>
+
+            {isSelfHosted && userProfile && (
+              <div className="relative h-full" ref={profileRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="w-10 h-10 border border-dashed border-white/30 bg-black flex items-center justify-center hover:border-white/50 transition-colors overflow-hidden"
+                >
+                  {userProfile.image ? (
+                    <img
+                      src={userProfile.image}
+                      alt={userProfile.name || userProfile.email}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-xs font-mono uppercase">
+                      {getInitials(userProfile.name, userProfile.email)}
+                    </span>
+                  )}
+                </button>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 border border-dashed border-white/20 bg-black z-50">
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 border border-dashed border-white/30 bg-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {userProfile.image ? (
+                            <img
+                              src={userProfile.image}
+                              alt={userProfile.name || userProfile.email}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-5 h-5 text-white/50" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white text-[11px] font-mono uppercase truncate">
+                            {userProfile.name || 'User'}
+                            {userProfile.role && (
+                              <span className="inline-flex ml-2 mt-1 text-[9px] tracking-wider font-mono uppercase text-white/60 border border-dashed border-white/20 px-1.5 py-0.5">
+                                {userProfile.role}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-white/40 text-xs font-mono truncate">
+                            {userProfile.email}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center">
+                      <hr className="w-full border-white/10 h-px" />
+                      <div className="relative z-20 h-5 w-full bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[5%]" />
+                      <hr className="w-full border-white/10 h-px" />
+                    </div>
+
+                    <div className="">
+                      <Link
+                        to="/settings"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-xs font-mono uppercase">Settings</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-3 text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span className="text-xs font-mono uppercase">Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
