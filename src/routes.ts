@@ -640,7 +640,7 @@ export function createRoutes(
           if (!allowedRoles.includes(user.role)) {
             return res.status(403).json({
               success: false,
-              message: `Access denied. Required role: ${allowedRoles.join(' or ')}`,
+              message: `Access denied.`,
               userRole: user.role || 'none',
             });
           }
