@@ -10,7 +10,7 @@ const config: StudioConfig = {
   },
   access: {
     roles: ['admin'],
-    allowEmails: [process.env.ADMIN_EMAIL_1, process.env.ADMIN_EMAIL_2],
+    allowEmails: ["kinfetare83@gmail.com"],
   },
 };
 

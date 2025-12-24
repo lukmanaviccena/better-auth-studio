@@ -517,6 +517,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
                             message: 'Password not configured. Please reset your password.',
                         });
                     }
+                    console.log({ users, credentialAccount });
                     const isValidPassword = await verifyPassword(password, credentialAccount.password);
                     if (!isValidPassword) {
                         return res.status(401).json({ success: false, message: 'Invalid credentials' });

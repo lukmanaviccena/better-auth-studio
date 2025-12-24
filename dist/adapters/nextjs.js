@@ -1,13 +1,18 @@
 import { handleStudioRequest } from '../core/handler.js';
-/**
- * Next.js adapter for Better Auth Studio (App Router)
- */
+function getUrlFromRequest(req) {
+    const nextUrl = req.nextUrl;
+    if (nextUrl && typeof nextUrl.pathname === 'string') {
+        return nextUrl.pathname + (nextUrl.search || '');
+    }
+    const url = new URL(req.url);
+    return url.pathname + url.search;
+}
 export function createStudioHandler(config) {
     return async (request) => {
         try {
-            const universalRequest = await nextToUniversal(request);
+            const universalRequest = await requestToUniversal(request);
             const universalResponse = await handleStudioRequest(universalRequest, config);
-            return universalToNext(universalResponse);
+            return universalToResponse(universalResponse);
         }
         catch (error) {
             console.error('Studio handler error:', error);
@@ -18,7 +23,7 @@ export function createStudioHandler(config) {
         }
     };
 }
-async function nextToUniversal(req) {
+async function requestToUniversal(req) {
     let body;
     if (req.method !== 'GET' && req.method !== 'HEAD') {
         const contentType = req.headers.get('content-type') || '';
@@ -34,13 +39,13 @@ async function nextToUniversal(req) {
         headers[key] = value;
     });
     return {
-        url: req.nextUrl.pathname + req.nextUrl.search,
+        url: getUrlFromRequest(req),
         method: req.method,
         headers,
         body,
     };
 }
-function universalToNext(res) {
+function universalToResponse(res) {
     return new Response(res.body, {
         status: res.status,
         headers: res.headers,

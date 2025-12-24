@@ -1,24 +1,21 @@
 import { handleStudioRequest } from '../core/handler.js';
 import type { StudioConfig, UniversalRequest, UniversalResponse } from '../types/handler.js';
 
-type NextRequest = {
-  method: string;
-  headers: Headers;
-  nextUrl: { pathname: string; search: string };
-  json: () => Promise<any>;
-};
+function getUrlFromRequest(req: Request): string {
+  const nextUrl = (req as any).nextUrl;
+  if (nextUrl && typeof nextUrl.pathname === 'string') {
+    return nextUrl.pathname + (nextUrl.search || '');
+  }
+  const url = new URL(req.url);
+  return url.pathname + url.search;
+}
 
-/**
- * Next.js adapter for Better Auth Studio (App Router)
- */
 export function createStudioHandler(config: StudioConfig) {
-  return async (request: NextRequest): Promise<Response> => {
+  return async (request: Request): Promise<Response> => {
     try {
-      const universalRequest = await nextToUniversal(request);
-
+      const universalRequest = await requestToUniversal(request);
       const universalResponse = await handleStudioRequest(universalRequest, config);
-
-      return universalToNext(universalResponse);
+      return universalToResponse(universalResponse);
     } catch (error) {
       console.error('Studio handler error:', error);
       return new Response(JSON.stringify({ error: 'Internal server error' }), {
@@ -29,7 +26,7 @@ export function createStudioHandler(config: StudioConfig) {
   };
 }
 
-async function nextToUniversal(req: NextRequest): Promise<UniversalRequest> {
+async function requestToUniversal(req: Request): Promise<UniversalRequest> {
   let body: any;
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     const contentType = req.headers.get('content-type') || '';
@@ -46,14 +43,14 @@ async function nextToUniversal(req: NextRequest): Promise<UniversalRequest> {
   });
 
   return {
-    url: req.nextUrl.pathname + req.nextUrl.search,
+    url: getUrlFromRequest(req),
     method: req.method,
     headers,
     body,
   };
 }
 
-function universalToNext(res: UniversalResponse): Response {
+function universalToResponse(res: UniversalResponse): Response {
   return new Response(res.body, {
     status: res.status,
     headers: res.headers,
