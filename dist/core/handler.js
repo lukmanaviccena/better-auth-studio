@@ -255,7 +255,7 @@ function handleStaticFile(path, config) {
                     'Content-Type': 'text/html',
                     'Cache-Control': 'no-cache',
                 },
-                body: `<!DOCTYPE html>
+                body: `<<!DOCTYPE html>
 <html>
 <head>
   <title>Better Auth Studio - Setup Required</title>
@@ -265,7 +265,7 @@ function handleStaticFile(path, config) {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
-      font-family: 'Geist Mono', monospace; 
+      font-family: 'Geist Sans', monospace; 
       background: #000000; 
       color: #e5e5e5; 
       max-width: 700px; 
@@ -274,7 +274,6 @@ function handleStaticFile(path, config) {
       line-height: 1.7; 
     }
     h1 { 
-      color: #ff4444; 
       font-size: 24px; 
       font-weight: 600; 
       margin-bottom: 16px; 
@@ -338,17 +337,16 @@ function handleStaticFile(path, config) {
   </style>
 </head>
 <body>
-  <h1>⚠️ Studio UI Not Available</h1>
+  <h1>Studio UI Not Available</h1>
   <p>The Better Auth Studio UI assets could not be located. This typically happens on serverless deployments with pnpm.</p>
   
       <div class="steps">
         <h3>To fix this:</h3>
         <ol>
           <li><strong>For Next.js:</strong> Add to <code>next.config.js</code>:
-            <pre>experimental: {
+            <pre> 
   outputFileTracingIncludes: {
     '/api/studio': ['./node_modules/better-auth-studio/dist/public/**/*', './node_modules/better-auth-studio/public/**/*'],
-  },
 }</pre>
           </li>
           <li>Ensure <code>better-auth-studio</code> is in <code>dependencies</code> (not devDependencies)</li>

@@ -525,6 +525,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
                     const userRole = users[0].role;
                     const user = { id: userId, email: users[0].email, name: users[0].name, role: userRole };
                     const allowedRoles = getAllowedRoles();
+                    console.log({ user, allowedRoles, credentialAccount });
                     if (!allowedRoles.includes(user.role)) {
                         return res.status(403).json({
                             success: false,
