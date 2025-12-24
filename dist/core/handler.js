@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, realpathSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'fs';
 import { dirname, extname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { serveIndexHtml as getIndexHtml } from '../utils/html-injector.js';
@@ -17,13 +17,6 @@ const __realdir = (() => {
 /**
  * Main handler - processes all studio requests (framework-agnostic)
  *
- * Route mapping:
- * - CLI studio: basePath = ''
- *   - /api/users → API route /api/users
- *   - /users → SPA route (serves index.html)
- * - Self-hosted: basePath = '/api/studio'
- *   - /api/studio/users (JSON request) → API route /api/users
- *   - /api/studio/users (HTML request) → SPA route (serves index.html)
  */
 export async function handleStudioRequest(request, config) {
     try {
@@ -193,23 +186,39 @@ function findPublicDir() {
     // First, try to find a directory with index.html
     for (const candidate of candidates) {
         try {
-            if (existsSync(candidate)) {
+            const dirExists = existsSync(candidate);
+            console.log(`[Studio Debug] Checking: ${candidate} - exists: ${dirExists}`);
+            if (dirExists) {
+                // Check if it's actually a directory
+                try {
+                    const stats = statSync(candidate);
+                    console.log(`[Studio Debug] ${candidate} - isDirectory: ${stats.isDirectory()}`);
+                    if (!stats.isDirectory()) {
+                        continue;
+                    }
+                }
+                catch (statError) {
+                    console.error(`[Studio Debug] Error stat-ing ${candidate}:`, statError);
+                    continue;
+                }
                 const indexPath = join(candidate, 'index.html');
-                if (existsSync(indexPath)) {
-                    console.log(`[Studio] Found public directory at: ${candidate}`);
+                const indexExists = existsSync(indexPath);
+                console.log(`[Studio Debug] Index.html at ${indexPath} - exists: ${indexExists}`);
+                if (indexExists) {
+                    console.log(`[Studio] ✓ Found public directory at: ${candidate}`);
                     return candidate;
                 }
             }
         }
         catch (error) {
-            // Continue to next candidate if there's an error
+            console.error(`[Studio Debug] Error checking ${candidate}:`, error);
             continue;
         }
     }
     // Fallback: return the first existing directory
     for (const candidate of candidates) {
         try {
-            if (existsSync(candidate)) {
+            if (existsSync(candidate) && statSync(candidate).isDirectory()) {
                 console.warn(`[Studio] Found public directory without index.html at: ${candidate}`);
                 return candidate;
             }
@@ -222,6 +231,18 @@ function findPublicDir() {
     console.error('[Studio] __dirname:', __dirname);
     console.error('[Studio] __realdir:', __realdir);
     console.error('[Studio] Tried candidates:', candidates);
+    // Try to list what's actually in the dist directory
+    try {
+        const distDir = resolve(__dirname, '..');
+        console.error('[Studio] Checking dist directory:', distDir);
+        if (existsSync(distDir)) {
+            const contents = readdirSync(distDir);
+            console.error('[Studio] Contents of dist directory:', contents);
+        }
+    }
+    catch (err) {
+        console.error('[Studio] Could not read dist directory:', err);
+    }
     return null;
 }
 let cachedPublicDir = null;
