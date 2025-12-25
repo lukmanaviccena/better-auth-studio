@@ -1663,7 +1663,13 @@ export function createRoutes(
         }
       } catch (_adapterError) {}
 
-      const result = await getAuthData(authConfig, 'users', { page, limit, search }, configPath, preloadedAdapter);
+      const result = await getAuthData(
+        authConfig,
+        'users',
+        { page, limit, search },
+        configPath,
+        preloadedAdapter
+      );
 
       const transformedUsers = (result.data || []).map((user: any) => ({
         id: user.id,
@@ -1691,7 +1697,13 @@ export function createRoutes(
       const page = parseInt(req.query.page as string, 10) || 1;
       const limit = parseInt(req.query.limit as string, 10) || 20;
 
-      const sessions = await getAuthData(authConfig, 'sessions', { page, limit }, configPath, preloadedAdapter);
+      const sessions = await getAuthData(
+        authConfig,
+        'sessions',
+        { page, limit },
+        configPath,
+        preloadedAdapter
+      );
       res.json(sessions);
     } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch sessions' });
@@ -1700,7 +1712,13 @@ export function createRoutes(
 
   router.get('/api/providers', async (_req: Request, res: Response) => {
     try {
-      const providers = await getAuthData(authConfig, 'providers', undefined, configPath, preloadedAdapter);
+      const providers = await getAuthData(
+        authConfig,
+        'providers',
+        undefined,
+        configPath,
+        preloadedAdapter
+      );
       res.json(providers);
     } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch providers' });
@@ -1720,7 +1738,7 @@ export function createRoutes(
   router.get('/api/plugins', async (_req: Request, res: Response) => {
     try {
       const betterAuthConfig = preloadedAuthOptions || (await getAuthConfigSafe());
-      
+
       if (betterAuthConfig) {
         const plugins = betterAuthConfig.plugins || [];
         const pluginInfo = plugins.map((plugin: any) => ({
@@ -2631,10 +2649,9 @@ export function createRoutes(
         try {
           const context = await authInstance.$context;
           return context?.tables || null;
-        } catch (_error) {
-        }
+        } catch (_error) {}
       }
-      
+
       const authConfigPath = await resolveSchemaConfigPath();
       if (!authConfigPath) {
         return null;
@@ -3680,7 +3697,13 @@ export function createRoutes(
       const { id } = req.params;
       const userData = req.body;
 
-      const updatedUser = await getAuthData(authConfig, 'updateUser', { id, userData }, configPath, preloadedAdapter);
+      const updatedUser = await getAuthData(
+        authConfig,
+        'updateUser',
+        { id, userData },
+        configPath,
+        preloadedAdapter
+      );
       res.json({ success: true, user: updatedUser });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to update user' });
