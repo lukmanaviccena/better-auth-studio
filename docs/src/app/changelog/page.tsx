@@ -135,33 +135,53 @@ export default function Changelog() {
                       fill="currentColor"
                     />
                   </svg>
-                  v1.0.71 <span className="text-white/50 ml-2">/ 2025-12-17</span>
+                  v1.0.79-beta.19 <span className="text-white/50 ml-2">/ 2025-12-25</span>
                 </span>
               </h3>
             </div>
             <p className="text-sm font-light tracking-tight text-white/70 mb-4 pt-4">
-              Enhanced email editor with code export, field simulator, and alignment icons. Added Password Strength Checker tool with comprehensive validation. Improved navigation with dynamic count badges.
+              Beta release with self-hosting support. Better Auth Studio can now be embedded directly into your application for production use. Full support for Next.js App Router and Express.js integration with automatic route generation.
             </p>
             <div className="space-y-3">
-              <h4 className="font-light tracking-tight text-white flex items-center"><ZapIcon />New Features</h4>
+              <h4 className="font-light tracking-tight text-white flex items-center"><RocketIcon />Self-Hosting Feature</h4>
               <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                 <li className="flex items-center">
                   <ChevronIcon />
-                  Email Editor with code export modal and syntax highlighting
+                  Embed Better Auth Studio directly into your application for production use
                 </li>
                 <li className="flex items-center">
                   <ChevronIcon />
-                  Database Highlight Visualizer for interactive schema exploration and relationship mapping
+                  Full support for Next.js App Router and seamless integration with Express.js applications
                 </li>
                 <li className="flex items-center">
                   <ChevronIcon />
-                  Field Simulator for real-time preview of email templates with dynamic placeholders
+                  Role-based and email-based access control for secure studio access
                 </li>
                 <li className="flex items-center">
                   <ChevronIcon />
-                  Password Strength Checker tool with comprehensive validation and visual indicators
+                  Optimized for deployment on Vercel, AWS, and other serverless platforms
                 </li>
               </ul>
+              <h4 className="font-light tracking-tight text-white flex items-center mt-4"><ShieldIcon />Production Fixes</h4>
+              <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Fixed adapter resolution, auth config loading, and database schema loading for all endpoints
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Updated analytics, stats, users, sessions, and providers endpoints for self-hosted compatibility
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Enhanced error handling and fallback mechanisms for missing configurations
+                </li>
+              </ul>
+              <div className="bg-black/50 border border-white/10 p-3 mt-4">
+                <p className="text-xs font-light tracking-tight text-white/70">
+                  <strong className="text-white/90">Note:</strong> Self-hosting is currently in beta. Please report any issues on GitHub. For Next.js deployments, ensure you add the <code className="text-white/80">outputFileTracingIncludes</code> configuration to your <code className="text-white/80">next.config.ts</code>.
+                </p>
+              </div>
             </div>
           </PixelCard>
         </section>
@@ -198,11 +218,7 @@ export default function Changelog() {
                   </li>
                   <li className="flex items-center">
                     <ChevronIcon />
-                    Full support for Next.js App Router with automatic route generation
-                  </li>
-                  <li className="flex items-center">
-                    <ChevronIcon />
-                    Easy integration with Express.js applications
+                    Full support for Next.js App Router and seamless integration with Express.js applications, both with automatic route generation
                   </li>
                   <li className="flex items-center">
                     <ChevronIcon />
@@ -250,7 +266,7 @@ export default function Changelog() {
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                   <li className="flex items-center">
                     <ChevronIcon />
-                    Added required <code className="text-yellow-400">outputFileTracingIncludes</code> configuration for Vercel deployments
+                    Added required <code className="text-white/80">outputFileTracingIncludes</code> configuration for Vercel deployments
                   </li>
                   <li className="flex items-center">
                     <ChevronIcon />
@@ -268,11 +284,11 @@ export default function Changelog() {
                 <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                   <li className="flex items-center">
                     <ChevronIcon />
-                    All endpoints now properly use <code className="text-yellow-400">preloadedAuthOptions</code> in self-hosted mode
+                    All endpoints now properly use <code className="text-white/80">preloadedAuthOptions</code> in self-hosted mode
                   </li>
                   <li className="flex items-center">
                     <ChevronIcon />
-                    Enhanced <code className="text-yellow-400">getAuthData</code> function to support preloaded adapters
+                    Enhanced <code className="text-white/80">getAuthData</code> function to support preloaded adapters
                   </li>
                   <li className="flex items-center">
                     <ChevronIcon />
@@ -285,9 +301,9 @@ export default function Changelog() {
                 </ul>
               </div>
 
-              <div className="bg-yellow-900/20 border border-yellow-500/30 p-3 mt-4">
-                <p className="text-xs font-light tracking-tight text-yellow-400">
-                  <strong>Note:</strong> Self-hosting is currently in beta. Please report any issues on GitHub. For Next.js deployments, ensure you add the <code className="text-yellow-300">outputFileTracingIncludes</code> configuration to your <code className="text-yellow-300">next.config.ts</code>.
+              <div className="bg-black/50 border border-white/10 p-3 mt-4">
+                <p className="text-xs font-light tracking-tight text-white/70">
+                  <strong className="text-white/90">Note:</strong> Self-hosting is currently in beta. Please report any issues on GitHub. For Next.js deployments, ensure you add the <code className="text-white/80">outputFileTracingIncludes</code> configuration to your <code className="text-white/80">next.config.ts</code>.
                 </p>
               </div>
             </div>
@@ -1167,3 +1183,4 @@ export default function Changelog() {
     </PixelLayout>
   );
 }
+
