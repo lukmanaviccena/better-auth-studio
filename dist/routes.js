@@ -895,7 +895,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
     });
     router.get('/api/stats', async (_req, res) => {
         try {
-            const stats = await getAuthData(authConfig, 'stats', undefined, configPath);
+            const stats = await getAuthData(authConfig, 'stats', undefined, configPath, preloadedAdapter);
             res.json(stats);
         }
         catch (_error) {
@@ -910,7 +910,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
                 type: type,
                 from: from,
                 to: to,
-            }, configPath);
+            }, configPath, preloadedAdapter);
             res.json(analytics);
         }
         catch (_error) {
@@ -1461,7 +1461,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
                 }
             }
             catch (_adapterError) { }
-            const result = await getAuthData(authConfig, 'users', { page, limit, search }, configPath);
+            const result = await getAuthData(authConfig, 'users', { page, limit, search }, configPath, preloadedAdapter);
             const transformedUsers = (result.data || []).map((user) => ({
                 id: user.id,
                 email: user.email,
@@ -1486,7 +1486,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
         try {
             const page = parseInt(req.query.page, 10) || 1;
             const limit = parseInt(req.query.limit, 10) || 20;
-            const sessions = await getAuthData(authConfig, 'sessions', { page, limit }, configPath);
+            const sessions = await getAuthData(authConfig, 'sessions', { page, limit }, configPath, preloadedAdapter);
             res.json(sessions);
         }
         catch (_error) {
@@ -1495,7 +1495,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
     });
     router.get('/api/providers', async (_req, res) => {
         try {
-            const providers = await getAuthData(authConfig, 'providers', undefined, configPath);
+            const providers = await getAuthData(authConfig, 'providers', undefined, configPath, preloadedAdapter);
             res.json(providers);
         }
         catch (_error) {
@@ -1505,7 +1505,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
     router.delete('/api/users/:id', async (req, res) => {
         try {
             const { id } = req.params;
-            await getAuthData(authConfig, 'deleteUser', { id }, configPath);
+            await getAuthData(authConfig, 'deleteUser', { id }, configPath, preloadedAdapter);
             res.json({ success: true });
         }
         catch (_error) {
@@ -3127,7 +3127,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
         try {
             const { id } = req.params;
             const userData = req.body;
-            const updatedUser = await getAuthData(authConfig, 'updateUser', { id, userData }, configPath);
+            const updatedUser = await getAuthData(authConfig, 'updateUser', { id, userData }, configPath, preloadedAdapter);
             res.json({ success: true, user: updatedUser });
         }
         catch (_error) {

@@ -1,7 +1,8 @@
 import { getAuthAdapter } from './auth-adapter.js';
-export async function getAuthData(_authConfig, type = 'stats', options, configPath) {
+export async function getAuthData(_authConfig, type = 'stats', options, configPath, preloadedAdapter) {
     try {
-        const adapter = await getAuthAdapter(configPath);
+        // Use preloaded adapter if available (self-hosted mode), otherwise load from config
+        const adapter = preloadedAdapter || (await getAuthAdapter(configPath));
         setTimeout(() => {
             if (adapter === null) {
                 const githubUrl = 'https://github.com/Kinfe123/better-auth-studio/issues';
