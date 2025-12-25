@@ -326,7 +326,10 @@ export function createRoutes(
   const isSelfHosted = !!preloadedAdapter;
 
   const getAuthConfigSafe = async (): Promise<any | null> => {
-    if (isSelfHosted && preloadedAuthOptions) {
+    if (isSelfHosted) {
+      return preloadedAuthOptions || authConfig || null;
+    }
+    if (preloadedAuthOptions) {
       return preloadedAuthOptions;
     }
     try {
@@ -343,7 +346,7 @@ export function createRoutes(
     } catch (_error) {
       // Ignors errors
     }
-    return null;
+    return authConfig || null;
   };
 
   const router = Router();
@@ -2481,7 +2484,10 @@ export function createRoutes(
 
   router.post('/api/admin/ban-user', async (req: Request, res: Response) => {
     try {
-      const auth = await getAuthConfigSafe();
+      let auth = preloadedAuthOptions;
+      if (!auth && !isSelfHosted) {
+        auth = await getAuthConfigSafe();
+      }
       if (!auth) {
         return res.status(400).json({
           success: false,
@@ -2524,7 +2530,10 @@ export function createRoutes(
 
   router.post('/api/admin/unban-user', async (req: Request, res: Response) => {
     try {
-      const auth = await getAuthConfigSafe();
+      let auth = preloadedAuthOptions;
+      if (!auth && !isSelfHosted) {
+        auth = await getAuthConfigSafe();
+      }
       if (!auth) {
         return res.status(400).json({
           success: false,
@@ -2566,7 +2575,10 @@ export function createRoutes(
 
   router.get('/api/admin/status', async (_req: Request, res: Response) => {
     try {
-      const betterAuthConfig = await getAuthConfigSafe();
+      let betterAuthConfig = preloadedAuthOptions;
+      if (!betterAuthConfig && !isSelfHosted) {
+        betterAuthConfig = await getAuthConfigSafe();
+      }
       if (!betterAuthConfig) {
         return res.json({
           enabled: false,
@@ -2826,7 +2838,10 @@ export function createRoutes(
 
   router.get('/api/plugins/teams/status', async (_req: Request, res: Response) => {
     try {
-      const betterAuthConfig = await getAuthConfigSafe();
+      let betterAuthConfig = preloadedAuthOptions;
+      if (!betterAuthConfig && !isSelfHosted) {
+        betterAuthConfig = await getAuthConfigSafe();
+      }
       if (!betterAuthConfig) {
         return res.json({
           enabled: false,
@@ -3513,7 +3528,10 @@ export function createRoutes(
 
   router.get('/api/plugins/organization/status', async (_req: Request, res: Response) => {
     try {
-      const betterAuthConfig = await getAuthConfigSafe();
+      let betterAuthConfig = preloadedAuthOptions;
+      if (!betterAuthConfig && !isSelfHosted) {
+        betterAuthConfig = await getAuthConfigSafe();
+      }
       if (!betterAuthConfig) {
         return res.json({
           enabled: false,
