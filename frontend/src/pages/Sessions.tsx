@@ -601,7 +601,10 @@ export default function Sessions() {
 
             <div className="space-y-4 mt-4">
               <div>
-                <Label htmlFor="create-user-id" className="text-xs text-white/80 font-mono uppercase">
+                <Label
+                  htmlFor="create-user-id"
+                  className="text-xs text-white/80 font-mono uppercase"
+                >
                   User ID
                 </Label>
                 <Input
@@ -610,7 +613,10 @@ export default function Sessions() {
                 />
               </div>
               <div>
-                <Label htmlFor="create-expires" className="text-xs text-white/80 font-mono uppercase">
+                <Label
+                  htmlFor="create-expires"
+                  className="text-xs text-white/80 font-mono uppercase"
+                >
                   Expires At
                 </Label>
                 <Input

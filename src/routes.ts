@@ -1090,7 +1090,7 @@ export function createRoutes(
           const plugins = betterAuthConfig.plugins || [];
           const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
           organizationPluginEnabled = !!organizationPlugin;
-          
+
           if (organizationPlugin) {
             teamsPluginEnabled =
               organizationPlugin.options?.teams?.enabled === true ||
@@ -2886,23 +2886,22 @@ export function createRoutes(
       const organizationPlugin = plugins.find((plugin: any) => plugin.id === 'organization');
       if (organizationPlugin) {
         let teamsEnabled = false;
-        
+
         if (organizationPlugin.options?.teams?.enabled === true) {
           teamsEnabled = true;
-        }
-        else if (organizationPlugin.teams?.enabled === true) {
+        } else if (organizationPlugin.teams?.enabled === true) {
           teamsEnabled = true;
-        }
-        else if (organizationPlugin.config?.teams?.enabled === true) {
+        } else if (organizationPlugin.config?.teams?.enabled === true) {
           teamsEnabled = true;
-        }
-        else if (organizationPlugin.options?.teams && typeof organizationPlugin.options.teams === 'object') {
+        } else if (
+          organizationPlugin.options?.teams &&
+          typeof organizationPlugin.options.teams === 'object'
+        ) {
           teamsEnabled = organizationPlugin.options.teams.enabled === true;
-        } 
-          else if (organizationPlugin.teams && typeof organizationPlugin.teams === 'object') {
+        } else if (organizationPlugin.teams && typeof organizationPlugin.teams === 'object') {
           teamsEnabled = organizationPlugin.teams.enabled === true;
         }
-        const teamSchema = organizationPlugin.schema
+        const teamSchema = organizationPlugin.schema;
         teamsEnabled = 'team' in teamSchema;
         return res.json({
           enabled: teamsEnabled,
@@ -3318,24 +3317,24 @@ export function createRoutes(
       const adapter = await getAuthAdapterWithConfig();
 
       if (!adapter) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           success: false,
           error: 'Auth adapter not available',
-          teams: []
+          teams: [],
         });
       }
 
       if (typeof adapter.findMany !== 'function') {
-        return res.status(500).json({ 
+        return res.status(500).json({
           success: false,
           error: 'Adapter findMany method not available',
-          teams: []
+          teams: [],
         });
       }
 
       try {
         let teams: any[] = [];
-        
+
         try {
           teams = await adapter.findMany({
             model: 'team',
@@ -3394,17 +3393,17 @@ export function createRoutes(
 
         return res.json({ success: true, teams: validTeams });
       } catch (error: any) {
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           teams: [],
-          error: error?.message || 'Failed to fetch teams'
+          error: error?.message || 'Failed to fetch teams',
         });
       }
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
         error: 'Failed to fetch teams',
-        message: error?.message || 'Unknown error'
+        message: error?.message || 'Unknown error',
       });
     }
   });
@@ -3443,7 +3442,7 @@ export function createRoutes(
           updatedAt: teamData.updatedAt,
         },
       });
-      if(!teamResult) {
+      if (!teamResult) {
         return res.status(500).json({ error: 'Failed to create team' });
       }
       res.json({ success: true, team });
@@ -3547,7 +3546,7 @@ export function createRoutes(
               });
               existingMember = existing && existing.length > 0 ? existing[0] : null;
             } catch (_findError) {
-              // if where clause isn't working. 
+              // if where clause isn't working.
               try {
                 const allMembers = await adapter.findMany({
                   model: 'teamMember',
@@ -3556,8 +3555,7 @@ export function createRoutes(
                 existingMember = (allMembers || []).find(
                   (m: any) => m.teamId === teamId && m.userId === userId
                 );
-              } catch (_fallbackError) {
-              }
+              } catch (_fallbackError) {}
             }
           }
 
@@ -3595,15 +3593,15 @@ export function createRoutes(
 
       const successCount = results.filter((r) => r.success).length;
       res.json({
-        success: results.some((r) => r.success), 
+        success: results.some((r) => r.success),
         message: `Added ${successCount} member${successCount !== 1 ? 's' : ''}`,
         results,
       });
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
         error: 'Failed to add team members',
-        message: error?.message || 'Unknown error'
+        message: error?.message || 'Unknown error',
       });
     }
   });

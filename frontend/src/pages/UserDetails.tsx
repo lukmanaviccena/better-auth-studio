@@ -288,7 +288,7 @@ export default function UserDetails() {
         setSessions(sessions);
         resolveSessionLocations(sessions);
       }
-    } catch (_error) { }
+    } catch (_error) {}
   }, [userId, resolveSessionLocations]);
 
   const fetchUserAccounts = useCallback(async () => {
@@ -298,7 +298,7 @@ export default function UserDetails() {
         const data = await response.json();
         setAccounts(data.accounts || []);
       }
-    } catch (_error) { }
+    } catch (_error) {}
   }, [userId]);
 
   const handleEditUser = async () => {
@@ -896,10 +896,11 @@ export default function UserDetails() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === tab.id
+                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
                       ? 'border-white text-white'
                       : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                    }`}
+                  }`}
                 >
                   <tab.icon className="w-4 h-4 text-white/90" />
                   <span className="inline-flex items-start">
@@ -1178,7 +1179,7 @@ export default function UserDetails() {
                                   variant="subscript"
                                   nonSliced={
                                     membership.team.organizationSlug ||
-                                      membership.team.organizationName
+                                    membership.team.organizationName
                                       ? true
                                       : false
                                   }
@@ -1311,7 +1312,7 @@ export default function UserDetails() {
                           </div>
                           <div className="flex flex-col items-end space-y-2 text-right">
                             <div className="flex items-center space-x-2 text-xs font-mono text-gray-400">
-                              <span className='uppercase'>Linked:</span>
+                              <span className="uppercase">Linked:</span>
                               <span className="text-white">
                                 {formatDateTime(account.createdAt || account.updatedAt)}
                               </span>
@@ -1411,7 +1412,6 @@ export default function UserDetails() {
                           </div>
                           <div className="flex flex-col items-end space-y-2">
                             <div className="flex items-center space-x-2">
-
                               <div className="flex items-center space-x-2">
                                 <span className="text-gray-500 font-mono text-xs uppercase">
                                   Expires:{' '}
@@ -1836,7 +1836,7 @@ export default function UserDetails() {
                     onClick={() => {
                       const count = parseInt(
                         (document.getElementById('session-count') as HTMLInputElement)?.value ||
-                        '3',
+                          '3',
                         10
                       );
                       handleSeedSessions(count);

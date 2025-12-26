@@ -1247,7 +1247,10 @@ export default function Users() {
                 />
               </div>
               <div>
-                <Label htmlFor="create-password" className="text-xs text-white/80 font-mono uppercase">
+                <Label
+                  htmlFor="create-password"
+                  className="text-xs text-white/80 font-mono uppercase"
+                >
                   Password
                 </Label>
                 <Input

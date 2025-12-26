@@ -78,7 +78,7 @@ export default function Organizations() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
-  const [isCreating, setIsCreating] = useState(false)
+  const [isCreating, setIsCreating] = useState(false);
   const [seedingLogs, setSeedingLogs] = useState<
     Array<{
       id: string;
@@ -278,7 +278,7 @@ export default function Organizations() {
     }
 
     const toastId = toast.loading('Creating organization...');
-    setIsCreating(true)
+    setIsCreating(true);
     try {
       const response = await fetch('/api/organizations', {
         method: 'POST',
@@ -305,7 +305,7 @@ export default function Organizations() {
       console.error('Error creating organization:', error);
       toast.error('Error creating organization', { id: toastId });
     } finally {
-      setIsCreating(false)
+      setIsCreating(false);
     }
   };
   const handleUpdateOrganization = async () => {
@@ -503,7 +503,9 @@ export default function Organizations() {
               <Building2 className="w-8 h-8 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-md text-white tracking-tight font-light font-mono uppercase mb-1">Organization Plugin Required</h3>
+              <h3 className="text-md text-white tracking-tight font-light font-mono uppercase mb-1">
+                Organization Plugin Required
+              </h3>
               <p className="text-gray-300 mb-6 text-sm">
                 To use Organizations in Better Auth Studio, you need to enable the organization
                 plugin in your Better Auth configuration.
@@ -536,7 +538,7 @@ export default function Organizations() {
                     <span className="text-gray-500 pl-10">// ... your existing configuration</span>{' '}
                     <br />
                     <span className="text-red-300 pl-10">plugins</span>: [ <br />
-                    <span className="text-yellow-300 pl-12">organization({ })</span>
+                    <span className="text-yellow-300 pl-12">organization({})</span>
                     <br />
                     <span className="pl-10">]</span> <br />
                     {`}`}) <br />
@@ -993,7 +995,9 @@ export default function Organizations() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-black border border-white/15 rounded-none p-6 w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg text-white font-light uppercase font-mono">Create Organization</h3>
+              <h3 className="text-lg text-white font-light uppercase font-mono">
+                Create Organization
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -1301,4 +1305,3 @@ export default function Organizations() {
     </div>
   );
 }
-

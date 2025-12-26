@@ -847,10 +847,11 @@ export default function OrganizationDetails() {
           <nav className="flex space-x-8 px-6">
             <button
               onClick={() => setActiveTab('details')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'details'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'details'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Building2 className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -868,10 +869,11 @@ export default function OrganizationDetails() {
             </button>
             <button
               onClick={() => setActiveTab('members')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'members'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'members'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Users className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -889,10 +891,11 @@ export default function OrganizationDetails() {
             </button>
             <button
               onClick={() => setActiveTab('invitations')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'invitations'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'invitations'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Mail className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -910,10 +913,11 @@ export default function OrganizationDetails() {
             </button>
             <button
               onClick={() => setActiveTab('teams')}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${activeTab === 'teams'
-                ? 'border-white text-white'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
-                }`}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'teams'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-white/50'
+              }`}
             >
               <Users className="w-4 h-4 text-white/90" />
               <span className="inline-flex items-start font-mono uppercase text-xs font-normal">
@@ -1014,7 +1018,7 @@ export default function OrganizationDetails() {
                         <AnimatedNumber
                           value={Math.ceil(
                             (new Date().getTime() - new Date(organization.createdAt).getTime()) /
-                            (1000 * 60 * 60 * 24)
+                              (1000 * 60 * 60 * 24)
                           )}
                           format={{ notation: 'standard', maximumFractionDigits: 0 }}
                         />
@@ -1070,7 +1074,9 @@ export default function OrganizationDetails() {
                       <Users className="w-8 h-8 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-md text-white tracking-tight font-light font-mono uppercase mb-1">Teams Feature Required</h3>
+                      <h3 className="text-md text-white tracking-tight font-light font-mono uppercase mb-1">
+                        Teams Feature Required
+                      </h3>
                       <p className="text-gray-300 mb-6 text-sm">
                         To use Teams in Better Auth Studio, you need to enable the teams feature in
                         your organization plugin configuration.
@@ -1420,12 +1426,13 @@ export default function OrganizationDetails() {
                             <td className="py-4 px-4">
                               <Badge
                                 variant="secondary"
-                                className={`text-xs font-normal font-mono uppercase rounded-none border-dashed flex items-center gap-1 w-fit ${invitation.status === 'pending'
-                                  ? 'bg-yellow-900/10 border border-yellow-500/30 text-yellow-400/70'
-                                  : invitation.status === 'accepted'
-                                    ? 'bg-green-900/10 border border-green-500/30 text-green-400/70'
-                                    : 'bg-red-900/10 border border-red-500/30 text-red-400/70'
-                                  }`}
+                                className={`text-xs font-normal font-mono uppercase rounded-none border-dashed flex items-center gap-1 w-fit ${
+                                  invitation.status === 'pending'
+                                    ? 'bg-yellow-900/10 border border-yellow-500/30 text-yellow-400/70'
+                                    : invitation.status === 'accepted'
+                                      ? 'bg-green-900/10 border border-green-500/30 text-green-400/70'
+                                      : 'bg-red-900/10 border border-red-500/30 text-red-400/70'
+                                }`}
                               >
                                 {invitation.status === 'pending' && <Clock className="w-2 h-2" />}
                                 {invitation.status === 'accepted' && (
