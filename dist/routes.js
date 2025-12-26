@@ -3030,7 +3030,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
             }
             const successCount = results.filter((r) => r.success).length;
             res.json({
-                success: true,
+                success: results.some((r) => r.success),
                 message: `Added ${successCount} member${successCount !== 1 ? 's' : ''}`,
                 results,
             });

@@ -3394,8 +3394,6 @@ export function createRoutes(
 
         return res.json({ success: true, teams: validTeams });
       } catch (error: any) {
-        // Log the error for debugging but return empty array
-        console.error('[Studio] Error fetching teams:', error?.message || error);
         return res.json({ 
           success: true, 
           teams: [],
@@ -3403,7 +3401,6 @@ export function createRoutes(
         });
       }
     } catch (error: any) {
-      console.error('[Studio] Error in /api/organizations/:orgId/teams:', error?.message || error);
       res.status(500).json({ 
         success: false,
         error: 'Failed to fetch teams',
@@ -3437,7 +3434,7 @@ export function createRoutes(
       if (!adapter.create) {
         return res.status(500).json({ error: 'Adapter create method not available' });
       }
-      await adapter.create({
+      const teamResult = await adapter.create({
         model: 'team',
         data: {
           name: teamData.name,
@@ -3446,6 +3443,9 @@ export function createRoutes(
           updatedAt: teamData.updatedAt,
         },
       });
+      if(!teamResult) {
+        return res.status(500).json({ error: 'Failed to create team' });
+      }
       res.json({ success: true, team });
     } catch (_error) {
       res.status(500).json({ error: 'Failed to create team' });

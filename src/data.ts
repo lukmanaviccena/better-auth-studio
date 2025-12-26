@@ -400,11 +400,9 @@ async function getRealAnalytics(
   try {
     const { period, type, from, to } = options;
 
-    // Get all users and sessions from the database
     let users: any[] = [];
     let sessions: any[] = [];
 
-    // Try to fetch with higher limits
     if (adapter.findMany) {
       users = await adapter.findMany({ model: 'user', limit: 100000 }).catch(() => []);
       sessions = await adapter.findMany({ model: 'session', limit: 100000 }).catch(() => []);
@@ -420,7 +418,6 @@ async function getRealAnalytics(
       ? await adapter.findMany({ model: 'team', limit: 100000 }).catch(() => [])
       : [];
 
-    // Determine the time range
     const now = new Date();
     let startDate: Date;
     const endDate = to ? new Date(to) : now;
@@ -574,7 +571,6 @@ async function getRealAnalytics(
       }
     }
 
-    // Count items in each bucket based on type
     let data: number[] = [];
 
     if (type === 'users') {
@@ -643,7 +639,6 @@ async function getRealAnalytics(
       type,
     };
   } catch (_error) {
-    // Return empty data on error
     return {
       data: [],
       labels: [],

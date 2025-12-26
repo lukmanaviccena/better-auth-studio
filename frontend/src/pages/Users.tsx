@@ -91,6 +91,7 @@ export default function Users() {
   const [banReason, setBanReason] = useState('');
   const [banExpiresIn, setBanExpiresIn] = useState<number | undefined>();
   const [adminPluginEnabled, setAdminPluginEnabled] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [editRole, setEditRole] = useState<string>('');
   const [seedRole, setSeedRole] = useState<string>('');
   const [createRole, setCreateRole] = useState<string>('');
@@ -257,7 +258,7 @@ export default function Users() {
       toast.error('Please fill in all fields');
       return;
     }
-
+    setIsCreating(true);
     const toastId = toast.loading('Creating user...');
 
     try {
@@ -282,6 +283,8 @@ export default function Users() {
       }
     } catch (_error) {
       toast.error('Error creating user', { id: toastId });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -1282,9 +1285,10 @@ export default function Users() {
               </Button>
               <Button
                 onClick={handleCreateUser}
+                disabled={isCreating}
                 className="bg-white hover:bg-white/90 text-black border border-white/20 rounded-none"
               >
-                Create
+                {isCreating ? 'Creating...' : 'Create'}
               </Button>
             </div>
           </div>
