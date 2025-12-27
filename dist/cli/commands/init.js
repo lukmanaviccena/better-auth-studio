@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-export async function initCommand() {
+export async function initCommand(options) {
     console.log('🚀 Initializing Better Auth Studio...\n');
     const framework = detectFramework();
     console.log('🔍 Detected framework:', framework);
@@ -8,7 +8,7 @@ export async function initCommand() {
     console.log('✅ Created config:', configPath);
     const basePath = '/api/studio';
     if (framework === 'nextjs') {
-        await setupNextJS(basePath);
+        await setupNextJS(basePath, options?.apiDir);
     }
     else {
         showManualInstructions(framework, basePath);
@@ -38,9 +38,27 @@ export default config;
     writeFileSync(configPath, configContent, 'utf-8');
     return configPath;
 }
-async function setupNextJS(basePath) {
+function detectNextJSAppDir() {
+    if (existsSync(join(process.cwd(), 'src', 'app'))) {
+        return 'src/app';
+    }
+    if (existsSync(join(process.cwd(), 'app'))) {
+        return 'app';
+    }
+    return 'app';
+}
+async function setupNextJS(basePath, customApiDir) {
     const segments = basePath.split('/').filter(Boolean);
-    const routeDir = join(process.cwd(), 'app', ...segments, '[[...path]]');
+    let appDir;
+    if (customApiDir) {
+        appDir = customApiDir;
+        console.log(`📂 Using custom API directory: ${appDir}`);
+    }
+    else {
+        appDir = detectNextJSAppDir();
+        console.log(`📂 Auto-detected app directory: ${appDir}`);
+    }
+    const routeDir = join(process.cwd(), appDir, ...segments, '[[...path]]');
     const routeFile = join(routeDir, 'route.ts');
     if (existsSync(routeFile)) {
         console.log('⚠️  Route file already exists:', routeFile);
@@ -51,14 +69,18 @@ async function setupNextJS(basePath) {
         writeFileSync(routeFile, code, 'utf-8');
         console.log('✅ Generated route file:', routeFile);
     }
+    const relativePath = `${appDir}${basePath}/[[...path]]/route.ts`;
     console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
-║                    ✅ Next.js Setup Complete!                  ║
+║                    ✅ Next.js Setup Complete!                 ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║                                                               ║
 ║  📁 Files created:                                            ║
 ║     • studio.config.ts                                        ║
-║     • app${basePath}/[[...path]]/route.ts                     ║
+║     • ${relativePath}                                        ║
+║                                                               ║
+║  ⚠️  Important: Ensure better-auth-studio is in dependencies ║
+║     (not devDependencies) for production deployments          ║
 ║                                                               ║
 ║  🚀 Start your app:                                           ║
 ║     pnpm dev                                                  ║

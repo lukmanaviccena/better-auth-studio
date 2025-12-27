@@ -1447,6 +1447,7 @@ export default function UserDetails() {
                                   })}
                                 </span>
                               </div>
+                              <div className="flex items-center space-x-2">
                               <span className="text-gray-500 font-mono text-xs uppercase">
                                 Created:{' '}
                               </span>
@@ -1461,8 +1462,9 @@ export default function UserDetails() {
                                   hour: 'numeric',
                                   minute: '2-digit',
                                   hour12: true,
-                                })}
-                              </span>
+                                  })}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
