@@ -1278,9 +1278,7 @@ export default function UserDetails() {
                 {teams.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-white/10 rounded-none">
                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400 font-mono text-xs uppercase">
-                      No teams found
-                    </p>
+                    <p className="text-gray-400 font-mono text-xs uppercase">No teams found</p>
                   </div>
                 ) : (
                   <div className="grid gap-4">
@@ -1494,9 +1492,7 @@ export default function UserDetails() {
                 {sessions.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-white/10 rounded-none">
                     <Clock1 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400 font-mono text-xs uppercase">
-                      No sessions found
-                    </p>
+                    <p className="text-gray-400 font-mono text-xs uppercase">No sessions found</p>
                   </div>
                 ) : (
                   <div className="grid gap-4">

@@ -3250,6 +3250,27 @@ export function createRoutes(
         return res.status(500).json({ error: 'Adapter update method not available' });
       }
 
+      let invitation = null;
+      try {
+        invitation = await adapter.findOne({
+          model: 'invitation',
+          where: [{ field: 'id', value: id }],
+        });
+      } catch (_findError) {
+        if (typeof adapter.findMany === 'function') {
+          const invitations = await adapter.findMany({
+            model: 'invitation',
+            where: [{ field: 'id', value: id }],
+            limit: 1,
+          });
+          invitation = invitations && invitations.length > 0 ? invitations[0] : null;
+        }
+      }
+
+      if (!invitation) {
+        return res.status(404).json({ error: 'Invitation not found' });
+      }
+
       await adapter.update({
         model: 'invitation',
         where: [{ field: 'id', value: id }],
@@ -3260,8 +3281,13 @@ export function createRoutes(
       });
 
       res.json({ success: true });
-    } catch (_error) {
-      res.status(500).json({ error: 'Failed to resend invitation' });
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resend invitation';
+      res.status(500).json({ 
+        error: 'Failed to resend invitation',
+        details: isSelfHosted ? errorMessage : undefined,
+      });
     }
   });
 
@@ -3549,7 +3575,14 @@ export function createRoutes(
   router.post('/api/organizations/:orgId/invitations', async (req: Request, res: Response) => {
     try {
       const { orgId } = req.params;
-      const { email, role = 'member', inviterId } = req.body;
+      const { email, role = 'member', inviterId, teamId } = req.body;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      if (!orgId) {
+        return res.status(400).json({ error: 'Organization ID is required' });
+      }
 
       if (!inviterId) {
         return res.status(400).json({ error: 'Inviter ID is required' });
@@ -3560,8 +3593,66 @@ export function createRoutes(
         return res.status(500).json({ error: 'Auth adapter not available' });
       }
 
-      const invitationData = {
-        email,
+      if (!adapter.create) {
+        return res.status(500).json({ error: 'Adapter create method not available' });
+      }
+
+      try {
+        const organization = await adapter.findOne({
+          model: 'organization',
+          where: [{ field: 'id', value: orgId }],
+        });
+        if (!organization) {
+          return res.status(404).json({ error: 'Organization not found' });
+        }
+      } catch (orgError) {
+        try {
+          if (typeof adapter.findMany === 'function') {
+            const orgs = await adapter.findMany({
+              model: 'organization',
+              where: [{ field: 'id', value: orgId }],
+              limit: 1,
+            });
+            if (!orgs || orgs.length === 0) {
+              return res.status(404).json({ error: 'Organization not found' });
+            }
+          }
+        } catch (_fallbackError) {
+        }
+      }
+
+      try {
+        let existingInvitation = null;
+        if (typeof adapter.findFirst === 'function') {
+          existingInvitation = await adapter.findFirst({
+            model: 'invitation',
+            where: [
+              { field: 'email', value: email.toLowerCase() },
+              { field: 'organizationId', value: orgId },
+              { field: 'status', value: 'pending' },
+            ],
+          });
+        } else if (typeof adapter.findMany === 'function') {
+          const invitations = await adapter.findMany({
+            model: 'invitation',
+            where: [
+              { field: 'email', value: email.toLowerCase() },
+              { field: 'organizationId', value: orgId },
+              { field: 'status', value: 'pending' },
+            ],
+            limit: 1,
+          });
+          existingInvitation = invitations && invitations.length > 0 ? invitations[0] : null;
+        }
+
+        if (existingInvitation) {
+          return res.status(400).json({ error: 'A pending invitation already exists for this email' });
+        }
+      } catch (_duplicateCheckError) {
+      }
+
+      const invitationData: any = {
+        email: email.toLowerCase(),
         role,
         organizationId: orgId,
         status: 'pending',
@@ -3570,31 +3661,27 @@ export function createRoutes(
         inviterId: inviterId,
       };
 
-      const invitation = {
-        id: `inv_${Date.now()}`,
-        ...invitationData,
-      };
-
-      if (!adapter.create) {
-        return res.status(500).json({ error: 'Adapter create method not available' });
+      if (teamId) {
+        invitationData.teamId = teamId;
       }
 
-      await adapter.create({
+      const createdInvitation = await adapter.create({
         model: 'invitation',
-        data: {
-          organizationId: invitationData.organizationId,
-          email: invitationData.email,
-          role: invitationData.role,
-          status: invitationData.status,
-          inviterId: invitationData.inviterId,
-          expiresAt: invitationData.expiresAt,
-          createdAt: invitationData.createdAt,
-        },
+        data: invitationData,
       });
 
-      res.json({ success: true, invitation });
-    } catch (_error) {
-      res.status(500).json({ error: 'Failed to create invitation' });
+      if (!createdInvitation) {
+        return res.status(500).json({ error: 'Failed to create invitation' });
+      }
+
+      res.json({ success: true, invitation: createdInvitation });
+    } catch (error) {
+      console.error('Error creating invitation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create invitation';
+      res.status(500).json({ 
+        error: 'Failed to create invitation',
+        details: isSelfHosted ? errorMessage : undefined,
+      });
     }
   });
 
