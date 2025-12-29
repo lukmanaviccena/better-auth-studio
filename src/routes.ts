@@ -1231,7 +1231,7 @@ export function createRoutes(
   router.put('/api/users/:userId', async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
-      const { name, email, role } = req.body;
+      const { name, email, role, image } = req.body;
       const adapter = await getAuthAdapterWithConfig();
       if (!adapter || !adapter.update) {
         return res.status(500).json({ error: 'Auth adapter not available' });
@@ -1240,6 +1240,9 @@ export function createRoutes(
       const updateData: any = { name, email };
       if (role !== undefined) {
         updateData.role = role;
+      }
+      if (image !== undefined) {
+        updateData.image = image;
       }
 
       const user = await adapter.update({

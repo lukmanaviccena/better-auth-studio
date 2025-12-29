@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { useCounts } from '../contexts/CountsContext';
+import { getImageSrc } from '../lib/utils';
 
 interface User {
   id: string;
@@ -98,6 +99,8 @@ export default function Users() {
   const [isUnbanning, setIsUnbanning] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [editRole, setEditRole] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [seedRole, setSeedRole] = useState<string>('');
   const [createRole, setCreateRole] = useState<string>('');
   const [seedingLogs, setSeedingLogs] = useState<
@@ -245,6 +248,8 @@ export default function Users() {
   const openEditModal = (user: User) => {
     setSelectedUser(user);
     setEditRole(user.role || '');
+    setImagePreview(user.image || null);
+    setSelectedImageFile(null);
     setShowEditModal(true);
   };
 
@@ -292,6 +297,98 @@ export default function Users() {
     }
   };
 
+  const compressImage = (
+    file: File,
+    maxWidth: number = 800,
+    maxHeight: number = 800,
+    quality: number = 0.8
+  ): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Failed to compress image'));
+                return;
+              }
+              const compressedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            file.type,
+            quality
+          );
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
+
+      try {
+        // Compress image before converting to base64
+        const compressedFile = await compressImage(file);
+        setSelectedImageFile(compressedFile);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        toast.error('Failed to process image');
+        console.error('Image compression error:', error);
+      }
+    }
+  };
+
   const handleUpdateUser = async () => {
     if (!selectedUser) {
       toast.error('No user selected');
@@ -310,10 +407,31 @@ export default function Users() {
     const toastId = toast.loading('Updating user...');
 
     try {
+      const updateData: any = { name, email, role: editRole || null };
+
+      if (selectedImageFile) {
+        const reader = new FileReader();
+        const imageData = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            if (result && result.startsWith('data:image/')) {
+              resolve(result);
+            } else {
+              reject(new Error('Invalid image data'));
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedImageFile);
+        });
+        updateData.image = imageData; // Store as base64 data URL
+      } else if (imagePreview === null && selectedUser.image) {
+        updateData.image = null;
+      }
+
       const response = await fetch(`/api/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, role: editRole || null }),
+        body: JSON.stringify(updateData),
       });
 
       const result = await response.json();
@@ -323,6 +441,8 @@ export default function Users() {
         setShowEditModal(false);
         setSelectedUser(null);
         setEditRole('');
+        setImagePreview(null);
+        setSelectedImageFile(null);
         toast.success('User updated successfully!', { id: toastId });
       } else {
         toast.error(`Error updating user: ${result.error || 'Unknown error'}`, { id: toastId });
@@ -916,14 +1036,19 @@ export default function Users() {
                       <div className="flex items-center space-x-3">
                         <div className="relative">
                           <img
-                            src={
-                              user.image ||
+                            src={getImageSrc(
+                              user.image,
                               `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
-                            }
+                            )}
                             alt={user.name}
-                            className={`w-10 h-10 rounded-none border border-dashed ${
+                            className={`w-10 h-10 rounded-none border border-dashed object-cover ${
                               user.banned ? 'border-red-400/50 opacity-60' : 'border-white/20'
                             }`}
+                            onError={(e) => {
+                              // Fallback to default avatar if image fails to load
+                              (e.target as HTMLImageElement).src =
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`;
+                            }}
                           />
                           {user.banned && (
                             <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5">
@@ -1339,6 +1464,8 @@ export default function Users() {
                 onClick={() => {
                   setShowEditModal(false);
                   setEditRole('');
+                  setImagePreview(null);
+                  setSelectedImageFile(null);
                 }}
                 className="text-gray-400 -mt-2 hover:text-white rounded-none"
               >
@@ -1354,23 +1481,58 @@ export default function Users() {
 
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
-                <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {selectedUser.image ? (
-                    <img
-                      src={selectedUser.image}
-                      alt={selectedUser.name}
-                      className="w-14 h-14 object-cover"
-                    />
-                  ) : (
-                    <User className="w-7 h-7 text-white" />
+                <div className="relative group">
+                  <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt={selectedUser.name}
+                        className="w-14 h-14 object-cover"
+                      />
+                    ) : (
+                      <User className="w-7 h-7 text-white" />
+                    )}
+                  </div>
+                  <label
+                    htmlFor="image-upload"
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-none"
+                  >
+                    <Edit className="w-4 h-4 text-white" />
+                  </label>
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setImagePreview(null);
+                        setSelectedImageFile(null);
+                      }}
+                      disabled={isUpdating}
+                      className="absolute bottom-0 right-0 w-4 h-4 bg-red-500/90 hover:bg-red-500 text-white flex items-center justify-center rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove image"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   )}
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    disabled={isUpdating}
+                  />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1">
                   <div className="text-white font-medium leading-tight flex items-center gap-2">
                     <span>{selectedUser.name}</span>
                     <CopyableId id={selectedUser.id} variant="subscript" nonSliced={true} />
                   </div>
                   <div className="text-sm text-gray-400">{selectedUser.email}</div>
+                  {selectedImageFile && (
+                    <div className="text-xs -mt-1 text-gray-500 font-mono">New image selected</div>
+                  )}
                 </div>
               </div>
               <div>
@@ -1421,6 +1583,8 @@ export default function Users() {
                 onClick={() => {
                   setShowEditModal(false);
                   setEditRole('');
+                  setImagePreview(null);
+                  setSelectedImageFile(null);
                 }}
                 disabled={isUpdating}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none font-mono uppercase text-xs tracking-tight"

@@ -14,3 +14,19 @@ export function assetPath(path: string): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${basePath}${cleanPath}`;
 }
+
+export function getImageSrc(image: string | null | undefined, fallback?: string): string {
+  if (!image) {
+    return fallback || '';
+  }
+
+  if (image.startsWith('data:image/')) {
+    return image;
+  }
+
+  if (image.startsWith('http://') || image.startsWith('https://')) {
+    return image;
+  }
+
+  return fallback || '';
+}

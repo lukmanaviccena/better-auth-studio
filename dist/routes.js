@@ -1070,7 +1070,7 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
     router.put('/api/users/:userId', async (req, res) => {
         try {
             const { userId } = req.params;
-            const { name, email, role } = req.body;
+            const { name, email, role, image } = req.body;
             const adapter = await getAuthAdapterWithConfig();
             if (!adapter || !adapter.update) {
                 return res.status(500).json({ error: 'Auth adapter not available' });
@@ -1078,6 +1078,9 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
             const updateData = { name, email };
             if (role !== undefined) {
                 updateData.role = role;
+            }
+            if (image !== undefined) {
+                updateData.image = image;
             }
             const user = await adapter.update({
                 model: 'user',

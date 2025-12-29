@@ -22,8 +22,8 @@ export async function startStudio(options) {
         origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
         credentials: true,
     }));
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
     let wss = null;
     if (watchMode) {
         wss = new WebSocketServer({ server });

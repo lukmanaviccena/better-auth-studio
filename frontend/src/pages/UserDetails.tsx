@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { getProviderIcon } from '../lib/icons';
+import { getImageSrc } from '../lib/utils';
 
 interface User {
   id: string;
@@ -184,6 +185,8 @@ export default function UserDetails() {
   const [cancellingInvitations, setCancellingInvitations] = useState<Record<string, boolean>>({});
   const [unlinkingAccounts, setUnlinkingAccounts] = useState<Record<string, boolean>>({});
   const [deletingSessions, setDeletingSessions] = useState<Record<string, boolean>>({});
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   const checkAdminPlugin = useCallback(async () => {
     try {
@@ -345,6 +348,98 @@ export default function UserDetails() {
     } catch (_error) {}
   }, [userId]);
 
+  const compressImage = (
+    file: File,
+    maxWidth: number = 800,
+    maxHeight: number = 800,
+    quality: number = 0.8
+  ): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Failed to compress image'));
+                return;
+              }
+              const compressedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            file.type,
+            quality
+          );
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
+
+      try {
+        // Compress image before converting to base64
+        const compressedFile = await compressImage(file);
+        setSelectedImageFile(compressedFile);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        toast.error('Failed to process image');
+        console.error('Image compression error:', error);
+      }
+    }
+  };
+
   const handleEditUser = async () => {
     if (!user) return;
 
@@ -359,18 +454,50 @@ export default function UserDetails() {
     setIsUpdating(true);
     const toastId = toast.loading('Updating user...');
     try {
+      const updateData: any = { name, email, role: editRole || null };
+
+      // If a new image was selected, include it in the update as base64
+      if (selectedImageFile) {
+        const reader = new FileReader();
+        const imageData = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => {
+            // Ensure we have a proper base64 data URL
+            const result = reader.result as string;
+            if (result && result.startsWith('data:image/')) {
+              resolve(result);
+            } else {
+              reject(new Error('Invalid image data'));
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedImageFile);
+        });
+        updateData.image = imageData; // Store as base64 data URL
+      } else if (imagePreview === null && user.image) {
+        // If image was removed (set to null), send null
+        updateData.image = null;
+      }
+
       const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, role: editRole || null }),
+        body: JSON.stringify(updateData),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setUser({ ...user, name, email, role: editRole || undefined });
+        setUser({
+          ...user,
+          name,
+          email,
+          role: editRole || undefined,
+          image: updateData.image !== undefined ? updateData.image : user.image,
+        });
         setShowEditModal(false);
         setEditRole('');
+        setImagePreview(null);
+        setSelectedImageFile(null);
         toast.success('User updated successfully!', { id: toastId });
       } else {
         toast.error(`Error updating user: ${result.error || 'Unknown error'}`, { id: toastId });
@@ -906,9 +1033,16 @@ export default function UserDetails() {
         <div className="mb-8 mt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gray-800 border border-dashed border-white/20 flex items-center justify-center">
-                {user.image ? (
-                  <img src={user.image} alt={user.name} className="w-16 h-16 object-cover" />
+              <div className="w-16 h-16 bg-gray-800 border border-dashed border-white/20 flex items-center justify-center overflow-hidden">
+                {getImageSrc(user?.image) ? (
+                  <img
+                    src={getImageSrc(user?.image)}
+                    alt={user?.name}
+                    className="w-16 h-16 object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 ) : (
                   <User className="w-8 h-8 text-white" />
                 )}
@@ -966,6 +1100,8 @@ export default function UserDetails() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setActionMenuOpen(false);
+                        setImagePreview(user?.image || null);
+                        setSelectedImageFile(null);
                         setShowEditModal(true);
                         setEditRole(user.role || '');
                       }}
@@ -1822,6 +1958,8 @@ export default function UserDetails() {
                 onClick={() => {
                   setShowEditModal(false);
                   setEditRole('');
+                  setImagePreview(null);
+                  setSelectedImageFile(null);
                 }}
                 className="text-gray-400 -mt-2 hover:text-white rounded-none"
               >
@@ -1837,19 +1975,54 @@ export default function UserDetails() {
 
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
-                <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user?.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
-                  ) : (
-                    <User className="w-7 h-7 text-white" />
+                <div className="relative group">
+                  <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt={user?.name} className="w-14 h-14 object-cover" />
+                    ) : (
+                      <User className="w-7 h-7 text-white" />
+                    )}
+                  </div>
+                  <label
+                    htmlFor="image-upload-details"
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-none"
+                  >
+                    <Edit className="w-4 h-4 text-white" />
+                  </label>
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setImagePreview(null);
+                        setSelectedImageFile(null);
+                      }}
+                      disabled={isUpdating}
+                      className="absolute bottom-0 right-0 w-4 h-4 bg-red-500/90 hover:bg-red-500 text-white flex items-center justify-center rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove image"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   )}
+                  <input
+                    id="image-upload-details"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    disabled={isUpdating}
+                  />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1">
                   <div className="text-white font-medium leading-tight flex items-center gap-2">
                     <span>{user?.name}</span>
                     <CopyableId id={user?.id || ''} variant="subscript" nonSliced={true} />
                   </div>
                   <div className="text-sm text-gray-400">{user?.email}</div>
+                  {selectedImageFile && (
+                    <div className="text-xs -mt-1 text-gray-500 font-mono">New image selected</div>
+                  )}
                 </div>
               </div>
               <div>
@@ -1903,6 +2076,8 @@ export default function UserDetails() {
                 onClick={() => {
                   setShowEditModal(false);
                   setEditRole('');
+                  setImagePreview(null);
+                  setSelectedImageFile(null);
                 }}
                 disabled={isUpdating}
                 className="border border-dashed border-white/20 text-white hover:bg-white/10 rounded-none font-mono uppercase text-xs tracking-tight"
@@ -1950,8 +2125,15 @@ export default function UserDetails() {
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
+                  {getImageSrc(user?.image) ? (
+                    <img
+                      src={getImageSrc(user?.image)}
+                      alt={user?.name}
+                      className="w-14 h-14 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}
@@ -2048,8 +2230,15 @@ export default function UserDetails() {
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
+                  {getImageSrc(user?.image) ? (
+                    <img
+                      src={getImageSrc(user?.image)}
+                      alt={user?.name}
+                      className="w-14 h-14 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}
@@ -2114,8 +2303,15 @@ export default function UserDetails() {
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
+                  {getImageSrc(user?.image) ? (
+                    <img
+                      src={getImageSrc(user?.image)}
+                      alt={user?.name}
+                      className="w-14 h-14 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}
@@ -2179,8 +2375,15 @@ export default function UserDetails() {
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
+                  {getImageSrc(user?.image) ? (
+                    <img
+                      src={getImageSrc(user?.image)}
+                      alt={user?.name}
+                      className="w-14 h-14 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}
@@ -2282,8 +2485,15 @@ export default function UserDetails() {
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
+                  {getImageSrc(user?.image) ? (
+                    <img
+                      src={getImageSrc(user?.image)}
+                      alt={user?.name}
+                      className="w-14 h-14 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}
@@ -2387,8 +2597,15 @@ export default function UserDetails() {
             <div className="space-y-4 mt-4">
               <div className="flex items-center space-x-3">
                 <div className="w-14 h-14 rounded-none border border-dashed border-white/15 bg-white/10 flex items-center justify-center overflow-hidden">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-14 h-14 object-cover" />
+                  {getImageSrc(user?.image) ? (
+                    <img
+                      src={getImageSrc(user?.image)}
+                      alt={user?.name}
+                      className="w-14 h-14 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <User className="w-7 h-7 text-white" />
                   )}
