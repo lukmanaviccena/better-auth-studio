@@ -164,7 +164,6 @@ export default function Organizations() {
     try {
       const response = await fetch('/api/organizations?limit=10000');
       const data = await response.json();
-      console.log({ lenght: data.organizations.length });
       setOrganizations(data.organizations || []);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);

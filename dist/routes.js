@@ -3104,7 +3104,9 @@ export function createRoutes(authConfig, configPath, geoDbPath, preloadedAdapter
             }
             const createdInvitation = await adapter.create({
                 model: 'invitation',
-                data: invitationData,
+                data: {
+                    ...invitationData,
+                },
             });
             if (!createdInvitation) {
                 return res.status(500).json({ error: 'Failed to create invitation' });
