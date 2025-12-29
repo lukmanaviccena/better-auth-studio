@@ -3310,7 +3310,6 @@ export function createRoutes(
       if (!invitations || invitations.length === 0) {
         return res.json({ success: true, invitations: [] });
       }
-      console.log({ invitations });
       const transformedInvitations = await Promise.all(
         invitations.map(async (invitation: any) => {
           let organizationName = 'Unknown';
