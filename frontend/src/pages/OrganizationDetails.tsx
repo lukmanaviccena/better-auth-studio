@@ -1461,7 +1461,9 @@ export default function OrganizationDetails() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      navigate(`/organizations/${orgId}/teams/${invitation.teamId}`);
+                                      navigate(
+                                        `/organizations/${orgId}/teams/${invitation.teamId}`
+                                      );
                                     }}
                                     className="opacity-0 group-hover:opacity-100 text-white/60 hover:text-white transition-all"
                                     title="View team details"
