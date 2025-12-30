@@ -96,6 +96,7 @@ const ChevronIcon = () => (
 );
 
 const versionHistory = [
+  { version: "v1.0.80-beta.1", date: "2025-12-30", description: "Added Hono and Elysia framework support for self-hosting. Better Auth Studio now supports integration with Hono.js and Elysia.js frameworks, expanding framework compatibility beyond Next.js and Express. Includes example projects with Prisma integration for both frameworks." },
   { version: "v1.0.79-beta.19", date: "2025-12-25", description: "Beta release with self-hosting support. Better Auth Studio can now be embedded directly into your application for production use. Full support for Next.js App Router and Express.js integration. Fixed adapter resolution, auth config loading, and database schema loading for all endpoints in production deployments." },
   { version: "v1.0.31", date: "2025-01-31", description: "Enhanced email editor with code export, field simulator, and alignment icons. Added Password Strength Checker tool with comprehensive validation. Improved navigation with dynamic count badges." },
   { version: "v1.0.30", date: "2025-11-08", description: "Released the refreshed analytics dashboard, Tools workspace with OAuth testing/migration/database utilities, Geist typography polish, and widespread UI clean-up." },
@@ -135,6 +136,78 @@ export default function Changelog() {
                       fill="currentColor"
                     />
                   </svg>
+                  v1.0.80-beta.1 <span className="text-white/50 ml-2">/ 2025-12-30</span>
+                </span>
+              </h3>
+            </div>
+            <p className="text-sm font-light tracking-tight text-white/70 mb-4 pt-4">
+              Added Hono and Elysia framework support for self-hosting. Better Auth Studio now supports integration with Hono.js and Elysia.js frameworks, expanding framework compatibility beyond Next.js and Express.
+            </p>
+            <div className="space-y-3">
+              <h4 className="font-light tracking-tight text-white flex items-center"><ChevronIcon />New Framework Adapters</h4>
+              <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Hono.js Support:</strong> Full integration with Hono framework using the <code className="text-white/80 bg-white/10 px-1">better-auth-studio/hono</code> adapter
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Elysia.js Support:</strong> Native support for Elysia framework optimized for Bun runtime via <code className="text-white/80 bg-white/10 px-1">better-auth-studio/elysia</code> adapter
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Universal request/response pattern ensures consistent behavior across all supported frameworks
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Example projects with Prisma integration available for both Hono and Elysia
+                </li>
+              </ul>
+              <h4 className="font-light tracking-tight text-white flex items-center mt-4"><ChevronIcon />Documentation & Examples</h4>
+              <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Comprehensive self-hosting documentation with framework-specific setup guides
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Clickable navigation anchors for quick access to framework integration sections
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Complete example projects demonstrating Prisma integration with both frameworks
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Framework-specific routing patterns documented (including Elysia's dual-route requirement)
+                </li>
+              </ul>
+              <div className="bg-black/50 border border-white/10 p-3 mt-4">
+                <p className="text-xs font-light tracking-tight text-white/70">
+                  <strong className="text-white/90">Note:</strong> Hono and Elysia adapters follow the same universal handler pattern as Express and Next.js, ensuring consistent behavior across all frameworks. For Elysia, both <code className="text-white/80 px-1">/api/studio</code> and <code className="text-white/80 px-1">/api/studio/*</code> routes are required due to Elysia's routing behavior.
+                </p>
+              </div>
+            </div>
+          </PixelCard>
+        </section>
+
+        <section>
+          <PixelCard variant="highlight" className="relative">
+            <div className="absolute -top-10 left-0">
+              <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
+                <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
+                <span className="relative z-10 inline-flex gap-[2px] items-center">
+                  <svg
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    className="w-3 h-3 inline-flex mr-1 text-white/50"
+                  >
+                    <path
+                      d="M15 2h2v2h4v18H3V4h4V2h2v2h6V2zM9 6H5v2h14V6H9zm-4 4v10h14V10H5zm2 2h8v2H7v-2zm4 6v-2H7v2h4z"
+                      fill="currentColor"
+                    />
+                  </svg>
                   v1.0.79-beta.19 <span className="text-white/50 ml-2">/ 2025-12-25</span>
                 </span>
               </h3>
@@ -143,7 +216,7 @@ export default function Changelog() {
               Beta release with self-hosting support. Better Auth Studio can now be embedded directly into your application for production use. Full support for Next.js App Router and Express.js integration with automatic route generation.
             </p>
             <div className="space-y-3">
-              <h4 className="font-light tracking-tight text-white flex items-center"><RocketIcon />Self-Hosting Feature</h4>
+              <h4 className="font-light tracking-tight text-white flex items-center"><ChevronIcon />Self-Hosting Feature</h4>
               <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
                 <li className="flex items-center">
                   <ChevronIcon />

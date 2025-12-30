@@ -376,8 +376,6 @@ import studioConfig from './studio.config';
 
 const app = new Elysia()
   
-  // Better Auth Studio routes
-  // Note: We need both routes because Elysia's wildcard /* doesn't match exact paths
   .all('/api/studio', betterAuthStudio(studioConfig))
   .all('/api/studio/*', betterAuthStudio(studioConfig))
   // Better Auth routes
@@ -400,7 +398,7 @@ app.listen(PORT, () => {
               <p className="text-sm font-light tracking-tight text-white/70">
                 Access the studio at <code className="text-white/90 bg-white/10 px-1 py-0.5">http://localhost:3000/api/studio</code>
               </p>
-              <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded">
+              <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded-none">
                 <p className="text-xs font-light tracking-tight text-white/60 mb-2">
                   <strong className="font-bold text-white/80">Note:</strong> Elysia is optimized for Bun runtime. Make sure to install the required dependencies:
                 </p>
