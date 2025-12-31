@@ -177,12 +177,38 @@ async function handleApiRoute(request, path, config) {
         return jsonResponse(500, { error: 'Internal server error' });
     }
 }
+function isNextJsProject() {
+    try {
+        const cwd = process.cwd();
+        // Check for .next directory (build output)
+        if (existsSync(join(cwd, '.next'))) {
+            return true;
+        }
+        // Check for next.config.js or next.config.ts
+        if (existsSync(join(cwd, 'next.config.js')) || existsSync(join(cwd, 'next.config.ts'))) {
+            return true;
+        }
+        // Check package.json for next dependency
+        const pkgPath = join(cwd, 'package.json');
+        if (existsSync(pkgPath)) {
+            try {
+                const pkgContent = readFileSync(pkgPath, 'utf-8');
+                const pkg = JSON.parse(pkgContent);
+                if (pkg.dependencies?.next || pkg.devDependencies?.next) {
+                    return true;
+                }
+            }
+            catch { }
+        }
+    }
+    catch { }
+    return false;
+}
 function findPublicDir() {
     const candidates = [];
     const debug = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+    const isNextJs = isNextJsProject();
     // PRIORITY 1: Direct resolution from __dirname (most reliable)
-    // __dirname is at: .../better-auth-studio/dist/core
-    // public is at: .../better-auth-studio/dist/public
     if (__dirname) {
         const directPublic = resolve(__dirname, '../public');
         candidates.unshift(directPublic);
@@ -192,24 +218,63 @@ function findPublicDir() {
     }
     // PRIORITY 2: Extract package root from __dirname path (handles pnpm store)
     if (__dirname) {
-        // Match: .../better-auth-studio/dist/... or .../better-auth-studio/...
         const packageMatch = __dirname.match(/(.+[/\\]better-auth-studio)(?:[/\\]dist[/\\]core)?$/);
         if (packageMatch) {
             const packageRoot = packageMatch[1];
             candidates.unshift(join(packageRoot, 'dist', 'public'));
         }
     }
-    // PRIORITY 3: Resolve from import.meta.url (for ESM)
+    // PRIORITY 3: Walk up from __dirname to find node_modules
+    if (__dirname) {
+        let searchDir = __dirname;
+        for (let i = 0; i < 10; i++) {
+            const nmPath = join(searchDir, 'node_modules', 'better-auth-studio', 'dist', 'public');
+            if (existsSync(nmPath)) {
+                candidates.unshift(nmPath);
+                break;
+            }
+            const parent = resolve(searchDir, '..');
+            if (parent === searchDir)
+                break;
+            searchDir = parent;
+        }
+    }
+    // PRIORITY 4: Resolve from import.meta.url (for ESM)
     try {
         const moduleUrl = import.meta.url;
         if (moduleUrl) {
             const modulePath = fileURLToPath(moduleUrl);
             const moduleDir = dirname(modulePath);
-            candidates.unshift(resolve(moduleDir, '../public'));
+            candidates.push(resolve(moduleDir, '../public'));
+            // Also walk up from module location to find node_modules
+            let moduleSearchDir = moduleDir;
+            for (let i = 0; i < 10; i++) {
+                const nmPath = join(moduleSearchDir, 'node_modules', 'better-auth-studio', 'dist', 'public');
+                if (existsSync(nmPath)) {
+                    candidates.push(nmPath);
+                    break;
+                }
+                const parent = resolve(moduleSearchDir, '..');
+                if (parent === moduleSearchDir)
+                    break;
+                moduleSearchDir = parent;
+            }
         }
     }
     catch (err) { }
-    // PRIORITY 4: Current working directory
+    // PRIORITY 5: Next.js specific paths (only if Next.js project detected)
+    if (isNextJs) {
+        try {
+            const cwd = process.cwd();
+            // Next.js builds to .next/server
+            const nextServer = join(cwd, '.next', 'server');
+            if (existsSync(nextServer)) {
+                candidates.push(join(nextServer, 'node_modules', 'better-auth-studio', 'dist', 'public'), join(nextServer, 'chunks', 'node_modules', 'better-auth-studio', 'dist', 'public'));
+            }
+        }
+        catch (err) { }
+    }
+    // PRIORITY 6: Current working directory (all projects)
     try {
         const cwd = process.cwd();
         candidates.push(join(cwd, 'node_modules', 'better-auth-studio', 'dist', 'public'), join(cwd, 'static', 'studio'));
