@@ -436,7 +436,7 @@ app.listen(PORT, () => {
               <CodeHighlighter
                 code={`// src/routes/api/studio/[...path]/+server.ts
 import { betterAuthStudio } from 'better-auth-studio/svelte-kit';
-import studioConfig from '../../../../../studio.config.js';
+import studioConfig from '../../../../../studio.config';
 
 const handler = betterAuthStudio(studioConfig);
 
