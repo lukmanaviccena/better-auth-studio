@@ -218,119 +218,50 @@ async function handleApiRoute(
 
 function findPublicDir(): string | null {
   const candidates: string[] = [];
+  const debug = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
-  try {
-    const cwd = process.cwd();
-    const nodeModulesPath = join(cwd, 'node_modules');
-    const pnpmStorePath = join(nodeModulesPath, '.pnpm');
-
-    candidates.push(
-      join(nodeModulesPath, 'better-auth-studio', 'dist', 'public'),
-      join(nodeModulesPath, 'better-auth-studio', 'public')
-    );
-
-    // Check pnpm store if it exists
-    if (existsSync(pnpmStorePath)) {
-      try {
-        const pnpmDirs = readdirSync(pnpmStorePath);
-        for (const dir of pnpmDirs) {
-          if (dir.startsWith('better-auth-studio@')) {
-            const pnpmPackagePath = join(pnpmStorePath, dir, 'node_modules', 'better-auth-studio');
-            candidates.unshift(
-              join(pnpmPackagePath, 'dist', 'public'),
-              join(pnpmPackagePath, 'public')
-            );
-          }
-        }
-      } catch (err) { }
+  // PRIORITY 1: Direct resolution from __dirname (most reliable)
+  // __dirname is at: .../better-auth-studio/dist/core
+  // public is at: .../better-auth-studio/dist/public
+  if (__dirname) {
+    const directPublic = resolve(__dirname, '../public');
+    candidates.unshift(directPublic);
+    
+    if (debug && !existsSync(directPublic)) {
+      console.log('[Studio] Direct path not found:', directPublic);
     }
-  } catch (err) { }
+  }
 
-  // Try to resolve from import.meta.url for better ESM support (SvelteKit)
+  // PRIORITY 2: Extract package root from __dirname path (handles pnpm store)
+  if (__dirname) {
+    // Match: .../better-auth-studio/dist/... or .../better-auth-studio/...
+    const packageMatch = __dirname.match(/(.+[/\\]better-auth-studio)(?:[/\\]dist[/\\]core)?$/);
+    if (packageMatch) {
+      const packageRoot = packageMatch[1];
+      candidates.unshift(join(packageRoot, 'dist', 'public'));
+    }
+  }
+
+  // PRIORITY 3: Resolve from import.meta.url (for ESM)
   try {
     const moduleUrl = import.meta.url;
     if (moduleUrl) {
       const modulePath = fileURLToPath(moduleUrl);
       const moduleDir = dirname(modulePath);
-      const realModuleDir = (() => {
-        try {
-          return realpathSync(moduleDir);
-        } catch {
-          return moduleDir;
-        }
-      })();
-
-      candidates.unshift(
-        resolve(realModuleDir, '../public'),
-        resolve(realModuleDir, '../../public'),
-        resolve(realModuleDir, '../../../public'),
-        resolve(realModuleDir, '../../dist/public'),
-        resolve(realModuleDir, '../../../dist/public'),
-        resolve(realModuleDir, '../dist/public')
-      );
+      candidates.unshift(resolve(moduleDir, '../public'));
     }
-  } catch (err) { }
+  } catch (err) {}
 
-  const baseDirs = [__dirname, __realdir];
-  for (const baseDir of baseDirs) {
+  // PRIORITY 4: Current working directory
+  try {
+    const cwd = process.cwd();
     candidates.push(
-      resolve(baseDir, '../public'),
-      resolve(baseDir, '../../public'),
-      resolve(baseDir, '../../../public'),
-      resolve(baseDir, '../../dist/public'),
-      resolve(baseDir, '../../../dist/public'),
-      resolve(baseDir, '../dist/public')
+      join(cwd, 'node_modules', 'better-auth-studio', 'dist', 'public'),
+      join(cwd, 'static', 'studio')
     );
-  }
+  } catch (err) {}
 
-  const pnpmMatch = __dirname.match(/(.+\/.pnpm\/[^/]+\/node_modules\/better-auth-studio)\//);
-  if (pnpmMatch) {
-    const pnpmPackageRoot = pnpmMatch[1];
-    candidates.unshift(
-      join(pnpmPackageRoot, 'dist', 'public'),
-      join(pnpmPackageRoot, 'public'),
-      join(pnpmPackageRoot, '..', 'dist', 'public')
-    );
-  }
-
-  try {
-    const svelteKitOutput = join(process.cwd(), '.svelte-kit', 'output', 'server');
-    if (existsSync(svelteKitOutput)) {
-      candidates.unshift(
-        join(svelteKitOutput, 'node_modules', 'better-auth-studio', 'dist', 'public'),
-        join(svelteKitOutput, 'node_modules', 'better-auth-studio', 'public')
-      );
-    }
-
-    const buildOutput = join(process.cwd(), 'build');
-    if (existsSync(buildOutput)) {
-      candidates.unshift(
-        join(buildOutput, 'node_modules', 'better-auth-studio', 'dist', 'public'),
-        join(buildOutput, 'node_modules', 'better-auth-studio', 'public')
-      );
-    }
-
-    const staticDir = join(process.cwd(), 'static', 'studio');
-    if (existsSync(staticDir)) {
-      candidates.unshift(staticDir);
-    }
-  } catch (err) { }
-
-  try {
-    let searchDir = __dirname;
-    for (let i = 0; i < 5; i++) {
-      const pkgPath = join(searchDir, 'package.json');
-      if (existsSync(pkgPath)) {
-        const pkgContent = readFileSync(pkgPath, 'utf-8');
-        if (pkgContent.includes('"name": "better-auth-studio"')) {
-          candidates.unshift(join(searchDir, 'dist', 'public'), join(searchDir, 'public'));
-          break;
-        }
-      }
-      searchDir = resolve(searchDir, '..');
-    }
-  } catch (err) { }
-
+  // Validate candidates
   for (const candidate of candidates) {
     try {
       if (existsSync(candidate)) {
@@ -338,20 +269,22 @@ function findPublicDir(): string | null {
         if (stats.isDirectory()) {
           const indexPath = join(candidate, 'index.html');
           if (existsSync(indexPath)) {
+            if (debug) {
+              console.log('[Studio] ✓ Found public directory:', candidate);
+            }
             return candidate;
           }
         }
       }
-    } catch (error) { }
+    } catch (error) {}
   }
 
-  for (const candidate of candidates) {
-    try {
-      if (existsSync(candidate) && statSync(candidate).isDirectory()) {
-        return candidate;
-      }
-    } catch (error) { }
+  if (debug) {
+    console.error('[Studio] ✗ Could not find public directory');
+    console.error('[Studio] __dirname:', __dirname);
+    console.error('[Studio] Checked', candidates.length, 'candidates');
   }
+
   return null;
 }
 

@@ -1,4 +1,3 @@
-/// <reference types="@sveltejs/kit" />
 import { auth } from "$lib/auth";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { building } from "$app/environment";
