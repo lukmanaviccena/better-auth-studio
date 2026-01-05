@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PixelLayout from "@/components/PixelLayout";
 import PixelCard from "@/components/PixelCard";
 import CodeHighlighter from "@/components/SyntaxHighlighter";
@@ -43,6 +43,23 @@ const frameworks: Array<{
   ];
 export default function SelfHosting() {
   const [activeFramework, setActiveFramework] = useState<Framework>("nextjs");
+  
+  useEffect(() => {
+    const hash = window.location.hash.slice(1); 
+    if (hash && frameworks.some(f => f.id === hash)) {
+      setActiveFramework(hash as Framework);
+    }
+    
+    const handleHashChange = () => {
+      const newHash = window.location.hash.slice(1);
+      if (newHash && frameworks.some(f => f.id === newHash)) {
+        setActiveFramework(newHash as Framework);
+      }
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   return (
     <PixelLayout
       currentPage="self-hosting"
@@ -201,14 +218,19 @@ export default config;`}
                 const Icon = framework.icon;
                 const isActive = activeFramework === framework.id;
                 return (
-                  <button
+                  <a
                     key={framework.id}
-                    onClick={() => setActiveFramework(framework.id)}
+                    href={`#${framework.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveFramework(framework.id);
+                      window.history.pushState(null, '', `#${framework.id}`);
+                    }}
                     className={`
                       relative text-[12px] font-light z-10 uppercase tracking-tight 
                       text-white/90 border bg-[#0a0a0a] 
                       px-2 py-[6px] overflow-hidden transition-all duration-200
-                      inline-flex items-center gap-[5px]
+                      inline-flex items-center gap-[5px] no-underline
                       ${isActive
                         ? "border-white/40 bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
                         : "border-white/20 hover:border-white/30 hover:bg-white/5"
@@ -229,7 +251,7 @@ export default config;`}
                       <Icon />
                       {framework.name}
                     </span>
-                  </button>
+                  </a>
                 );
               })}
             </div>
