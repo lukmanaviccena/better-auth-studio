@@ -12,12 +12,6 @@ import type { StudioConfig, UniversalRequest, UniversalResponse } from '../types
  * import { toWebRequest } from 'better-auth/nuxt';
  *
  * export default defineEventHandler(async (event) => {
- *   // Read body first to avoid stream conflicts
- *   if (event.method !== 'GET' && event.method !== 'HEAD' && !(event as any).body) {
- *     try {
- *       (event as any).body = await readBody(event);
- *     } catch {}
- *   }
  *   const request = toWebRequest(event);
  *   return betterAuthStudio(studioConfig)(request);
  * });
