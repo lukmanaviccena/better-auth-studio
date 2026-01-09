@@ -96,6 +96,7 @@ const ChevronIcon = () => (
 );
 
 const versionHistory = [
+  { version: "v1.0.79-beta.66", date: "2025-01-XX", description: "Comprehensive framework support for self-hosting. Better Auth Studio now supports 10 major web frameworks (Next.js, Express, Hono, Elysia, SvelteKit, SolidStart, TanStack Start, Astro, Remix, Nuxt) with seamless integration for production deployments. Added environment variable support for admin emails and mobile-responsive documentation." },
   { version: "v1.0.80-beta.1", date: "2025-12-30", description: "Added Hono and Elysia framework support for self-hosting. Better Auth Studio now supports integration with Hono.js and Elysia.js frameworks, expanding framework compatibility beyond Next.js and Express. Includes example projects with Prisma integration for both frameworks." },
   { version: "v1.0.79-beta.19", date: "2025-12-25", description: "Beta release with self-hosting support. Better Auth Studio can now be embedded directly into your application for production use. Full support for Next.js App Router and Express.js integration. Fixed adapter resolution, auth config loading, and database schema loading for all endpoints in production deployments." },
   { version: "v1.0.31", date: "2025-01-31", description: "Enhanced email editor with code export, field simulator, and alignment icons. Added Password Strength Checker tool with comprehensive validation. Improved navigation with dynamic count badges." },
@@ -119,6 +120,116 @@ export default function Changelog() {
       description="Track the Better Auth Studio development with detailed release updates."
     >
       <div className="space-y-8">
+        <section>
+          <PixelCard variant="highlight" className="relative">
+            <div className="absolute -top-10 left-0">
+              <h3 className="relative text-[12px] font-light uppercase tracking-tight text-white/90 border border-white/20 bg-[#0a0a0a] px-2 py-[6px] overflow-hidden">
+                <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,#ffffff,#ffffff_1px,transparent_1px,transparent_6px)] opacity-[2.5%]" />
+                <span className="relative z-10 inline-flex gap-[2px] items-center">
+                  <svg
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    className="w-3 h-3 inline-flex mr-1 text-white/50"
+                  >
+                    <path
+                      d="M15 2h2v2h4v18H3V4h4V2h2v2h6V2zM9 6H5v2h14V6H9zm-4 4v10h14V10H5zm2 2h8v2H7v-2zm4 6v-2H7v2h4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  v1.0.79-beta.66 <span className="text-white/50 ml-2">/ 2025-01-XX</span>
+                </span>
+              </h3>
+            </div>
+            <p className="text-sm font-light tracking-tight text-white/70 mb-4 pt-4">
+              Comprehensive framework support for self-hosting. Better Auth Studio now supports 10 major web frameworks, providing seamless integration for production deployments across the entire JavaScript ecosystem.
+            </p>
+            <div className="space-y-3">
+              <h4 className="font-light tracking-tight text-white flex items-center"><RocketIcon />Complete Framework Support</h4>
+              <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Next.js:</strong> Full support for App Router with automatic route generation via <code className="text-white/80 bg-white/10 px-1">better-auth-studio/nextjs</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Express:</strong> Native Express.js middleware integration with <code className="text-white/80 bg-white/10 px-1">better-auth-studio/express</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Hono:</strong> Lightweight and fast web framework support via <code className="text-white/80 bg-white/10 px-1">better-auth-studio/hono</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Elysia:</strong> Bun-optimized framework with full TypeScript support using <code className="text-white/80 bg-white/10 px-1">better-auth-studio/elysia</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">SvelteKit:</strong> Complete SvelteKit integration with catch-all routes via <code className="text-white/80 bg-white/10 px-1">better-auth-studio/svelte-kit</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">SolidStart:</strong> Solid.js meta-framework support with <code className="text-white/80 bg-white/10 px-1">better-auth-studio/solid-start</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">TanStack Start:</strong> TanStack Router-based framework integration via <code className="text-white/80 bg-white/10 px-1">better-auth-studio/tanstack-start</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Astro:</strong> Astro API routes support with <code className="text-white/80 bg-white/10 px-1">better-auth-studio/astro</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Remix:</strong> Remix resource routes integration using <code className="text-white/80 bg-white/10 px-1">better-auth-studio/remix</code>
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  <strong className="text-white/90 mr-2">Nuxt:</strong> Nuxt 3 server API routes support via <code className="text-white/80 bg-white/10 px-1">better-auth-studio/nuxt</code>
+                </li>
+              </ul>
+              <h4 className="font-light tracking-tight text-white flex items-center mt-4"><SettingsIcon />Self-Hosting Features</h4>
+              <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Framework-agnostic self-hosting - deploy Better Auth Studio alongside your application
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Role-based access control and email allowlists for secure admin access
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Environment variable support for admin emails (<code className="text-white/80 bg-white/10 px-1">ADMIN_EMAIL_1</code>, <code className="text-white/80 bg-white/10 px-1">ADMIN_EMAIL_2</code>, etc.)
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Custom base paths - mount studio at any route (e.g., <code className="text-white/80 bg-white/10 px-1">/api/studio</code>, <code className="text-white/80 bg-white/10 px-1">/admin</code>)
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Production-ready deployment patterns for all supported frameworks
+                </li>
+              </ul>
+              <h4 className="font-light tracking-tight text-white flex items-center mt-4"><GlobeIcon />Documentation & UX</h4>
+              <ul className="list-none space-y-2 text-sm font-light tracking-tight text-white/70 ml-4">
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Comprehensive self-hosting guide with framework-specific setup examples
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Environment variable configuration examples and best practices
+                </li>
+                <li className="flex items-center">
+                  <ChevronIcon />
+                  Complete example projects for all 10 supported frameworks
+                </li>
+              </ul>
+            </div>
+          </PixelCard>
+        </section>
+
         <section>
           <PixelCard variant="highlight" className="relative">
             <div className="absolute -top-10 left-0">
