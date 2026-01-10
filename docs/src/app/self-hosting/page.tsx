@@ -648,6 +648,14 @@ export default defineEventHandler(async (event) => {
                   <p className="text-sm font-light tracking-tight text-white/50 mt-1">
                     The URL path where studio is mounted (e.g., <code className="text-white/70 bg-white/10 px-1 py-0.5">/api/studio</code>)
                   </p>
+                  <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-none">
+                    <p className="text-xs font-light tracking-tight text-white/60 mb-2">
+                      <strong className="font-bold text-white/80">⚠️ Important:</strong> When adjusting the <code className="text-white/70 bg-white/10 px-1 py-0.5">basePath</code>, make sure to adjust your route structure accordingly when mounting the handler.
+                    </p>
+                    <p className="text-xs font-light tracking-tight text-white/50 mt-2">
+                      For example, if your <code className="text-white/70 bg-white/10 px-1 py-0.5">basePath</code> is <code className="text-white/70 bg-white/10 px-1 py-0.5">/admin</code>, your route file should be at <code className="text-white/70 bg-white/10 px-1 py-0.5">app/admin/[[...path]]/route.ts</code> to matching the path structure.
+                    </p>
+                  </div>
                 </div>
                 <div className="border-b border-white/10 pb-3">
                   <code className="text-white/90 text-sm">access.allowEmails</code>
