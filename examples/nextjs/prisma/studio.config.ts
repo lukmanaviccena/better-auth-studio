@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 
 const config: StudioConfig = {
   auth,
-  basePath: '/api/studio',
+  basePath: '/dashboard',
   metadata: {
     title: 'Admin Dashboard',
     theme: 'dark',
