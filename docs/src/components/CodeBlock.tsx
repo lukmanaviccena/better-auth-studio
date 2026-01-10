@@ -43,8 +43,8 @@ export default function CodeBlock({
   return (
     <div className={`relative group ${className}`}>
       <PixelCard variant="code">
-        <div className="flex items-center justify-between">
-          <code className="text-sm font-mono text-white/90 flex-1">{code}</code>
+        <div className="flex items-start justify-between">
+          <code className="text-sm font-mono text-white/90 flex-1 whitespace-pre">{code}</code>
           {showCopy && (
             <button
               onClick={copyToClipboard}
