@@ -111,7 +111,7 @@ function injectConfig(html: string, config: WindowStudioConfig): string {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
-    
+
     // Determine MIME type from file extension
     const faviconLower = config.metadata.favicon.toLowerCase();
     let mimeType = 'image/png'; // default
@@ -124,21 +124,18 @@ function injectConfig(html: string, config: WindowStudioConfig): string {
     } else if (faviconLower.endsWith('.webp')) {
       mimeType = 'image/webp';
     }
-    
+
     const faviconTag = `<link rel="icon" type="${mimeType}" href="${escapedFavicon}" />`;
-    
+
     // Replace existing favicon/link rel="icon" tags
     modifiedHtml = modifiedHtml.replace(
       /<link[^>]*rel=["'](icon|shortcut icon)["'][^>]*>/gi,
       faviconTag
     );
-    
+
     // If no existing favicon tag, add one before </head>
     if (!modifiedHtml.includes('rel="icon"') && !modifiedHtml.includes("rel='icon'")) {
-      modifiedHtml = modifiedHtml.replace(
-        '</head>',
-        `  ${faviconTag}\n</head>`
-      );
+      modifiedHtml = modifiedHtml.replace('</head>', `  ${faviconTag}\n</head>`);
     }
   }
 

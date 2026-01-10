@@ -404,8 +404,8 @@ export default function Layout({ children }: LayoutProps) {
 
   const config = getStudioConfig();
   const metadata = config?.metadata || {};
-  const logoUrl = metadata.logo 
-    ? (metadata.logo.startsWith('http://') || metadata.logo.startsWith('https://'))
+  const logoUrl = metadata.logo
+    ? metadata.logo.startsWith('http://') || metadata.logo.startsWith('https://')
       ? metadata.logo
       : assetPath(metadata.logo)
     : assetPath('/logo.png');
