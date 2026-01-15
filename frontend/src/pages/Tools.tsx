@@ -581,6 +581,16 @@ export default function Tools() {
     };
   }, [showConfigValidator]);
   useEffect(() => {
+    if (showExportModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showExportModal]);
+  useEffect(() => {
     if (showOAuthCredentialsModal) {
       document.body.style.overflow = 'hidden';
     } else {
